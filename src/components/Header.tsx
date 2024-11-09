@@ -9,7 +9,7 @@ export default function Header() {
           {/* Logo */}
           <div className="flex items-center space-x-4">
             <Layout className="h-8 w-8 text-indigo-600" />
-            <span className="text-xl font-bold text-gray-900">Brandby</span>
+            <span className="text-xl font-bold text-gray-900">Kanban AI</span>
           </div>
 
           {/* Navigation */}
