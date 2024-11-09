@@ -7,6 +7,7 @@ import type { Task } from '../types';
 const MOCK_TASKS: Task[] = [
   {
     id: 'MSP-105',
+    projectID: '123qrep-8673',
     title: 'Email delivery error',
     description: 'Users are reporting delays in email delivery system',
     type: 'bug',
@@ -17,6 +18,34 @@ const MOCK_TASKS: Task[] = [
     assignee: {
       id: '1',
       name: 'John Doe',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    },
+    comments: [
+      {
+        id: '1',
+        userId: '2',
+        content: 'This needs immediate attention',
+        createdAt: '2024-03-15T10:00:00Z',
+        user: {
+          name: 'Jane Smith',
+          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+        }
+      }
+    ]
+  },
+  {
+    id: 'MSP-106',
+    projectID: '123qrep-8673',
+    title: 'Build Email Notification w/ Library',
+    description: 'Scoping has been completed. Integrate selected notification library into frontend, using websocket. Check that package.json file is updated.',
+    type: 'feature',
+    priority: 'medium',
+    status: 'todo',
+    sprint: 1,
+    dueDate: '2024-03-25',
+    assignee: {
+      id: '1',
+      name: 'Callum Scott',
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
     },
     comments: [
@@ -52,11 +81,11 @@ export default function KanbanBoard() {
   ];
 
   const handleStatusChange = (taskId: string, newStatus: string) => {
-    const updatedTasks = tasks.map(task => 
+    const updatedTasks = tasks.map(task =>
       task.id === taskId ? { ...task, status: newStatus as Task['status'] } : task
     );
     setTasks(updatedTasks);
-    
+
     if (selectedTask?.id === taskId) {
       const updatedTask = updatedTasks.find(task => task.id === taskId);
       if (updatedTask) setSelectedTask(updatedTask);
@@ -64,11 +93,11 @@ export default function KanbanBoard() {
   };
 
   const handleSprintChange = (taskId: string, newSprint: number) => {
-    const updatedTasks = tasks.map(task => 
+    const updatedTasks = tasks.map(task =>
       task.id === taskId ? { ...task, sprint: newSprint } : task
     );
     setTasks(updatedTasks);
-    
+
     if (selectedTask?.id === taskId) {
       const updatedTask = updatedTasks.find(task => task.id === taskId);
       if (updatedTask) setSelectedTask(updatedTask);
@@ -115,7 +144,7 @@ export default function KanbanBoard() {
             </button>
           )}
         </div>
-        
+
         {isEditingDescription ? (
           <div className="flex items-start space-x-2">
             <textarea
@@ -150,8 +179,8 @@ export default function KanbanBoard() {
                 key={sprint}
                 onClick={() => setActiveSprint(sprint)}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors
-                  ${activeSprint === sprint 
-                    ? 'bg-indigo-600 text-white' 
+                  ${activeSprint === sprint
+                    ? 'bg-indigo-600 text-white'
                     : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}
               >
                 {sprint}

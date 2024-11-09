@@ -4,6 +4,7 @@ export type Status = 'todo' | 'in-progress' | 'in-review';
 
 export interface Task {
   id: string;
+  projectID: string;
   title: string;
   description: string;
   type: TaskType;

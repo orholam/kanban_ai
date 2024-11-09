@@ -17,8 +17,9 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-semibold text-gray-900">{task.title}</h2>
-              <div className="flex items-center space-x-2 mt-1">
-                <p className="text-sm text-gray-500">{task.id}</p>
+              <div className="flex justify-between space-x-2 mt-1">
+                <p className="text-sm text-left text-gray-500">{task.id}</p>
+                <p className="text-sm text-right text-gray-500">{task.projectID}</p>
               </div>
             </div>
             <button
