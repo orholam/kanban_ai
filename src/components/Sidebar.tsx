@@ -22,7 +22,7 @@ export default function Sidebar() {
             <div className="mt-1 space-y-1">
               <a
                 href="#"
-                className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-900 bg-purple-50"
+                className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-900 bg-indigo-50"
               >
                 Email Project
               </a>
