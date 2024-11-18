@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Filter, Share, Eye, Pencil, Check, X } from 'lucide-react';
 import TaskCard from './TaskCard';
 import TaskModal from './TaskModal';
@@ -66,7 +66,8 @@ const MOCK_TASKS: Task[] = [
 const DEFAULT_DESCRIPTION = "A comprehensive email system overhaul focusing on reliability and performance improvements.";
 
 export default function KanbanBoard() {
-  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
+  //const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
+  const [tasks, setTasks] = useState([]); // default blank instead of mock data
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [activeSprint, setActiveSprint] = useState(1);
@@ -74,35 +75,70 @@ export default function KanbanBoard() {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [tempDescription, setTempDescription] = useState(description);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const taskRaw = await fetch('http://localhost:5000/api/tasks');
+        if (!taskRaw.ok) {
+          throw new Error(`HTTP error! Status: ${taskRaw.status}`);
+        }
+        const taskData = await taskRaw.json();
+        console.log("taskData");
+        console.log(taskData);
+        setTasks(taskData);
+      } catch (err) {
+        console.error('Failed to fetch tasks: ', err);
+      }
+    };
+    fetchData();
+    console.log(tasks)
+  }, []);
+
   const columns = [
     { id: 'todo', title: 'Todo' },
     { id: 'in-progress', title: 'In Progress' },
     { id: 'in-review', title: 'In Review' }
   ];
 
-  const handleStatusChange = (taskId: string, newStatus: string) => {
-    const updatedTasks = tasks.map(task =>
-      task.id === taskId ? { ...task, status: newStatus as Task['status'] } : task
-    );
-    setTasks(updatedTasks);
+  {/* handle status change from todo to in progress to done etc.*/}
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
 
-    if (selectedTask?.id === taskId) {
-      const updatedTask = updatedTasks.find(task => task.id === taskId);
-      if (updatedTask) setSelectedTask(updatedTask);
-    }
+    const updatedTask = await response.json();
+    setTasks(prevTasks => prevTasks.map(task => (task.id === updatedTask.id ? updatedTask : task)));
   };
 
-  const handleSprintChange = (taskId: string, newSprint: number) => {
-    const updatedTasks = tasks.map(task =>
-      task.id === taskId ? { ...task, sprint: newSprint } : task
-    );
-    setTasks(updatedTasks);
+  {/* handle sprint change */}
+  const handleSprintChange = async (taskId: string, newSprint: number) => {
+    const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/sprint`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ sprint: newSprint }),
+    });
 
-    if (selectedTask?.id === taskId) {
-      const updatedTask = updatedTasks.find(task => task.id === taskId);
-      if (updatedTask) setSelectedTask(updatedTask);
-    }
+    const updatedTask = await response.json();
+    setTasks(prevTasks => prevTasks.map(task => (task.id === updatedTask.id ? updatedTask : task)));
   };
+
+  // const handleSprintChange = (taskId: string, newSprint: number) => {
+  //   const updatedTasks = tasks.map(task =>
+  //     task.id === taskId ? { ...task, sprint: newSprint } : task
+  //   );
+  //   setTasks(updatedTasks);
+  //
+  //   if (selectedTask?.id === taskId) {
+  //     const updatedTask = updatedTasks.find(task => task.id === taskId);
+  //     if (updatedTask) setSelectedTask(updatedTask);
+  //   }
+  // };
 
   const handleDragOver = (e: React.DragEvent, columnId: string) => {
     e.preventDefault();
@@ -204,6 +240,7 @@ export default function KanbanBoard() {
         </div>
       </div>
 
+      {/* setup three column structure*/}
       <div className="grid grid-cols-3 gap-6">
         {columns.map((column) => (
           <div

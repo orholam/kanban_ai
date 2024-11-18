@@ -2,6 +2,7 @@ import React from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import KanbanBoard from './components/KanbanBoard';
+import "react-datepicker/dist/react-datepicker.css";
 
 function App() {
   return (

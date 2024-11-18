@@ -47,7 +47,7 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
           {task.type}
         </span>
       </div>
-
+{/* Comments section
       <div className="flex items-center justify-between">
         <div className="flex items-center text-gray-500 text-sm">
           <Calendar className="h-4 w-4 mr-1" />
@@ -67,7 +67,7 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
             className="h-6 w-6 rounded-full"
           />
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

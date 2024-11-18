@@ -1,6 +1,8 @@
 import React from 'react';
+import { useState, useEffect } from "react";
 import { X, Calendar, MessageSquare } from 'lucide-react';
 import type { Task } from '../types';
+import DatePicker from "react-datepicker";
 
 interface TaskModalProps {
   task: Task;
@@ -10,16 +12,47 @@ interface TaskModalProps {
 }
 
 export default function TaskModal({ task, onClose, onStatusChange, onSprintChange }: TaskModalProps) {
+  const [status, setStatus] = useState(task.status); // Local state for the status
+  const [sprint, setSprint] = useState(task.sprint); // Local state for the sprint
+  const [dueDate, setDueDate] = useState(new Date(task.due_date));
+  const [showCalendar, setShowCalendar] = useState(false);
+
+  // Update local state whenever the task prop changes
+  useEffect(() => {
+    setStatus(task.status);
+    setSprint(task.sprint);
+  }, [task.status, task.sprint]);
+
+  const handleStatusChange = (e) => {
+    const newStatus = e.target.value;
+    setStatus(newStatus); // Update the local state
+    onStatusChange(task.id, newStatus); // Trigger the parent handler
+  };
+
+  const handleSprintChange = (e) => {
+    const newSprint = parseInt(e.target.value);
+    console.log(e.target.value);
+    setSprint(newSprint);
+    onSprintChange(task.id, newSprint);
+  };
+
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-xl font-semibold text-gray-900">{task.title}</h2>
               <div className="flex justify-between space-x-2 mt-1">
                 <p className="text-sm text-left text-gray-500">{task.id}</p>
-                <p className="text-sm text-right text-gray-500">{task.projectID}</p>
+                <p className="text-sm text-right text-gray-500">{task.project_id}</p>
               </div>
             </div>
             <button
@@ -35,8 +68,8 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
               <div>
                 <h3 className="text-sm font-medium text-gray-900 mb-2">Status</h3>
                 <select
-                  value={task.status}
-                  onChange={(e) => onStatusChange(task.id, e.target.value)}
+                  value={status}
+                  onChange={handleStatusChange}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                 >
                   <option value="todo">Todo</option>
@@ -47,8 +80,8 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
               <div>
                 <h3 className="text-sm font-medium text-gray-900 mb-2">Sprint</h3>
                 <select
-                  value={task.sprint}
-                  onChange={(e) => onSprintChange(task.id, parseInt(e.target.value))}
+                  value={sprint}
+                  onChange={handleSprintChange}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                 >
                   {Array.from({ length: 10 }, (_, i) => i + 1).map((sprint) => (
@@ -68,8 +101,22 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
             <div>
               <h3 className="text-sm font-medium text-gray-900 mb-2">Due Date</h3>
               <div className="flex items-center text-sm text-gray-500">
-                <Calendar className="h-4 w-4 mr-2" />
-                {new Date(task.dueDate).toLocaleDateString()}
+                <Calendar className="h-4 w-4 mr-2"   onClick={() => setShowCalendar(!showCalendar)}/>
+                {new Date(task.due_date).toLocaleDateString()}
+                {showCalendar && (
+                  <div className="absolute z-50 bg-white shadow-lg rounded-md p-2">
+                    <DatePicker
+                      selected={dueDate}
+                      //onChange={handleDateChange}
+                      onClickOutside={() => setShowCalendar(false)} // Close when clicking outside
+                      inline // Shows the calendar inline
+                      // calendarClassName="custom-calendar" // Custom calendar class
+                      // dayClassName={(date) =>
+                      //   date.getDate() === new Date().getDate() ? "bg-indigo-500 text-white" : "" // Highlight today's date
+                      // }
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -77,14 +124,15 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
               <h3 className="text-sm font-medium text-gray-900 mb-2">Assignee</h3>
               <div className="flex items-center">
                 <img
-                  src={task.assignee.avatar}
-                  alt={task.assignee.name}
+                  src={task.assignee_id.avatar}
+                  alt={task.assignee_id.name}
                   className="h-8 w-8 rounded-full"
                 />
-                <span className="ml-2 text-sm text-gray-900">{task.assignee.name}</span>
+                <span className="ml-2 text-sm text-gray-900">{task.assignee_id.name}</span>
               </div>
             </div>
 
+            {/*
             <div>
               <h3 className="text-sm font-medium text-gray-900 mb-2">Comments</h3>
               <div className="space-y-4">
@@ -123,6 +171,7 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
                 </button>
               </div>
             </div>
+            */}
           </div>
         </div>
       </div>
