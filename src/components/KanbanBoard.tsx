@@ -97,7 +97,7 @@ export default function KanbanBoard() {
   const columns = [
     { id: 'todo', title: 'Todo' },
     { id: 'in-progress', title: 'In Progress' },
-    { id: 'in-review', title: 'In Review' }
+    { id: 'done', title: 'Done' }
   ];
 
   {/* handle status change from todo to in progress to done etc.*/}

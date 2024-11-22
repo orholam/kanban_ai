@@ -101,8 +101,13 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
             <div>
               <h3 className="text-sm font-medium text-gray-900 mb-2">Due Date</h3>
               <div className="flex items-center text-sm text-gray-500">
-                <Calendar className="h-4 w-4 mr-2"   onClick={() => setShowCalendar(!showCalendar)}/>
-                {new Date(task.due_date).toLocaleDateString()}
+                <span 
+                  className="inline-flex items-center cursor-pointer"
+                  onClick={() => setShowCalendar(!showCalendar)}
+                >
+                  <Calendar className="h-4 w-4 mr-2"/>
+                  {new Date(task.due_date).toLocaleDateString()}
+                </span>
                 {showCalendar && (
                   <div className="absolute z-50 bg-white shadow-lg rounded-md p-2">
                     <DatePicker
@@ -110,10 +115,6 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
                       //onChange={handleDateChange}
                       onClickOutside={() => setShowCalendar(false)} // Close when clicking outside
                       inline // Shows the calendar inline
-                      // calendarClassName="custom-calendar" // Custom calendar class
-                      // dayClassName={(date) =>
-                      //   date.getDate() === new Date().getDate() ? "bg-indigo-500 text-white" : "" // Highlight today's date
-                      // }
                     />
                   </div>
                 )}
