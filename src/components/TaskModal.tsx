@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from "react";
-import { X, Calendar, MessageSquare } from 'lucide-react';
+import { X, Calendar, MessageSquare, User } from 'lucide-react';
 import type { Task } from '../types';
 import DatePicker from "react-datepicker";
 
@@ -124,11 +124,17 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
             <div>
               <h3 className="text-sm font-medium text-gray-900 mb-2">Assignee</h3>
               <div className="flex items-center">
-                <img
-                  src={task.assignee_id.avatar}
-                  alt={task.assignee_id.name}
-                  className="h-8 w-8 rounded-full"
-                />
+                {task.assignee_id.avatar ? (
+                  <img
+                    src={task.assignee_id.avatar}
+                    alt={task.assignee_id.name}
+                    className="h-8 w-8 rounded-full"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <User className="h-5 w-5 text-gray-500" />
+                  </div>
+                )}
                 <span className="ml-2 text-sm text-gray-900">{task.assignee_id.name}</span>
               </div>
             </div>
