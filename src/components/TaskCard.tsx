@@ -1,14 +1,14 @@
 import React from 'react';
 import { Calendar, MessageSquare, Trash2 } from 'lucide-react';
 import type { Task } from '../types';
-import { deleteTask } from '../api/deleteTask';
 
 interface TaskCardProps {
   task: Task;
   onClick: (task: Task) => void;
+  onDeleteTask: (taskId: string) => void;
 }
 
-export default function TaskCard({ task, onClick }: TaskCardProps) {
+export default function TaskCard({ task, onClick, onDeleteTask }: TaskCardProps) {
   const priorityColors = {
     low: 'bg-green-100 text-green-800',
     medium: 'bg-yellow-100 text-yellow-800',
@@ -23,7 +23,7 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    deleteTask(task.id);
+    onDeleteTask(task.id);
   };
 
   return (

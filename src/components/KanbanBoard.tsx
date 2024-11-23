@@ -130,6 +130,16 @@ export default function KanbanBoard() {
     setTasks(prevTasks => prevTasks.map(task => (task.id === updatedTask.id ? updatedTask : task)));
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
+      method: 'DELETE',
+    });
+  
+    if (response.ok) {
+      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+    }
+  };
+
   // const handleSprintChange = (taskId: string, newSprint: number) => {
   //   const updatedTasks = tasks.map(task =>
   //     task.id === taskId ? { ...task, sprint: newSprint } : task
@@ -227,7 +237,7 @@ export default function KanbanBoard() {
           </div>
           <div className="flex space-x-4">
             <button 
-              onClick={() => createTask("Add a trash icon to the bottom right of each task card")}
+              onClick={() => createTask("I need to bring in the backend to be part of the same repo.")}
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
             >
               <Filter className="h-4 w-4 mr-2" />
@@ -276,6 +286,7 @@ export default function KanbanBoard() {
                     key={task.id}
                     task={task}
                     onClick={setSelectedTask}
+                    onDeleteTask={handleDeleteTask}
                   />
                 ))}
             </div>
