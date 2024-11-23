@@ -67,7 +67,11 @@ const MOCK_TASKS: Task[] = [
 
 const DEFAULT_DESCRIPTION = "A comprehensive email system overhaul focusing on reliability and performance improvements.";
 
-export default function KanbanBoard() {
+interface KanbanBoardProps {
+  isDarkMode: boolean;
+}
+
+export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
   //const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
   const [tasks, setTasks] = useState([]); // default blank instead of mock data
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -179,18 +183,20 @@ export default function KanbanBoard() {
   };
 
   return (
-    <div className="flex-1 bg-gray-50 p-6">
+    <div className={`flex-1 p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-200`}>
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold text-gray-900">Email Project</h1>
-          {!isEditingDescription && (
-            <button
-              onClick={() => setIsEditingDescription(true)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-          )}
+          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Email Project</h1>
+          <div className="flex items-center gap-2">
+            {!isEditingDescription && (
+              <button
+                onClick={() => setIsEditingDescription(true)}
+                className={`text-gray-400 hover:${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            )}
+          </div>
         </div>
 
         {isEditingDescription ? (
@@ -217,7 +223,7 @@ export default function KanbanBoard() {
             </div>
           </div>
         ) : (
-          <p className="text-sm text-gray-600 mb-4">{description}</p>
+          <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>{description}</p>
         )}
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0 mt-4">
@@ -229,7 +235,10 @@ export default function KanbanBoard() {
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors
                   ${activeSprint === sprint
                     ? 'bg-indigo-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}
+                    : isDarkMode 
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700' 
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border-gray-200'
+                  } border`}
               >
                 {sprint}
               </button>
@@ -238,16 +247,28 @@ export default function KanbanBoard() {
           <div className="flex space-x-4">
             <button 
               onClick={() => createTask("I need to bring in the backend to be part of the same repo.")}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+              className={`inline-flex items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium ${
+                isDarkMode 
+                  ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' 
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
             >
               <Filter className="h-4 w-4 mr-2" />
               Filter
             </button>
-            <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <button className={`inline-flex items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium ${
+              isDarkMode 
+                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' 
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`}>
               <Share className="h-4 w-4 mr-2" />
               Share
             </button>
-            <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <button className={`inline-flex items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium ${
+              isDarkMode 
+                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' 
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`}>
               <Eye className="h-4 w-4 mr-2" />
               View
             </button>
@@ -260,7 +281,7 @@ export default function KanbanBoard() {
         {columns.map((column) => (
           <div
             key={column.id}
-            className={`bg-gray-100 rounded-lg p-4 ${
+            className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} rounded-lg p-4 ${
               dragOverColumn === column.id ? 'ring-2 ring-indigo-500 ring-opacity-50' : ''
             }`}
             onDragOver={(e) => handleDragOver(e, column.id)}
@@ -268,14 +289,14 @@ export default function KanbanBoard() {
             onDrop={(e) => handleDrop(e, column.id)}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className={`text-lg font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 {column.title}
-                <span className="ml-2 text-sm text-gray-500">
+                <span className={`ml-2 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   ({tasks.filter(task => task.status === column.id && task.sprint === activeSprint).length})
                 </span>
               </h3>
-              <button className="p-1 hover:bg-gray-200 rounded">
-                <Plus className="h-5 w-5 text-gray-500" />
+              <button className={`p-1 hover:${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded`}>
+                <Plus className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
               </button>
             </div>
             <div className="space-y-4">
@@ -287,6 +308,7 @@ export default function KanbanBoard() {
                     task={task}
                     onClick={setSelectedTask}
                     onDeleteTask={handleDeleteTask}
+                    isDarkMode={isDarkMode}
                   />
                 ))}
             </div>
