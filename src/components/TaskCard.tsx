@@ -1,6 +1,7 @@
 import React from 'react';
-import { Calendar, MessageSquare } from 'lucide-react';
+import { Calendar, MessageSquare, Trash2 } from 'lucide-react';
 import type { Task } from '../types';
+import { deleteTask } from '../api/deleteTask';
 
 interface TaskCardProps {
   task: Task;
@@ -18,6 +19,11 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
     bug: 'bg-red-100 text-red-800',
     feature: 'bg-blue-100 text-blue-800',
     scope: 'bg-purple-100 text-purple-800',
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteTask(task.id);
   };
 
   return (
@@ -47,27 +53,15 @@ export default function TaskCard({ task, onClick }: TaskCardProps) {
           {task.type}
         </span>
       </div>
-{/* Comments section
-      <div className="flex items-center justify-between">
-        <div className="flex items-center text-gray-500 text-sm">
-          <Calendar className="h-4 w-4 mr-1" />
-          <span>{new Date(task.dueDate).toLocaleDateString()}</span>
-        </div>
 
-        <div className="flex items-center space-x-2">
-          {task.comments.length > 0 && (
-            <div className="flex items-center text-gray-500">
-              <MessageSquare className="h-4 w-4 mr-1" />
-              <span className="text-xs">{task.comments.length}</span>
-            </div>
-          )}
-          <img
-            src={task.assignee.avatar}
-            alt={task.assignee.name}
-            className="h-6 w-6 rounded-full"
-          />
-        </div>
-      </div> */}
+      <div className="flex items-center justify-end">
+        <button
+          onClick={handleDelete}
+          className="text-gray-400 hover:text-red-500 transition-colors"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }
