@@ -183,7 +183,7 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
   };
 
   return (
-    <div className={`flex-1 p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-200`}>
+    <div className={`flex-1 p-6 overflow-y-auto ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-200`}>
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Email Project</h1>
@@ -246,7 +246,7 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
           </div>
           <div className="flex space-x-4">
             <button 
-              onClick={() => createTask("I need to bring in the backend to be part of the same repo.")}
+              onClick={() => createTask("UI fix - make it so the main page can scroll if columns with tasks in them get too tall.")}
               className={`inline-flex items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium ${
                 isDarkMode 
                   ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' 
