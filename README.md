@@ -18,10 +18,10 @@ Kanban AI is your personal side project coach. Tell KAI what your side project S
     ```
 3. Start both the frontend and backend servers:
     ```
-    npm install
+    npm start
     ```
 - The *frontend* will run on `localhost:5173` (default Vite dev server port)and the *backend* will run on `localhost:3000` (default Express server port).
----
+
 ## **Individual Setup***
 ### **Frontend**
 1. Navigate to the frontend directory:
@@ -37,7 +37,6 @@ Kanban AI is your personal side project coach. Tell KAI what your side project S
     npm start
     ```
 The *frontend* will run on `localhost:5173`
----
 ### **Backend**
 1. Navigate to the backend directory:
     ```bash
@@ -48,6 +47,8 @@ The *frontend* will run on `localhost:5173`
     node server.js
     ```
 The *backend* will run on `localhost:3000`
+
 ---
+
 ## **Database** (not automatically configured)
 The application uses PostgreSQL as its database. The database has not yet been set up to be shared, so when you run the application, you will not see any cards loaded into the Kanban board. You will need to set up the database manually and configure the backend with the appropriate connection details.
