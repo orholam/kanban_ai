@@ -18,23 +18,23 @@ export const createTask = async (taskDescription: string): Promise<any> => {
     console.log(llm_data);
     console.log(llm_data.title);
 
-
+    const response_body = {
+      projectId: "123qrep-8673",
+      title: llm_data.title,
+      description: llm_data.description,
+      type: llm_data.type,
+      priority: llm_data.priority,
+      status: "todo",
+      sprint: 1,
+      dueDate: "2024-12-01",
+      assigneeId: 1
+    };
     const task_response = await fetch(task_url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        projectId: "123qrep-8673",
-        title: llm_data.title,
-        description: llm_data.description,
-        type: llm_data.type,
-        priority: llm_data.priority,
-        status: "todo",
-        sprint: 1,
-        dueDate: "2024-12-01",
-        assigneeId: 1
-      }),
+      body: JSON.stringify(response_body),
     });
     if (!task_response.ok) {
       throw new Error(`Error creating task: ${task_response.status} ${task_response.statusText}`);
@@ -46,7 +46,7 @@ export const createTask = async (taskDescription: string): Promise<any> => {
 
 
 
-    return "OK";
+    return response_body;
   } catch (error) {
     console.error(error);
     throw error;

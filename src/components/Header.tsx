@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Bell, Settings, Layout, Inbox, Users, ChevronDown, Sun, Moon } from 'lucide-react';
 
 interface HeaderProps {
@@ -7,6 +7,26 @@ interface HeaderProps {
 }
 
 export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const closeDropdown = (e: MouseEvent) => {
+    setIsProfileOpen(false);
+    document.removeEventListener('click', closeDropdown);
+  };
+
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isProfileOpen) {
+      setIsProfileOpen(true);
+      setTimeout(() => {
+        document.addEventListener('click', closeDropdown);
+      }, 0);
+    } else {
+      setIsProfileOpen(false);
+      document.removeEventListener('click', closeDropdown);
+    }
+  };
+
   return (
     <header className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6">
@@ -27,7 +47,7 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
               <Users className="h-5 w-5 mr-2" />
               <span>My Issues</span>
             </a>
-            <div className="relative group">
+            <div className="relative">
               <button className={`flex items-center ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
                 <span>Teams</span>
                 <ChevronDown className="h-4 w-4 ml-1" />
@@ -73,8 +93,28 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
             <button className={`p-2 ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}>
               <Settings className="h-6 w-6" />
             </button>
-            <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-medium">
-              JD
+            <div className="relative">
+              <div 
+                onClick={handleProfileClick}
+                className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-medium cursor-pointer"
+              >
+                JD
+              </div>
+              <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              } ring-1 ring-black ring-opacity-5 transition-all duration-200 ${
+                isProfileOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+              }`}>
+                <div className="py-1">
+                  <div className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-900'} border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <p className="font-medium">John Doe</p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>john.doe@example.com</p>
+                  </div>
+                  <a href="#" className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>Profile Settings</a>
+                  <a href="#" className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>Preferences</a>
+                  <a href="#" className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'}`}>Sign Out</a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
