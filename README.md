@@ -20,9 +20,11 @@ Kanban AI is your personal side project coach. Tell KAI what your side project S
     ```
     npm start
     ```
-- The *frontend* will run on `localhost:5173` (default Vite dev server port)and the *backend* will run on `localhost:3000` (default Express server port).
+- The *frontend* will run on `localhost:5173` (default Vite dev server port)and the *backend* will run on `localhost:3000` (default Express server port). 
 
-## **Individual Setup***
+---
+
+### **Individual Setup**
 ### **Frontend**
 1. Navigate to the frontend directory:
     ```bash
