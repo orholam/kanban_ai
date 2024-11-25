@@ -2,7 +2,6 @@
 
 Kanban AI is your personal side project coach. Tell KAI what your side project SaaS idea is, along with the skills you want to add to your resume (e.g., React, Express, etc.), and KAI will generate a full 10-week plan to help you create it! Track your progress by updating the tasks KAI makes for you.
 
----
 
 ## **Setup**
 
