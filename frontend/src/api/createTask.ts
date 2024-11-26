@@ -1,6 +1,8 @@
+import { API_ENDPOINTS } from '../config/apiConfig';
+
 export const createTask = async (taskDescription: string): Promise<any> => {
-  const llm_url = 'http://localhost:5000/api/llm-workflow';
-  const task_url = 'http://localhost:5000/api/tasks';
+  const llm_url = API_ENDPOINTS.llm;
+  const task_url = API_ENDPOINTS.tasks;
 
   try {
     const llm_response = await fetch(llm_url, {

@@ -1,7 +1,9 @@
 // This function is not needed, since the call is handled in KanbanBoard.tsx, but I'm keeping it here for now.
+import { API_ENDPOINTS } from '../config/apiConfig';
+
 
 export const deleteTask = async (id: string): Promise<void> => {
-  const url = `http://localhost:5000/api/tasks/${id}`;
+  const url = `${API_ENDPOINTS.tasks}/${id}`;
 
   try {
     const response = await fetch(url, {

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Filter, Share, Eye, Pencil, Check, X } from 'lucide-react';
+import { Plus, Pencil, Check, X } from 'lucide-react';
 import TaskCard from './TaskCard';
 import TaskModal from './TaskModal';
 import type { Task } from '../types';
 import { createTask }from '../api/createTask';
+import { API_ENDPOINTS } from '../config/apiConfig';
 
 
 const MOCK_TASKS: Task[] = [
@@ -84,7 +85,7 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const taskRaw = await fetch('http://localhost:5000/api/tasks');
+        const taskRaw = await fetch(API_ENDPOINTS.tasks);
         if (!taskRaw.ok) {
           throw new Error(`HTTP error! Status: ${taskRaw.status}`);
         }
@@ -108,7 +109,7 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
 
   {/* handle status change from todo to in progress to done etc.*/}
   const handleStatusChange = async (taskId: string, newStatus: string) => {
-    const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/status`, {
+    const response = await fetch(`${API_ENDPOINTS.tasks}/${taskId}/status`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -122,7 +123,7 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
 
   {/* handle sprint change */}
   const handleSprintChange = async (taskId: string, newSprint: number) => {
-    const response = await fetch(`http://localhost:5000/api/tasks/${taskId}/sprint`, {
+    const response = await fetch(`${API_ENDPOINTS.tasks}/${taskId}/sprint`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -135,7 +136,7 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
   };
 
   const handleDeleteTask = async (taskId: string) => {
-    const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
+    const response = await fetch(`${API_ENDPOINTS.tasks}/${taskId}`, {
       method: 'DELETE',
     });
   
