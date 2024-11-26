@@ -144,6 +144,13 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
     }
   };
 
+  const handleCreateTask = async (task_description: string) => {
+    const response = await createTask(task_description);
+    if (response) {
+      setTasks(prevTasks => [...prevTasks, response]);
+    }
+  };
+
   // const handleSprintChange = (taskId: string, newSprint: number) => {
   //   const updatedTasks = tasks.map(task =>
   //     task.id === taskId ? { ...task, sprint: newSprint } : task
@@ -238,7 +245,7 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
                     : isDarkMode 
                       ? 'bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-700' 
                       : 'bg-white text-gray-700 hover:bg-gray-100 border-gray-200'
-                  } border`}
+                  }`}
               >
                 {sprint}
               </button>
@@ -246,31 +253,13 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
           </div>
           <div className="flex space-x-4">
             <button 
-              onClick={() => createTask("UI fix - make it so the main page can scroll if columns with tasks in them get too tall.")}
-              className={`inline-flex items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium ${
-                isDarkMode 
-                  ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' 
-                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-              }`}
+              onClick={() => handleCreateTask("[NEW] Test ticket")}
+              className="inline-flex items-center px-6 py-2 rounded-md shadow-sm text-sm font-medium text-white w-40
+                bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 hover:from-purple-700 hover:via-purple-600 hover:to-indigo-700
+                transition-all duration-200 ease-in-out"
             >
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
-            </button>
-            <button className={`inline-flex items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium ${
-              isDarkMode 
-                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' 
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-            }`}>
-              <Share className="h-4 w-4 mr-2" />
-              Share
-            </button>
-            <button className={`inline-flex items-center px-4 py-2 border rounded-md shadow-sm text-sm font-medium ${
-              isDarkMode 
-                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700' 
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-            }`}>
-              <Eye className="h-4 w-4 mr-2" />
-              View
+              <Plus className="h-4 w-4 mr-2" />
+              New Task
             </button>
           </div>
         </div>

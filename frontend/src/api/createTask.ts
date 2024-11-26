@@ -15,8 +15,6 @@ export const createTask = async (taskDescription: string): Promise<any> => {
     }
     const llm_data_raw = await llm_response.json();
     const llm_data = JSON.parse(llm_data_raw);
-    console.log(llm_data);
-    console.log(llm_data.title);
 
     const response_body = {
       projectId: "123qrep-8673",
@@ -39,14 +37,11 @@ export const createTask = async (taskDescription: string): Promise<any> => {
     if (!task_response.ok) {
       throw new Error(`Error creating task: ${task_response.status} ${task_response.statusText}`);
     }
-    const data = await task_response.json();
-    //console.log(JSON.parse(data));
 
+    const res = await task_response.json();
+    //console.log('Task creation response:', res);
 
-
-
-
-    return response_body;
+    return res;
   } catch (error) {
     console.error(error);
     throw error;
