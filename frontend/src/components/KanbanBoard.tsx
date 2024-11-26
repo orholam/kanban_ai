@@ -6,7 +6,7 @@ import type { Task } from '../types';
 import { createTask }from '../api/createTask';
 import { API_ENDPOINTS } from '../config/apiConfig';
 
-
+const MOCK_NEW_TASK = "Figure out where types are defined, if they are defined.";
 const MOCK_TASKS: Task[] = [
   {
     id: 'MSP-105',
@@ -74,7 +74,7 @@ interface KanbanBoardProps {
 
 export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
   //const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
-  const [tasks, setTasks] = useState([]); // default blank instead of mock data
+  const [tasks, setTasks] = useState<Task[]>([]); // Add explicit Task[] type
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [activeSprint, setActiveSprint] = useState(1);
@@ -254,7 +254,7 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
           </div>
           <div className="flex space-x-4">
             <button 
-              onClick={() => handleCreateTask("[NEW] Test ticket")}
+              onClick={() => handleCreateTask(MOCK_NEW_TASK)}
               className="inline-flex items-center px-6 py-2 rounded-md shadow-sm text-sm font-medium text-white w-40
                 bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 hover:from-purple-700 hover:via-purple-600 hover:to-indigo-700
                 transition-all duration-200 ease-in-out"

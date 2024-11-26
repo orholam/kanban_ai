@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, Bell, Settings, Layout, Inbox, Users, ChevronDown, Sun, Moon } from 'lucide-react';
+import Logo from '../assets/kanban_ai_logo3.png';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -33,7 +34,15 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center space-x-4">
-            <Layout className={`h-8 w-8 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
+            {/* Original icon logo */}
+            {/* <Layout className={`h-8 w-8 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} /> */}
+            
+            {/* New image logo */}
+            <img 
+              src={Logo}
+              alt="Kanban AI Logo" 
+              className="h-10 w-auto"
+            />
             <span className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Kanban AI</span>
           </div>
 
