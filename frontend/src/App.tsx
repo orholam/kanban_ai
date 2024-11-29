@@ -36,7 +36,7 @@ function AppContent() {
           {user && <Sidebar isDarkMode={isDarkMode} />}
           <main className="flex-1">
             <Routes>
-              <Route path="/login" element={<Login />} />
+              <Route path="/login" element={<Login isDarkMode={isDarkMode} />} />
               <Route
                 path="/"
                 element={

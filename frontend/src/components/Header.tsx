@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Search, Bell, Settings, Inbox, Users, ChevronDown, Sun, Moon } from 'lucide-react';
-import Logo from '../assets/kanban_ai_logo3.png';
+import { Search, Bell, Settings, Sun, Moon } from 'lucide-react';
+import Logo from '../assets/kanban_ai_logo5.png';
 import { useAuth } from '../contexts/AuthContext';
 
 interface HeaderProps {
@@ -54,7 +54,7 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
             <span className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Kanban AI</span>
           </div>
 
-          {/* Navigation */}
+          {/* Navigation
           <nav className="hidden md:flex items-center space-x-8">
             <a href="#" className={`flex items-center ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
               <Inbox className="h-5 w-5 mr-2" />
@@ -78,6 +78,7 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
               </div>
             </div>
           </nav>
+          */}
 
           {/* Search and Actions */}
           <div className="flex items-center space-x-4">

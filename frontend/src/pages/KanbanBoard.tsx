@@ -6,7 +6,7 @@ import type { Task } from '../types';
 import { createTask }from '../api/createTask';
 import { API_ENDPOINTS } from '../config/apiConfig';
 
-const MOCK_NEW_TASK = "Go to Argentina, buy a llama, and bring it back to the office.";
+const MOCK_NEW_TASK = "Test new supabase task/project integration";
 const MOCK_TASKS: Task[] = [
   {
     id: 'MSP-105',
