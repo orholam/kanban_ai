@@ -68,6 +68,8 @@ const MOCK_TASKS: Task[] = [
 
 const DEFAULT_DESCRIPTION = "A comprehensive email system overhaul focusing on reliability and performance improvements.";
 
+const STAGGER_DELAY_MS = 100; // Delay between each card animation
+
 interface KanbanBoardProps {
   isDarkMode: boolean;
 }
@@ -81,10 +83,12 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
   const [description, setDescription] = useState(DEFAULT_DESCRIPTION);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [tempDescription, setTempDescription] = useState(description);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true);
         const taskRaw = await fetch(API_ENDPOINTS.tasks);
         if (!taskRaw.ok) {
           throw new Error(`HTTP error! Status: ${taskRaw.status}`);
@@ -95,6 +99,8 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
         setTasks(taskData);
       } catch (err) {
         console.error('Failed to fetch tasks: ', err);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchData();
@@ -292,14 +298,19 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
             <div className="space-y-4">
               {tasks
                 .filter(task => task.status === column.id && task.sprint === activeSprint)
-                .map(task => (
-                  <TaskCard
+                .map((task, index) => (
+                  <div
                     key={task.id}
-                    task={task}
-                    onClick={setSelectedTask}
-                    onDeleteTask={handleDeleteTask}
-                    isDarkMode={isDarkMode}
-                  />
+                    className={`transform opacity-0 translate-y-4 blur-sm animate-[fade-in-up_.8s_ease-out_forwards]`}
+                    style={{ animationDelay: `${index * STAGGER_DELAY_MS}ms` }}
+                  >
+                    <TaskCard
+                      task={task}
+                      onClick={setSelectedTask}
+                      onDeleteTask={handleDeleteTask}
+                      isDarkMode={isDarkMode}
+                    />
+                  </div>
                 ))}
             </div>
           </div>

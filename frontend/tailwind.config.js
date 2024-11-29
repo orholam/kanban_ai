@@ -2,7 +2,25 @@
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
-    extend: {},
+    extend: {
+      keyframes: {
+        'fade-in-up': {
+          '0%': {
+            opacity: '0',
+            transform: 'translateY(1rem)',
+            filter: 'blur(4px)'
+          },
+          '60%': {
+            transform: 'translateY(0)',
+          },
+          '100%': {
+            opacity: '1',
+            transform: 'translateY(0)',
+            filter: 'blur(0)'
+          },
+        }
+      },
+    },
   },
   plugins: [],
   darkMode: 'class',
