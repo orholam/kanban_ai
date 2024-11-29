@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Inbox, Users, Layout, Calendar, List, Clock, CheckCircle, Folder, Eye } from 'lucide-react';
 
 interface SidebarProps {
@@ -10,38 +11,45 @@ export default function Sidebar({ isDarkMode }: SidebarProps) {
     <aside className={`w-64 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border-r h-[calc(100vh-4rem)] flex flex-col`}>
       <div className="flex-1 overflow-y-auto">
         <nav className="p-4 space-y-1">
-          <a href="#" className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-white hover:text-gray-900'}`}>
+          <Link to="#" className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-white hover:text-gray-900'}`}>
             <Inbox className={`mr-3 h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`} />
             Inbox
-          </a>
-          <a href="#" className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-white hover:text-gray-900'}`}>
+          </Link>
+          <Link to="#" className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-white hover:text-gray-900'}`}>
             <Users className={`mr-3 h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`} />
             My Issues
-          </a>
+          </Link>
 
           <div className="pt-4">
             <p className={`px-3 text-xs font-semibold uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               Projects
             </p>
             <div className="mt-1 space-y-1">
-              <a
-                href="#"
+              <Link
+                to="#"
                 className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-white bg-gray-700' : 'text-gray-900 bg-indigo-50'}`}
               >
                 Email Project
-              </a>
-              <a
-                href="#"
+              </Link>
+              <Link
+                to="#"
                 className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-white hover:text-gray-900'}`}
               >
                 Analytics Dashboard
-              </a>
-              <a
-                href="#"
+              </Link>
+              <Link
+                to="#"
                 className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-white hover:text-gray-900'}`}
               >
                 Mobile App
-              </a>
+              </Link>
+              <Link
+                to="/new-project"
+                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-white hover:text-gray-900'}`}
+              >
+                <span className="flex items-center justify-center w-5 h-5 mr-3 border rounded-full border-current">+</span>
+                New Project
+              </Link>
             </div>
           </div>
 
@@ -59,14 +67,14 @@ export default function Sidebar({ isDarkMode }: SidebarProps) {
                 { name: 'Projects', icon: Folder },
                 { name: 'Views', icon: Eye },
               ].map(({ name, icon: Icon }) => (
-                <a
+                <Link
                   key={name}
-                  href="#"
+                  to="#"
                   className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-white hover:text-gray-900'}`}
                 >
                   <Icon className={`mr-3 h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`} />
                   {name}
-                </a>
+                </Link>
               ))}
             </div>
           </div>

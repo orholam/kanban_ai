@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Pencil, Check, X } from 'lucide-react';
-import TaskCard from './TaskCard';
-import TaskModal from './TaskModal';
+import TaskCard from '../components/TaskCard';
+import TaskModal from '../components/TaskModal';
 import type { Task } from '../types';
 import { createTask }from '../api/createTask';
 import { API_ENDPOINTS } from '../config/apiConfig';
 
-const MOCK_NEW_TASK = "Figure out where types are defined, if they are defined.";
+const MOCK_NEW_TASK = "Go to Argentina, buy a llama, and bring it back to the office.";
 const MOCK_TASKS: Task[] = [
   {
     id: 'MSP-105',
