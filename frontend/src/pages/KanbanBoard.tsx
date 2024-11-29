@@ -73,6 +73,9 @@ const STAGGER_DELAY_MS = 100; // Delay between each card animation
 interface KanbanBoardProps {
   isDarkMode: boolean;
 }
+interface Task {
+    isAnimated?: boolean;
+}
 
 export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
   //const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
@@ -124,7 +127,9 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
     });
 
     const updatedTask = await response.json();
-    setTasks(prevTasks => prevTasks.map(task => (task.id === updatedTask.id ? updatedTask : task)));
+    setTasks(prevTasks => prevTasks.map(task => 
+      task.id === updatedTask.id ? { ...updatedTask, isAnimated: true } : task
+    ));
   };
 
   {/* handle sprint change */}
@@ -301,7 +306,7 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
                 .map((task, index) => (
                   <div
                     key={task.id}
-                    className={`transform opacity-0 translate-y-4 blur-sm animate-[fade-in-up_.8s_ease-out_forwards]`}
+                    className={`${!isLoading && !task.isAnimated ? 'transform opacity-0 translate-y-4 blur-sm animate-[fade-in-up_.8s_ease-out_forwards]' : ''}`}
                     style={{ animationDelay: `${index * STAGGER_DELAY_MS}ms` }}
                   >
                     <TaskCard
