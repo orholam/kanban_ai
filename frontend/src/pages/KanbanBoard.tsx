@@ -191,7 +191,7 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
   };
 
   return (
-    <div className={`flex-1 p-6 overflow-y-auto ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-200`}>
+    <div className={`h-full overflow-auto p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-200`}>
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Email Project</h1>
@@ -267,7 +267,7 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
       </div>
 
       {/* setup three column structure*/}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-3 gap-6 min-h-fit">
         {columns.map((column) => (
           <div
             key={column.id}

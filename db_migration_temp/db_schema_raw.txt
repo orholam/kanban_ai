@@ -1,0 +1,65 @@
+\dt
+          List of relations
+ Schema |   Name   | Type  |  Owner   
+--------+----------+-------+----------
+ public | comments | table | postgres
+ public | tasks    | table | postgres
+ public | users    | table | postgres
+(3 rows)
+
+\d comments
+                                        Table "public.comments"
+   Column   |            Type             | Collation | Nullable |               Default                
+------------+-----------------------------+-----------+----------+--------------------------------------
+ id         | integer                     |           | not null | nextval('comments_id_seq'::regclass)
+ task_id    | integer                     |           |          | 
+ user_id    | integer                     |           |          | 
+ content    | text                        |           |          | 
+ created_at | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+Indexes:
+    "comments_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "comments_task_id_fkey" FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+    "comments_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+
+
+\d tasks
+                                      Table "public.tasks"
+   Column    |          Type          | Collation | Nullable |              Default              
+-------------+------------------------+-----------+----------+-----------------------------------
+ id          | integer                |           | not null | nextval('tasks_id_seq'::regclass)
+ project_id  | character varying(255) |           |          | 
+ title       | character varying(255) |           | not null | 
+ description | text                   |           |          | 
+ type        | character varying(50)  |           |          | 
+ priority    | character varying(50)  |           |          | 
+ status      | character varying(50)  |           |          | 
+ sprint      | integer                |           |          | 
+ due_date    | date                   |           |          | 
+ assignee_id | integer                |           |          | 
+Indexes:
+    "tasks_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "tasks_assignee_id_fkey" FOREIGN KEY (assignee_id) REFERENCES users(id) ON DELETE SET NULL
+Referenced by:
+    TABLE "comments" CONSTRAINT "comments_task_id_fkey" FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+
+
+\d users
+                                          Table "public.users"
+     Column     |            Type             | Collation | Nullable |              Default              
+----------------+-----------------------------+-----------+----------+-----------------------------------
+ id             | integer                     |           | not null | nextval('users_id_seq'::regclass)
+ name           | character varying(255)      |           | not null | 
+ email          | character varying(255)      |           | not null | 
+ avatar         | character varying(255)      |           |          | 
+ role           | character varying(50)       |           |          | 
+ status         | character varying(50)       |           |          | 
+ joined_at      | timestamp without time zone |           |          | CURRENT_TIMESTAMP
+ last_active_at | timestamp without time zone |           |          | 
+Indexes:
+    "users_pkey" PRIMARY KEY, btree (id)
+    "users_email_key" UNIQUE CONSTRAINT, btree (email)
+Referenced by:
+    TABLE "comments" CONSTRAINT "comments_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    TABLE "tasks" CONSTRAINT "tasks_assignee_id_fkey" FOREIGN KEY (assignee_id) REFERENCES users(id) ON DELETE SET NULL

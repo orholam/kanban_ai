@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Bell, Settings, Layout, Inbox, Users, ChevronDown, Sun, Moon } from 'lucide-react';
+import { Search, Bell, Settings, Inbox, Users, ChevronDown, Sun, Moon } from 'lucide-react';
 import Logo from '../assets/kanban_ai_logo3.png';
+import { useAuth } from '../contexts/AuthContext';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -8,6 +9,7 @@ interface HeaderProps {
 }
 
 export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
+  const { user, signOut } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const closeDropdown = (e: MouseEvent) => {
@@ -26,6 +28,12 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
       setIsProfileOpen(false);
       document.removeEventListener('click', closeDropdown);
     }
+  };
+
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await signOut();
+    setIsProfileOpen(false);  // Close the dropdown after signing out
   };
 
   return (
@@ -107,7 +115,7 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
                 onClick={handleProfileClick}
                 className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-medium cursor-pointer"
               >
-                JD
+                {user?.email ? user.email.substring(0, 2).toUpperCase() : 'JD'}
               </div>
               <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg ${
                 isDarkMode ? 'bg-gray-800' : 'bg-white'
@@ -116,12 +124,18 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
               }`}>
                 <div className="py-1">
                   <div className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-900'} border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                    <p className="font-medium">John Doe</p>
-                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>john.doe@example.com</p>
+                    <p className="font-medium">Username</p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{user?.email}</p>
                   </div>
                   <a href="#" className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>Profile Settings</a>
                   <a href="#" className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>Preferences</a>
-                  <a href="#" className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'}`}>Sign Out</a>
+                  <a 
+                    href="#" 
+                    onClick={handleSignOut}
+                    className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'}`}
+                  >
+                    Sign Out
+                  </a>
                 </div>
               </div>
             </div>
