@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar';
 import KanbanBoard from './pages/KanbanBoard';
 import NewProject from './pages/NewProject';
 import Login from './pages/Login';
+import LandingPage from './pages/LandingPage';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -36,9 +37,15 @@ function AppContent() {
           {user && <Sidebar isDarkMode={isDarkMode} />}
           <main className="flex-1">
             <Routes>
+              <Route 
+                path="/" 
+                element={
+                  user ? <Navigate to="/kanban" /> : <LandingPage isDarkMode={isDarkMode} />
+                } 
+              />
               <Route path="/login" element={<Login isDarkMode={isDarkMode} />} />
               <Route
-                path="/"
+                path="/kanban"
                 element={
                   <PrivateRoute>
                     <KanbanBoard isDarkMode={isDarkMode} />

@@ -1,15 +1,18 @@
-import { Auth } from '@supabase/auth-ui-react'
-import { ThemeSupa } from '@supabase/auth-ui-shared'
-import { supabase } from '../lib/supabase'
-import { useAuth } from '../contexts/AuthContext'
-import { Navigate } from 'react-router-dom'
-import TypewriterText from '../components/TypeWriterText'
+import { Auth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
+import TypewriterText from '../components/TypeWriterText';
+import { ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
 
 export default function Login({ isDarkMode }: { isDarkMode: boolean }) {
   const { user } = useAuth()
 
   if (user) {
-    return <Navigate to="/" />
+    return <Navigate to="/kanban" />
   }
 
   return (
@@ -23,7 +26,13 @@ export default function Login({ isDarkMode }: { isDarkMode: boolean }) {
             className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="relative z-20 p-12 flex flex-col h-full">
-                <div className="text-3xl font-bold text-white">Kanban AI</div>
+                <Link 
+                  to="/"
+                  className="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors duration-200 w-fit"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Return to website
+                </Link>
                 <div className="flex flex-col justify-center flex-grow">
                     <h2 className="text-4xl font-bold mb-4 text-white">
                         Your personal<br/>
@@ -90,7 +99,7 @@ export default function Login({ isDarkMode }: { isDarkMode: boolean }) {
             }}
             theme={isDarkMode ? 'dark' : 'light'}
             providers={['google', 'github']}
-            redirectTo={`${window.location.origin}/`}
+            redirectTo={`${window.location.origin}/kanban`}
           />
         </div>
       </div>
