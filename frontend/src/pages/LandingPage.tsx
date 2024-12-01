@@ -195,7 +195,12 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
                       className={`text-4xl font-bold tracking-tight 
                         ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
                     >
-                      {tier.price}
+                      {tier.name === "Pro" ? (
+                        <>
+                          <span className="line-through text-gray-400">$6/month</span>
+                          <span className="block text-lg text-indigo-600 mt-1">Free this month!</span>
+                        </>
+                      ) : tier.price}
                     </span>
                   </p>
                   <ul 
