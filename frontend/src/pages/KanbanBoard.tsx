@@ -6,7 +6,7 @@ import type { Task } from '../types';
 import { createTask }from '../api/createTask';
 import { API_ENDPOINTS } from '../config/apiConfig';
 
-const MOCK_NEW_TASK = "Test new supabase task/project integration";
+const MOCK_NEW_TASK = "Create project wizard using openai to create new projects and automatically generate tasks";
 const MOCK_TASKS: Task[] = [
   {
     id: 'MSP-105',
