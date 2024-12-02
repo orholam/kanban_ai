@@ -21,8 +21,11 @@ interface KanbanBoardProps {
   isDarkMode: boolean;
   projects: Project[];
 }
-interface Task {
-    isAnimated?: boolean;
+
+export interface Task {
+  id: string;
+  // ... other existing properties ...
+  isAnimated?: boolean;
 }
 
 export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) {
@@ -39,27 +42,11 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const taskRaw = await fetch(API_ENDPOINTS.tasks);
-        if (!taskRaw.ok) {
-          throw new Error(`HTTP error! Status: ${taskRaw.status}`);
-        }
-        const taskData = await taskRaw.json();
-        console.log("taskData");
-        console.log(taskData);
-        setTasks(taskData);
-      } catch (err) {
-        console.error('Failed to fetch tasks: ', err);
-      } finally {
-        setIsLoading(false);
-      }
-
-
 
       console.log("projectId");
       console.log(projectId);
       try {
+        setIsLoading(true);
         let { data: tasks, error } = await supabase
         .from('tasks')
         .select('*')
@@ -67,14 +54,15 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
         console.log("tasks TEST FROM supabase");
         console.log(tasks); 
         if (tasks) {
-          setTasks(prevTasks => [...prevTasks, ...tasks]);
+          console.log("tasks TEST FROM supabase");
+          console.log(tasks);
+          setTasks(tasks);
         }
       } catch (error) {
         console.error('Failed to fetch tasks: ', error);
+      } finally {
+        setIsLoading(false);
       }
-
-
-
 
     };
     fetchData();
@@ -96,42 +84,57 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
 
   {/* handle status change from todo to in progress to done etc.*/}
   const handleStatusChange = async (taskId: string, newStatus: string) => {
-    const response = await fetch(`${API_ENDPOINTS.tasks}/${taskId}/status`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ status: newStatus }),
-    });
+    const { data, error } = await supabase
+    .from('tasks')
+    .update({ status: newStatus })
+    .eq('id', taskId)
+    .select()
 
-    const updatedTask = await response.json();
-    setTasks(prevTasks => prevTasks.map(task => 
-      task.id === updatedTask.id ? { ...updatedTask, isAnimated: true } : task
-    ));
+    if (error) {
+      console.error('Error updating task status:', error);
+      return;
+    }
+
+    if (data) {
+      console.log(data[0]);
+      setTasks(prevTasks => prevTasks.map(task => 
+        task.id === data[0].id ? { ...data[0], isAnimated: true } : task
+      ));
+    }
   };
 
   {/* handle sprint change */}
   const handleSprintChange = async (taskId: string, newSprint: number) => {
-    const response = await fetch(`${API_ENDPOINTS.tasks}/${taskId}/sprint`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ sprint: newSprint }),
-    });
+    const { data, error } = await supabase
+    .from('tasks')
+    .update({ sprint: newSprint })
+    .eq('id', taskId)
+    .select()
 
-    const updatedTask = await response.json();
-    setTasks(prevTasks => prevTasks.map(task => (task.id === updatedTask.id ? updatedTask : task)));
+    if (error) {
+      console.error('Error updating sprint status:', error);
+      return;
+    }
+    if (data) {
+      console.log(data[0]);
+      setTasks(prevTasks => prevTasks.map(task => (task.id === data[0].id ? { ...data[0], isAnimated: true } : task)));
+    }
   };
 
   const handleDeleteTask = async (taskId: string) => {
-    const response = await fetch(`${API_ENDPOINTS.tasks}/${taskId}`, {
-      method: 'DELETE',
-    });
-  
-    if (response.ok) {
-      setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+
+    const { error } = await supabase
+    .from('tasks')
+    .delete()
+    .eq('id', taskId)
+
+    if (error) {
+      console.error('Error deleting task:', error);
+      return;
     }
+
+    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+
   };
 
   const handleCreateTask = async (task_description: string) => {

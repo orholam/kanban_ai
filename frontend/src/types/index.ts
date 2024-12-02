@@ -18,6 +18,7 @@ export interface Task {
     avatar: string;
   };
   comments: Comment[];
+  isAnimated?: boolean;
 }
 
 export interface Comment {
