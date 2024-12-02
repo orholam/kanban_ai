@@ -7,6 +7,8 @@ import KanbanBoard from './pages/KanbanBoard';
 import NewProject from './pages/NewProject';
 import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
+import { supabase } from './lib/supabase';
+import type { Project } from './types';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -37,12 +39,51 @@ function AppContent() {
 
   const { user } = useAuth();
 
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      if (!user) {
+        setProjects([]);
+        return;
+      }
+
+      try {
+        console.log("Fetching projects TEST");
+        setIsLoading(true);
+        let { data: projects, error } = await supabase
+          .from('projects')
+          .select('*');
+
+        if (error) {
+          console.error('Error fetching projects:', error);
+          return;
+        }
+
+        if (projects) {
+          console.log(projects);
+          setProjects(projects);
+        }
+      } catch (err) {
+        console.error('Failed to fetch projects:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [user]);
+
   return (
     <BrowserRouter>
       <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+        <Header 
+          isDarkMode={isDarkMode} 
+          toggleTheme={toggleTheme} 
+        />
         <div className="flex flex-1 overflow-hidden">
-          {user && <Sidebar isDarkMode={isDarkMode} />}
+          {user && <Sidebar isDarkMode={isDarkMode} projects={projects} />}
           <main className="flex-1">
             <Routes>
               <Route 
@@ -56,7 +97,15 @@ function AppContent() {
                 path="/kanban"
                 element={
                   <PrivateRoute>
-                    <KanbanBoard isDarkMode={isDarkMode} />
+                    <KanbanBoard isDarkMode={isDarkMode} projects={projects} />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/project/:projectId"
+                element={
+                  <PrivateRoute>
+                    <KanbanBoard isDarkMode={isDarkMode} projects={projects} />
                   </PrivateRoute>
                 }
               />

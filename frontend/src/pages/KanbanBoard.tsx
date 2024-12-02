@@ -1,70 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Plus, Pencil, Check, X } from 'lucide-react';
 import TaskCard from '../components/TaskCard';
 import TaskModal from '../components/TaskModal';
-import type { Task } from '../types';
+import type { Project, Task } from '../types';
 import { createTask }from '../api/createTask';
 import { API_ENDPOINTS } from '../config/apiConfig';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { supabase } from '../lib/supabase';
+
 
 const MOCK_NEW_TASK = "Create project wizard using openai to create new projects and automatically generate tasks";
-const MOCK_TASKS: Task[] = [
-  {
-    id: 'MSP-105',
-    projectID: '123qrep-8673',
-    title: 'Email delivery error',
-    description: 'Users are reporting delays in email delivery system',
-    type: 'bug',
-    priority: 'high',
-    status: 'todo',
-    sprint: 1,
-    dueDate: '2024-03-20',
-    assignee: {
-      id: '1',
-      name: 'John Doe',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-    },
-    comments: [
-      {
-        id: '1',
-        userId: '2',
-        content: 'This needs immediate attention',
-        createdAt: '2024-03-15T10:00:00Z',
-        user: {
-          name: 'Jane Smith',
-          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-        }
-      }
-    ]
-  },
-  {
-    id: 'MSP-106',
-    projectID: '123qrep-8673',
-    title: 'Build Email Notification w/ Library',
-    description: 'Scoping has been completed. Integrate selected notification library into frontend, using websocket. Check that package.json file is updated.',
-    type: 'feature',
-    priority: 'medium',
-    status: 'todo',
-    sprint: 1,
-    dueDate: '2024-03-25',
-    assignee: {
-      id: '1',
-      name: 'Callum Scott',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-    },
-    comments: [
-      {
-        id: '1',
-        userId: '2',
-        content: 'This needs immediate attention',
-        createdAt: '2024-03-15T10:00:00Z',
-        user: {
-          name: 'Jane Smith',
-          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-        }
-      }
-    ]
-  }
-];
+
 
 const DEFAULT_DESCRIPTION = "A comprehensive email system overhaul focusing on reliability and performance improvements.";
 
@@ -72,13 +19,14 @@ const STAGGER_DELAY_MS = 100; // Delay between each card animation
 
 interface KanbanBoardProps {
   isDarkMode: boolean;
+  projects: Project[];
 }
 interface Task {
     isAnimated?: boolean;
 }
 
-export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
-  //const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
+export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) {
+  const { projectId } = useParams();
   const [tasks, setTasks] = useState<Task[]>([]); // Add explicit Task[] type
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
@@ -87,6 +35,7 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [tempDescription, setTempDescription] = useState(description);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -105,10 +54,39 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
       } finally {
         setIsLoading(false);
       }
+
+
+
+      console.log("projectId");
+      console.log(projectId);
+      try {
+        let { data: tasks, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('project_id', projectId)
+        console.log("tasks TEST FROM supabase");
+        console.log(tasks); 
+        if (tasks) {
+          setTasks(prevTasks => [...prevTasks, ...tasks]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch tasks: ', error);
+      }
+
+
+
+
     };
     fetchData();
-    console.log(tasks)
-  }, []);
+    console.log(tasks);
+
+
+  }, [projectId]);
+
+  useEffect(() => {
+    const project = projects.find(p => p.id === projectId);
+    setCurrentProject(project || null);
+  }, [projectId, projects]);
 
   const columns = [
     { id: 'todo', title: 'Todo' },
@@ -247,7 +225,7 @@ export default function KanbanBoard({ isDarkMode }: KanbanBoardProps) {
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0 mt-4">
           <div className="flex space-x-2">
-            {Array.from({ length: 10 }, (_, i) => i + 1).map((sprint) => (
+            {currentProject && Array.from({ length: currentProject.num_sprints }, (_, i) => i + 1).map((sprint) => (
               <button
                 key={sprint}
                 onClick={() => setActiveSprint(sprint)}

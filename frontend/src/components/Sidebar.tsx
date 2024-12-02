@@ -1,12 +1,21 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Inbox, Users, Layout, Calendar, List, Clock, CheckCircle, Folder, Eye } from 'lucide-react';
+
+interface Project {
+  id: string;
+  title: string;
+}
 
 interface SidebarProps {
   isDarkMode: boolean;
+  projects: Project[];
 }
 
-export default function Sidebar({ isDarkMode }: SidebarProps) {
+export default function Sidebar({ isDarkMode, projects }: SidebarProps) {
+  const location = useLocation();
+  console.log("Sidebar Received Projects");
+  console.log(projects);
   return (
     <aside className={`w-64 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border-r h-[calc(100vh-4rem)] flex flex-col`}>
       <div className="flex-1 overflow-y-auto">
@@ -25,24 +34,23 @@ export default function Sidebar({ isDarkMode }: SidebarProps) {
               Projects
             </p>
             <div className="mt-1 space-y-1">
-              <Link
-                to="#"
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-white bg-gray-700' : 'text-gray-900 bg-indigo-50'}`}
-              >
-                Email Project
-              </Link>
-              <Link
-                to="#"
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-white hover:text-gray-900'}`}
-              >
-                Analytics Dashboard
-              </Link>
-              <Link
-                to="#"
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-white hover:text-gray-900'}`}
-              >
-                Mobile App
-              </Link>
+              {projects.map((project) => (
+                <Link
+                  key={project.id}
+                  to={`/project/${project.id}`}
+                  className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                    location.pathname === `/project/${project.id}`
+                      ? isDarkMode
+                        ? 'text-white bg-gray-700'
+                        : 'text-gray-900 bg-indigo-50'
+                      : isDarkMode
+                        ? 'text-gray-300 hover:bg-gray-700'
+                        : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  {project.title}
+                </Link>
+              ))}
               <Link
                 to="/new-project"
                 className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-white hover:text-gray-900'}`}

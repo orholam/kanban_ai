@@ -1,5 +1,5 @@
 import React from 'react';
-
+import ProjectCreate from '../components/ProjectCreate';
 
 interface NewProjectProps {
     isDarkMode: boolean;
@@ -13,6 +13,7 @@ export default function NewProject({ isDarkMode }: NewProjectProps) {
           <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Create Project</h1>
         </div>
       </div>
+      <ProjectCreate isDarkMode={isDarkMode} />
     </div>
   );
 } 

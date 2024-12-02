@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Bell, Settings, Sun, Moon } from 'lucide-react';
 import Logo from '../assets/kanban_ai_logo5.png';
 import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -32,8 +33,8 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
 
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
+    setIsProfileOpen(false);
     await signOut();
-    setIsProfileOpen(false);  // Close the dropdown after signing out
   };
 
   return (
@@ -41,18 +42,14 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center space-x-4">
-            {/* Original icon logo */}
-            {/* <Layout className={`h-8 w-8 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} /> */}
-            
-            {/* New image logo */}
+          <Link to="/" className="flex items-center space-x-4">
             <img 
               src={Logo}
               alt="Kanban AI Logo" 
               className="h-10 w-auto"
             />
             <span className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Kanban AI</span>
-          </div>
+          </Link>
 
           {/* Right section */}
           <div className="flex items-center space-x-4">

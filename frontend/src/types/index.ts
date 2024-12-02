@@ -39,6 +39,7 @@ export interface Team {
 
 export interface Project {
   id: string;
-  name: string;
+  title: string;
   tasks: Task[];
+  num_sprints: number;
 }
