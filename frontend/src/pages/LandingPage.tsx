@@ -148,8 +148,8 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
                   "Unlimited projects",
                   "AI task creation",
                   "Weekly sprint planning",
-                  "Advanced AI assistance",
                   "Resume-building retrospect",
+                  "Advanced AI assistance",
                   "Priority support",
                 ],
                 featured: true

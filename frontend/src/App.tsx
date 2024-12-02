@@ -14,20 +14,28 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppContent() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const { user } = useAuth();
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      return savedTheme === 'dark';
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setIsDarkMode(true);
+    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    if (isDarkMode) {
       document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-  }, []);
+  }, [isDarkMode]);
 
   const toggleTheme = () => {
     setIsDarkMode(prev => !prev);
-    document.documentElement.classList.toggle('dark');
   };
+
+  const { user } = useAuth();
 
   return (
     <BrowserRouter>
