@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Plus, Pencil, Check, X } from 'lucide-react';
 import TaskCard from '../components/TaskCard';
 import TaskModal from '../components/TaskModal';
+import CreateTaskModal from '../components/CreateTaskModal';
 import type { Project, Task } from '../types';
 import { createTask }from '../api/createTask';
 import { API_ENDPOINTS } from '../config/apiConfig';
@@ -39,6 +40,7 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
   const [tempDescription, setTempDescription] = useState(description);
   const [isLoading, setIsLoading] = useState(true);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -137,10 +139,23 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
 
   };
 
-  const handleCreateTask = async (task_description: string) => {
-    const response = await createTask(task_description);
-    if (response) {
-      setTasks(prevTasks => [...prevTasks, response]);
+  const handleCreateTask = async (newTask: Task) => {
+    try {
+      console.log("trying to create new task!");
+      console.log(newTask);
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([newTask])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setTasks(prevTasks => [...prevTasks, { ...data, isAnimated: true }]);
+      }
+    } catch (error) {
+      console.error('Error creating task:', error);
     }
   };
 
@@ -186,7 +201,7 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
     <div className={`h-full overflow-auto p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-200`}>
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Email Project</h1>
+          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentProject?.title}</h1>
           <div className="flex items-center gap-2">
             {!isEditingDescription && (
               <button
@@ -223,7 +238,7 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
             </div>
           </div>
         ) : (
-          <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>{description}</p>
+          <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>{currentProject?.description}</p>
         )}
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0 mt-4">
@@ -246,7 +261,7 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
           </div>
           <div className="flex space-x-4">
             <button 
-              onClick={() => handleCreateTask(MOCK_NEW_TASK)}
+              onClick={() => setIsCreateModalOpen(true)}
               className="inline-flex items-center px-6 py-2 rounded-md shadow-sm text-sm font-medium text-white w-40
                 bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 hover:from-purple-700 hover:via-purple-600 hover:to-indigo-700
                 transition-all duration-200 ease-in-out"
@@ -309,6 +324,14 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
           onClose={() => setSelectedTask(null)}
           onStatusChange={handleStatusChange}
           onSprintChange={handleSprintChange}
+        />
+      )}
+
+      {isCreateModalOpen && (
+        <CreateTaskModal
+          onClose={() => setIsCreateModalOpen(false)}
+          onCreateTask={handleCreateTask}
+          projectId={projectId || ''}
         />
       )}
     </div>

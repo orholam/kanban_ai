@@ -9,6 +9,7 @@
     "start:backend": "npm --prefix backend start"
   },
   "devDependencies": {
+    "@types/uuid": "^10.0.0",
     "concurrently": "^8.2.2"
   },
   "keywords": [],
@@ -18,6 +19,7 @@
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/supabase-js": "^2.46.2",
-    "react-router-dom": "^7.0.1"
+    "react-router-dom": "^7.0.1",
+    "uuid": "^11.0.3"
   }
 }

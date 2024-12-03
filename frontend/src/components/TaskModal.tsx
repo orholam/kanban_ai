@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { X, Calendar, MessageSquare, User } from 'lucide-react';
 import type { Task } from '../types';
 import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface TaskModalProps {
   task: Task;
