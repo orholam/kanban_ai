@@ -202,11 +202,11 @@ export default function ProjectCreate({ isDarkMode }: ProjectCreateProps) {
                   {RECOMMENDED_STACKS.map((recommendedStack, index) => (
                     <div 
                       key={index}
-                      className={`p-4 rounded-lg border ${
+                      className={`p-4 rounded-lg border transform transition-all duration-200 ${
                         isDarkMode 
-                          ? 'border-gray-700 hover:border-gray-600' 
-                          : 'border-gray-200 hover:border-gray-300'
-                      } cursor-pointer transition-colors`}
+                          ? 'border-gray-700 hover:border-indigo-500 hover:-translate-y-0.5' 
+                          : 'border-gray-200 hover:border-indigo-500 hover:-translate-y-0.5'
+                      } cursor-pointer hover:shadow-md`}
                       onClick={() => setStackItems([...new Set([...stackItems, ...recommendedStack.stack])])}
                     >
                       <div className="flex items-center justify-between">
