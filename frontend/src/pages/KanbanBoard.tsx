@@ -61,29 +61,38 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
   }, [projectId, projects]);
 
   useEffect(() => {
+    if (!currentProject?.id) return;
+    
     const fetchData = async () => {
+      // Skip if we already have tasks for this project
+      if (tasks.some(task => task.project_id === currentProject.id)) {
+        return;
+      }
+
       try {
         setIsLoading(true);
         let { data: tasks, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('project_id', currentProject?.id)
-        console.log("tasks TEST FROM supabase");
-        console.log(tasks); 
+          .from('tasks')
+          .select('*')
+          .eq('project_id', currentProject.id);
+
+        if (error) {
+          console.error('Error fetching tasks:', error);
+          return;
+        }
+
         if (tasks) {
-          console.log("tasks TEST FROM supabase");
-          console.log(tasks);
           setTasks(tasks);
         }
       } catch (error) {
-        console.error('Failed to fetch tasks: ', error);
+        console.error('Failed to fetch tasks:', error);
       } finally {
         setIsLoading(false);
       }
-
     };
+
     fetchData();
-  }, [currentProject]);
+  }, [currentProject?.id]);
 
 
   const columns = [
