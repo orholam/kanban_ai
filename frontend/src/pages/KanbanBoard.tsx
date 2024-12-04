@@ -43,16 +43,31 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
+    if (projects.length === 0) return;
 
-      console.log("projectId");
-      console.log(projectId);
+    let project;
+    console.log("checking if projectId is defined");
+    console.log(projectId);
+    if (projectId !== undefined) {
+      // If projectId exists in URL, find that project
+      console.log("setting project to first project");
+      project = projects.find(p => p.id === projectId);
+    }
+    // If no projectId or project not found, use first project
+    if (project === undefined) {
+      project = projects[0];
+    }
+    setCurrentProject(project);
+  }, [projectId, projects]);
+
+  useEffect(() => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
         let { data: tasks, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('project_id', projectId)
+        .eq('project_id', currentProject?.id)
         console.log("tasks TEST FROM supabase");
         console.log(tasks); 
         if (tasks) {
@@ -68,15 +83,8 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
 
     };
     fetchData();
-    console.log(tasks);
+  }, [currentProject]);
 
-
-  }, [projectId]);
-
-  useEffect(() => {
-    const project = projects.find(p => p.id === projectId);
-    setCurrentProject(project || null);
-  }, [projectId, projects]);
 
   const columns = [
     { id: 'todo', title: 'Todo' },

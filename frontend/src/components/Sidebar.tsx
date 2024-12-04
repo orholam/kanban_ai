@@ -34,12 +34,13 @@ export default function Sidebar({ isDarkMode, projects }: SidebarProps) {
               Projects
             </p>
             <div className="mt-1 space-y-1">
-              {projects.map((project) => (
+              {projects.map((project, index) => (
                 <Link
                   key={project.id}
                   to={`/project/${project.id}`}
                   className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                    location.pathname === `/project/${project.id}`
+                    location.pathname === `/project/${project.id}` || 
+                    (index === 0 && !projects.some(p => location.pathname === `/project/${p.id}`))
                       ? isDarkMode
                         ? 'text-white bg-gray-700'
                         : 'text-gray-900 bg-indigo-50'
