@@ -41,6 +41,7 @@ function AppContent() {
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -80,7 +81,8 @@ function AppContent() {
       <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <Header 
           isDarkMode={isDarkMode} 
-          toggleTheme={toggleTheme} 
+          toggleTheme={toggleTheme}
+          onSearch={setSearchQuery}
         />
         <div className="flex flex-1 overflow-hidden">
           {user && <Sidebar isDarkMode={isDarkMode} projects={projects} />}
@@ -105,7 +107,11 @@ function AppContent() {
                 path="/project/:projectId"
                 element={
                   <PrivateRoute>
-                    <KanbanBoard isDarkMode={isDarkMode} projects={projects} />
+                    <KanbanBoard 
+                      isDarkMode={isDarkMode} 
+                      projects={projects}
+                      searchQuery={searchQuery}
+                    />
                   </PrivateRoute>
                 }
               />

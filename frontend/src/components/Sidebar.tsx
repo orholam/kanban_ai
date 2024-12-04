@@ -56,7 +56,7 @@ export default function Sidebar({ isDarkMode, projects }: SidebarProps) {
                 to="/new-project"
                 className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${isDarkMode ? 'text-gray-300 hover:bg-gray-700 hover:text-white' : 'text-gray-600 hover:bg-white hover:text-gray-900'}`}
               >
-                <span className="flex items-center justify-center w-5 h-5 mr-3 border rounded-full border-current">+</span>
+                <span className="flex items-center justify-center w-5 h-5 mr-3">+</span>
                 New Project
               </Link>
             </div>

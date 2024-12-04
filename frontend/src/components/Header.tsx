@@ -7,9 +7,10 @@ import { Link } from 'react-router-dom';
 interface HeaderProps {
   isDarkMode: boolean;
   toggleTheme: () => void;
+  onSearch: (query: string) => void;
 }
 
-export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
+export default function Header({ isDarkMode, toggleTheme, onSearch }: HeaderProps) {
   const { user, signOut } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -59,7 +60,8 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search..."
+                    placeholder="Search tasks..."
+                    onChange={(e) => onSearch(e.target.value)}
                     className={`w-64 pl-10 pr-4 py-2 rounded-lg border ${
                       isDarkMode 
                         ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 

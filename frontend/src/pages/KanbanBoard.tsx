@@ -21,6 +21,7 @@ const STAGGER_DELAY_MS = 100; // Delay between each card animation
 interface KanbanBoardProps {
   isDarkMode: boolean;
   projects: Project[];
+  searchQuery: string;
 }
 
 export interface Task {
@@ -29,7 +30,7 @@ export interface Task {
   isAnimated?: boolean;
 }
 
-export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) {
+export default function KanbanBoard({ isDarkMode, projects, searchQuery }: KanbanBoardProps) {
   const { projectId } = useParams();
   const [tasks, setTasks] = useState<Task[]>([]); // Add explicit Task[] type
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -214,6 +215,16 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
     setIsEditingDescription(false);
   };
 
+  const filteredTasks = tasks.filter(task => {
+    if (!searchQuery) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      task.title.toLowerCase().includes(query) ||
+      task.description.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div className={`h-full overflow-auto p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-200`}>
       <div className="mb-6">
@@ -302,19 +313,16 @@ export default function KanbanBoard({ isDarkMode, projects }: KanbanBoardProps) 
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, column.id)}
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center mb-4">
               <h3 className={`text-lg font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 {column.title}
                 <span className={`ml-2 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  ({tasks.filter(task => task.status === column.id && task.sprint === activeSprint).length})
+                  ({filteredTasks.filter(task => task.status === column.id && task.sprint === activeSprint).length})
                 </span>
               </h3>
-              <button className={`p-1 hover:${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded`}>
-                <Plus className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} />
-              </button>
             </div>
             <div className="space-y-4">
-              {tasks
+              {filteredTasks
                 .filter(task => task.status === column.id && task.sprint === activeSprint)
                 .map((task, index) => (
                   <div
