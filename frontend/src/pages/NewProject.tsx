@@ -1,84 +1,65 @@
-import React, { useState } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
-import Step1ProjectDetails from './ProjectWizard/Step1ProjectDetails';
-import Step2ReviewPlan from './ProjectWizard/Step2ReviewPlan';
-import Step3TaskReview from './ProjectWizard/Step3TasksReview';
+import React, { useState, useEffect, useRef } from 'react';
+import ProjectDetails from '../components/ProjectWizard/ProjectDetails';
+import ProjectReviewPlan from '../components/ProjectWizard/ProjectReviewPlan';
+import ProjectReviewTasks from '../components/ProjectWizard/ProjectReviewTasks';
 
-interface NewProjectProps {
-  isDarkMode: boolean;
-}
-
-interface ProjectDetails {
+interface ProjectData {
   name: string;
-  keywords: string[];
   description: string;
+  keywords: string[];
 }
 
-export default function NewProject({ isDarkMode }: NewProjectProps) {
-  const navigate = useNavigate();
-  const [projectDetails, setProjectDetails] = useState<ProjectDetails | null>(null);
+export default function NewProject({ isDarkMode }: { isDarkMode: boolean }) {
+  const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [projectPlan, setProjectPlan] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<string[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleStep1Complete = (details: ProjectDetails) => {
-    setProjectDetails(details);
-    navigate('review-plan');
-  };
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-  const handleStep2Complete = (plan: string) => {
-    setProjectPlan(plan);
-    navigate('task-review');
-  };
+    const resizeObserver = new ResizeObserver(() => {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
+    });
 
-  const handleStep3Complete = (finalTasks: string[]) => {
-    setTasks(finalTasks);
-    navigate('/projects');
-  };
+    Array.from(container.children).forEach(child => {
+      resizeObserver.observe(child);
+    });
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [projectData, projectPlan]);
 
   return (
-    <div className="h-screen overflow-y-auto">
-      <div className={`flex-1 p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-200`}>
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Create Project</h1>
-          </div>
-        </div>
-
-        <Routes>
-          <Route 
-            index
-            element={
-              <Step1ProjectDetails 
-                isDarkMode={isDarkMode} 
-                onNext={handleStep1Complete}
-              />
-            } 
+    <div 
+      ref={containerRef}
+      className={`flex-1 p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} h-full overflow-auto p-6 pb-40`}
+    >
+      <div className="max-w-2xl mx-auto space-y-8">
+        <ProjectDetails 
+          isDarkMode={isDarkMode} 
+          onComplete={setProjectData} 
+        />
+        
+        {projectData && (
+          <ProjectReviewPlan 
+            isDarkMode={isDarkMode}
+            projectData={projectData}
+            onComplete={setProjectPlan}
           />
-          <Route 
-            path="review-plan" 
-            element={
-              <Step2ReviewPlan
-                isDarkMode={isDarkMode}
-                projectDetails={projectDetails}
-                onNext={handleStep2Complete}
-                onBack={() => navigate(-1)}
-              />
-            } 
+        )}
+        
+        {projectPlan && (
+          <ProjectReviewTasks 
+            isDarkMode={isDarkMode}
+            projectPlan={projectPlan}
           />
-          <Route 
-            path="task-review" 
-            element={
-              <Step3TaskReview
-                isDarkMode={isDarkMode}
-                projectPlan={projectPlan}
-                projectDetails={projectDetails}
-                onNext={handleStep3Complete}
-                onBack={() => navigate(-1)}
-              />
-            } 
-          />
-        </Routes>
+        )}
       </div>
     </div>
   );
-} 
+}
