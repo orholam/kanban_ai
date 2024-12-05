@@ -16,9 +16,12 @@ export async function generateProjectPlan(
   projectDetails: { name: string; keywords: string[]; description: string }
 ): Promise<string> {
   const prompt = `
-    Create a detailed project plan for a project named "${projectDetails.name}".
-    Keywords: ${projectDetails.keywords.join(', ')}.
-    Description: ${projectDetails.description}.
+    Your task is to create a detailed no-nonsense development pipeline over the course of 4 weeks for a solopreneur.
+    Your project outline should not include planning - you are the planner.
+    It should dive right into the development process, starting with design, frontend, backend, and deployment.
+    Create a detailed development plan for a project named "${projectDetails.name}".
+    Incorporate the following dev tools: ${projectDetails.keywords.join(', ')}.
+    Web app description: ${projectDetails.description}.
   `;
 
   const requestBody: OpenAIRequest = {
