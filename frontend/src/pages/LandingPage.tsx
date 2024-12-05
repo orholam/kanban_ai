@@ -24,7 +24,7 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
           <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
         </div>
 
-        <div className="mx-auto max-w-2xl py-16 sm:py-24 lg:py-32">
+        <div className="mx-auto max-w-4xl py-16 sm:py-24 lg:py-32">
           <div className="text-center">
             <h1 className={`text-4xl font-bold tracking-tight sm:text-6xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               Your AI-powered project companion
@@ -51,11 +51,11 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
             </div>
           </div>
           
-          <div className="mt-16 flex justify-center -mx-16 relative z-10">
+          <div className="mt-16 flex justify-center relative z-10 mx-2 sm:mx-8">
             <img 
               src={promocard}
               alt="Product preview" 
-              className="rounded-xl shadow-2xl w-[140%] max-w-15xl transform scale-110"
+              className="rounded-xl shadow-2xl w-full max-w-[1600px] transition-shadow duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
             />
           </div>
         </div>
