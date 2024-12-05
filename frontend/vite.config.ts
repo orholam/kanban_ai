@@ -22,5 +22,6 @@ export default defineConfig({
       '@supabase/auth-ui-shared',
       'uuid'
     ]
-  }
+  },
+  
 });
