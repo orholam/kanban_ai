@@ -19,7 +19,8 @@ export default defineConfig({
       'react-router-dom',
       '@supabase/supabase-js',
       '@supabase/auth-ui-react',
-      '@supabase/auth-ui-shared'
+      '@supabase/auth-ui-shared',
+      'uuid'
     ]
   }
 });
