@@ -6,6 +6,7 @@ import promocard from '../assets/promoscreen.jpg'
 import sprintPlanning from '../assets/undraw_choose_card_n0x0.svg'
 import taskManagement from '../assets/undraw_join_re_w1lh.svg'
 import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
+import { TrustedBy } from '../components/TrustedBy'
 
 
 
@@ -20,73 +21,77 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
     <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} h-full overflow-y-auto`}>
       {/* Hero Section */}
       <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
-          <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
-        </div>
+        <div className="mx-auto max-w-4xl py-8 sm:py-16 lg:py-24">
+          <TrustedBy isDarkMode={isDarkMode} />
 
-        <div className="absolute inset-0 -z-10">
-          <svg className="absolute h-full w-full" aria-hidden="true">
-            <defs>
-              <pattern id="grid-pattern" width="24" height="24" patternUnits="userSpaceOnUse">
-                <path 
-                  d="M.5 24V.5H24" 
-                  fill="none" 
-                  stroke={isDarkMode ? 'white' : 'black'} 
-                  strokeOpacity="0.05"
-                />
-              </pattern>
-            </defs>
-            <rect 
-              width="100%" 
-              height="100%" 
-              fill="url(#grid-pattern)"
-              style={{
-                maskImage: 'radial-gradient(ellipse at center, black 20%, transparent 80%)',
-                WebkitMaskImage: 'radial-gradient(ellipse at center, black 20%, transparent 80%)'
-              }}
-            />
-          </svg>
-        </div>
+          <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
+            <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
+          </div>
 
-        <div className="mx-auto max-w-4xl py-16 sm:py-24 lg:py-32">
-          <div className="text-center">
-            <h1 className={`text-4xl font-bold tracking-tight sm:text-6xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Your <span className="font-['Yellowtail'] text-indigo-500 text-[1.15em]">AI-powered</span> project companion
-            </h1>
-            <p className={`mt-6 text-lg leading-8 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              Transform your side projects from ideas to reality with AI-assisted project management. 
-              Get personalized guidance, automated task breakdowns, and intelligent progress tracking.
-            </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link to="/login"
-                className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                Get started
-                <ArrowRight className="ml-2 w-4 h-4 inline" />
-              </Link>
-              <a 
-                href="https://github.com/orholam/kanban_ai" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className={`text-sm font-semibold leading-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}
-              >
-                View on GitHub <span aria-hidden="true">→</span>
-              </a>
+          <div className="absolute inset-0 -z-10">
+            <svg className="absolute h-full w-full" aria-hidden="true">
+              <defs>
+                <pattern id="grid-pattern" width="24" height="24" patternUnits="userSpaceOnUse">
+                  <path 
+                    d="M.5 24V.5H24" 
+                    fill="none" 
+                    stroke={isDarkMode ? 'white' : 'black'} 
+                    strokeOpacity="0.05"
+                  />
+                </pattern>
+              </defs>
+              <rect 
+                width="100%" 
+                height="100%" 
+                fill="url(#grid-pattern)"
+                style={{
+                  maskImage: 'radial-gradient(ellipse at center, black 20%, transparent 80%)',
+                  WebkitMaskImage: 'radial-gradient(ellipse at center, black 20%, transparent 80%)'
+                }}
+              />
+            </svg>
+          </div>
+
+          <div className="mx-auto max-w-4xl py-8 sm:py-4">
+            <div className="text-center">
+              <h1 className={`text-4xl font-bold tracking-tight sm:text-6xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Your <span className="font-['Yellowtail'] text-indigo-500 text-[1.15em]">AI-powered</span> project companion
+              </h1>
+              <p className={`mt-6 text-lg leading-8 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Transform your side projects from ideas to reality with AI-assisted project management. 
+                Get personalized guidance, automated task breakdowns, and intelligent progress tracking.
+              </p>
+              <div className="mt-10 flex items-center justify-center gap-x-6">
+                <Link to="/login"
+                  className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                >
+                  Get started
+                  <ArrowRight className="ml-2 w-4 h-4 inline" />
+                </Link>
+                <a 
+                  href="https://github.com/orholam/kanban_ai" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={`text-sm font-semibold leading-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}
+                >
+                  View on GitHub <span aria-hidden="true">→</span>
+                </a>
+              </div>
+            </div>
+            
+            <div className="mt-16 flex justify-center relative z-10 mx-2 sm:mx-8">
+              <img 
+                src={promocard}
+                alt="Product preview" 
+                className="rounded-xl shadow-2xl w-full max-w-[1600px] transition-shadow duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
+              />
             </div>
           </div>
-          
-          <div className="mt-16 flex justify-center relative z-10 mx-2 sm:mx-8">
-            <img 
-              src={promocard}
-              alt="Product preview" 
-              className="rounded-xl shadow-2xl w-full max-w-[1600px] transition-shadow duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
-            />
-          </div>
-        </div>
 
-        {/* Decorative blob */}
-        <div className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
-          <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]" />
+          {/* Decorative blob */}
+          <div className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
+            <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]" />
+          </div>
         </div>
       </div>
 
