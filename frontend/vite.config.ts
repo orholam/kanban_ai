@@ -15,6 +15,11 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['react-router-dom']
+    include: [
+      'react-router-dom',
+      '@supabase/supabase-js',
+      '@supabase/auth-ui-react',
+      '@supabase/auth-ui-shared'
+    ]
   }
 });
