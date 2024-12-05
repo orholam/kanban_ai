@@ -24,6 +24,30 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
           <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
         </div>
 
+        <div className="absolute inset-0 -z-10">
+          <svg className="absolute h-full w-full" aria-hidden="true">
+            <defs>
+              <pattern id="grid-pattern" width="24" height="24" patternUnits="userSpaceOnUse">
+                <path 
+                  d="M.5 24V.5H24" 
+                  fill="none" 
+                  stroke={isDarkMode ? 'white' : 'black'} 
+                  strokeOpacity="0.05"
+                />
+              </pattern>
+            </defs>
+            <rect 
+              width="100%" 
+              height="100%" 
+              fill="url(#grid-pattern)"
+              style={{
+                maskImage: 'radial-gradient(ellipse at center, black 20%, transparent 80%)',
+                WebkitMaskImage: 'radial-gradient(ellipse at center, black 20%, transparent 80%)'
+              }}
+            />
+          </svg>
+        </div>
+
         <div className="mx-auto max-w-4xl py-16 sm:py-24 lg:py-32">
           <div className="text-center">
             <h1 className={`text-4xl font-bold tracking-tight sm:text-6xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
