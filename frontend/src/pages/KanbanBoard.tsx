@@ -356,7 +356,7 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
         <CreateTaskModal
           onClose={() => setIsCreateModalOpen(false)}
           onCreateTask={handleCreateTask}
-          projectId={projectId || ''}
+          projectId={currentProject?.id || ''}
         />
       )}
     </div>
