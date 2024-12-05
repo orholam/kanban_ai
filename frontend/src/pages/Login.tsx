@@ -38,7 +38,7 @@ export default function Login({ isDarkMode }: { isDarkMode: boolean }) {
                         Your personal<br/>
                         side project<br/>
                         <TypewriterText 
-                            texts={["scrum master", "motivational coach", "co-founder"]}
+                            texts={["scrum master", "motivational coach", "co-founder", "side kick"]}
                             pauseBetweenTexts={8000} 
                             typingSpeed={3}
                         />
