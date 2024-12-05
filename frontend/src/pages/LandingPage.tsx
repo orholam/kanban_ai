@@ -27,7 +27,7 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
         <div className="mx-auto max-w-4xl py-16 sm:py-24 lg:py-32">
           <div className="text-center">
             <h1 className={`text-4xl font-bold tracking-tight sm:text-6xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Your AI-powered project companion
+              Your <span className="font-['Yellowtail'] text-indigo-500 text-[1.15em]">AI-powered</span> project companion
             </h1>
             <p className={`mt-6 text-lg leading-8 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
               Transform your side projects from ideas to reality with AI-assisted project management. 
