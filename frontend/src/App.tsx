@@ -21,7 +21,7 @@ function AppContent() {
     if (savedTheme) {
       return savedTheme === 'dark';
     }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches && false;
   });
 
   useEffect(() => {
