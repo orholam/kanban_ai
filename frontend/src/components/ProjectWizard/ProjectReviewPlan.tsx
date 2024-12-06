@@ -60,19 +60,17 @@ export default function ProjectReviewPlan({ isDarkMode, projectData, onComplete 
       </h2>
       
       {/* Project Overview Section */}
-      {streamingData && (
         <div className="mb-8">
           <h3 className={`text-lg font-semibold mb-3 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
             Project Overview
           </h3>
           <StreamingContent 
-            stream={streamingData}
+            stream={streamingData || new ReadableStream({ start(controller) { controller.close(); } })}
             isDarkMode={isDarkMode}
             scrollToBottom={false}
             className="min-h-[300px] max-h-[400px] p-4 rounded-lg border border-gray-200 dark:border-gray-700"
           />
         </div>
-      )}
 
       {/* Weekly Plan Section */}
       {loading ? (
