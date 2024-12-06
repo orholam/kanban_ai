@@ -7,16 +7,17 @@ interface AnimatedTextProps {
   className?: string;
   onComplete?: () => void;
   delay?: number;
+  speed?: number;
 }
 
-function useAnimatedText(text: string, delay: number = 0) {
+function useAnimatedText(text: string, delay: number = 0, speed: number = 1) {
   const [displayText, setDisplayText] = useState('');
   const textProgress = useMotionValue(0);
   
   useEffect(() => {
     const controls = animate(textProgress, text.length, {
       type: "tween",
-      duration: text.length * 0.03, // Adjust speed based on text length
+      duration: (text.length * 0.03) / speed,
       ease: "linear",
       delay: delay,
       onUpdate: latest => {
@@ -25,7 +26,7 @@ function useAnimatedText(text: string, delay: number = 0) {
     });
 
     return () => controls.stop();
-  }, [text, delay]);
+  }, [text, delay, speed]);
 
   return displayText;
 }
@@ -35,9 +36,10 @@ export default function AnimatedText({
   isDarkMode = false,
   className = '',
   onComplete,
-  delay = 0
+  delay = 0,
+  speed = 1
 }: AnimatedTextProps) {
-  const animatedText = useAnimatedText(content, delay);
+  const animatedText = useAnimatedText(content, delay, speed);
 
   useEffect(() => {
     if (animatedText === content && onComplete) {

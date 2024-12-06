@@ -7,6 +7,7 @@ interface OpenAIRequest {
   temperature?: number;
   max_tokens?: number;
   tools?: any[];
+  function_call?: string;
 }
 
 interface OpenAIResponse {
@@ -28,6 +29,7 @@ const tools = [
         type: "function",
         function: {
             name: "create_project_plan",
+            description: "Create a detailed development plan for the project.",
             parameters: {
                 type: "object",
                 properties: {
@@ -48,8 +50,66 @@ const tools = [
                 additionalProperties: false,
             },
         },
-    }
+    },
+    {
+      type: "function",
+      function: {
+          name: "create_project_tasks",
+          description: "Create a list of tasks for the first week of the project.",
+          parameters: {
+              type: "object",
+              properties: {
+                  tasks: {
+                      type: "array",
+                      items: {
+                          type: "object",
+                          properties: {
+                              title: { type: "string" },
+                              description: { type: "string" },
+                              priority: { type: "string", enum: ["low", "medium", "high"] },
+                              type: { type: "string", enum: ["feature", "scope", "bug"] }
+                          },
+                          required: ["title", "description", "priority", "type"]
+                      },
+                      minItems: 1
+                  }
+              },
+              required: ["tasks"],
+              additionalProperties: false,
+          },
+      },
+  }
 ];
+const tools2 = [
+  {
+    type: "function",
+    function: {
+        name: "create_project_tasks",
+        description: "Create a list of tasks for the first week of the project.",
+        parameters: {
+            type: "object",
+            properties: {
+                tasks: {
+                    type: "array",
+                    items: {
+                        type: "object",
+                        properties: {
+                            title: { type: "string" },
+                            description: { type: "string" },
+                            priority: { type: "string", enum: ["low", "medium", "high"] },
+                            type: { type: "string", enum: ["feature", "scope", "bug"] }
+                        },
+                        required: ["title", "description", "priority", "type"]
+                    },
+                    minItems: 1
+                }
+            },
+            required: ["tasks"],
+            additionalProperties: false,
+        },
+    },
+}
+]
 
 export async function generateProjectPlan(
   projectDetails: { name: string; keywords: string[]; description: string }
@@ -100,6 +160,7 @@ export async function generateFirstWeekTasks(projectPlan: string): Promise<any> 
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.7,
     max_tokens: 500,
+    tools: tools2,
   };
 
   const response = await fetch(OPENAI_API_URL, {
