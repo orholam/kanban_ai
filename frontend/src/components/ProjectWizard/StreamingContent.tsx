@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { animate, useMotionValue, useTransform, motion } from 'framer-motion';
+import { animate, useMotionValue, motion } from 'framer-motion';
 
 interface StreamingContentProps {
   stream: ReadableStream<Uint8Array>;
@@ -39,8 +39,10 @@ export default function StreamingContent({
   const animatedText = useAnimatedText(content);
 
   useEffect(() => {
+    let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+
     async function processStream() {
-      const reader = stream.getReader();
+      reader = stream.getReader();
       const decoder = new TextDecoder();
 
       try {
@@ -74,6 +76,12 @@ export default function StreamingContent({
     }
 
     processStream();
+
+    return () => {
+      if (reader) {
+        reader.cancel();
+      }
+    };
   }, [stream]);
 
   // Auto-scroll to bottom as content streams in

@@ -1,0 +1,61 @@
+import React, { useEffect, useState } from 'react';
+import { animate, useMotionValue, motion } from 'framer-motion';
+
+interface AnimatedTextProps {
+  content: string;
+  isDarkMode?: boolean;
+  className?: string;
+  onComplete?: () => void;
+  delay?: number;
+}
+
+function useAnimatedText(text: string, delay: number = 0) {
+  const [displayText, setDisplayText] = useState('');
+  const textProgress = useMotionValue(0);
+  
+  useEffect(() => {
+    const controls = animate(textProgress, text.length, {
+      type: "tween",
+      duration: text.length * 0.03, // Adjust speed based on text length
+      ease: "linear",
+      delay: delay,
+      onUpdate: latest => {
+        setDisplayText(text.slice(0, Math.round(latest)));
+      }
+    });
+
+    return () => controls.stop();
+  }, [text, delay]);
+
+  return displayText;
+}
+
+export default function AnimatedText({ 
+  content,
+  isDarkMode = false,
+  className = '',
+  onComplete,
+  delay = 0
+}: AnimatedTextProps) {
+  const animatedText = useAnimatedText(content, delay);
+
+  useEffect(() => {
+    if (animatedText === content && onComplete) {
+      onComplete();
+    }
+  }, [animatedText, content, onComplete]);
+
+  return (
+    <div 
+      className={`
+        relative
+        ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}
+        ${className}
+      `}
+    >
+      <motion.div className="whitespace-pre-wrap">
+        {animatedText}
+      </motion.div>
+    </div>
+  );
+}
