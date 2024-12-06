@@ -1,6 +1,6 @@
-import p1 from '../assets/p1.jpg'
-import p2 from '../assets/p2.jpg'
-import p3 from '../assets/p3.jpg'
+import p1 from '../assets/p1_small.jpg'
+import p2 from '../assets/p2_small.jpg'
+import p3 from '../assets/p3_small.jpg'
 
 interface TrustedByProps {
   isDarkMode: boolean;
