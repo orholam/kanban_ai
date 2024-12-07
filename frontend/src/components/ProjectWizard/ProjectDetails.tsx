@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 interface ProjectDetailsProps {
   isDarkMode: boolean;
@@ -22,7 +21,6 @@ export default function ProjectDetails({ isDarkMode, onComplete }: ProjectDetail
   const [description, setDescription] = useState('');
   const [stackItems, setStackItems] = useState<string[]>([]);
   const [stackInput, setStackInput] = useState('');
-  const navigate = useNavigate();
 
   const projectNameRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
@@ -114,6 +112,7 @@ export default function ProjectDetails({ isDarkMode, onComplete }: ProjectDetail
                 : 'bg-white border-gray-300'
             } focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
             required
+            spellCheck={false}
           />
         </div>
 

@@ -181,6 +181,10 @@ export async function generateFirstWeekTasks(projectPlan: string): Promise<any> 
   return data;
 }
 
+// Note: Should have an external memory store which cycles through tech information
+// Some should be sticky - the prompt should always include basic knowledge of LLMs, function calling, modern tools, etc.
+// Other information should cycle through - tech headlines, so users can take advantage of the cutting edge tools.
+
 export async function generateProjectOverview(
   projectDetails: { name: string; keywords: string[]; description: string }
 ): Promise<ReadableStream<Uint8Array> | null> {
@@ -189,8 +193,16 @@ export async function generateProjectOverview(
     This project will use: ${projectDetails.keywords.join(', ')}.
     Project description: ${projectDetails.description}
 
-    Ensure the user that the idea is great and give them a single short reason why.
+    Some background information on recent advancements in tech - only include if relevant to the project:
+    - Elevenlabs introduced conversational voice model
+    - All major LLMs now support function calling
+    - Bolt.new, Loveable, and V0 are the top new prompt -> app tools, which work well for frontend as a starting pointbut also integrate well with supabase for backend.
+    - Cursor and Windsurf are popular coding assistants (like Copilot) IDEs
+    - Supabase is a popular new database tool that supports Postgresql, storage, and auth.
+
+    Write a single informal sentence saying the idea is cool because of X and you're going to help them build it, but then dive right into the project plan in the next paragraph.
     Explain how the tools they selected will be used to build the project, including any features or integrations they mentioned in the description.
+    Don't be afraid to be technical, and avoid using any buzzwords. If there's a good cop and bad cop, be the bad cop.
     Then say below you're generating a project plan.
 
     The total length of your response should be 1-2 paragraphs.
