@@ -1,51 +1,32 @@
-import { API_ENDPOINTS } from '../config/apiConfig';
+import { supabase } from '../lib/supabase'; // Ensure you have initialized Supabase client
 
-export const createTask = async (taskDescription: string): Promise<any> => {
-  const llm_url = API_ENDPOINTS.llm;
-  const task_url = API_ENDPOINTS.tasks;
+interface TaskData {
+  id: string;
+  assignee_id: string;
+  project_id: string;
+  title: string;
+  description: string;
+  type: string;
+  status: string;
+  priority: string;
+  sprint: number;
+  due_date: string;
+  created_at: string;
+}
 
+export async function createTask(taskData: TaskData) {
   try {
-    const llm_response = await fetch(llm_url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ input: taskDescription }), // Sending task description as part of the body
-    });
-    if (!llm_response.ok) {
-      throw new Error(`Error creating task: ${llm_response.status} ${llm_response.statusText}`);
-    }
-    const llm_data_raw = await llm_response.json();
-    const llm_data = JSON.parse(llm_data_raw);
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert([taskData])
+      .select();
 
-    const response_body = {
-      projectId: "123qrep-8673",
-      title: llm_data.title,
-      description: llm_data.description,
-      type: llm_data.type,
-      priority: llm_data.priority,
-      status: "todo",
-      sprint: 1,
-      dueDate: "2024-12-01",
-      assigneeId: 1
-    };
-    const task_response = await fetch(task_url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(response_body),
-    });
-    if (!task_response.ok) {
-      throw new Error(`Error creating task: ${task_response.status} ${task_response.statusText}`);
+    if (error) {
+      throw error;
     }
 
-    const res = await task_response.json();
-    //console.log('Task creation response:', res);
-
-    return res;
+    console.log('Task created successfully:', data);
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error('Error creating task:', error.message);
   }
-};
+}

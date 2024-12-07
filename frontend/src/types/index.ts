@@ -17,7 +17,7 @@ export interface Task {
     name: string;
     avatar: string;
   };
-  comments: Comment[];
+  comments?: Comment[];
   isAnimated?: boolean;
 }
 

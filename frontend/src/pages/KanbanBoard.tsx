@@ -5,8 +5,6 @@ import TaskCard from '../components/TaskCard';
 import TaskModal from '../components/TaskModal';
 import CreateTaskModal from '../components/CreateTaskModal';
 import type { Project, Task } from '../types';
-import { createTask }from '../api/createTask';
-import { API_ENDPOINTS } from '../config/apiConfig';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 

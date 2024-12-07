@@ -2,6 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import ProjectDetails from '../components/ProjectWizard/ProjectDetails';
 import ProjectReviewPlan from '../components/ProjectWizard/ProjectReviewPlan';
 import ProjectReviewTasks from '../components/ProjectWizard/ProjectReviewTasks';
+import { createProject } from '../api/createProject';
+import { createTask } from '../api/createTask';
+import { useAuth } from '../contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
+import { Task } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 interface ProjectData {
   name: string;
@@ -13,6 +19,8 @@ export default function NewProject({ isDarkMode }: { isDarkMode: boolean }) {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [projectPlan, setProjectPlan] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const container = containerRef.current;
@@ -33,6 +41,55 @@ export default function NewProject({ isDarkMode }: { isDarkMode: boolean }) {
       resizeObserver.disconnect();
     };
   }, [projectData, projectPlan]);
+
+  const handleProjectCreate = async (tasks: Task[]) => {
+    if (!projectPlan || !projectData || !user) {
+      console.error('Project plan is null');
+      return;
+    }
+
+    const newProject = {
+      id: uuidv4(),
+      user_id: user.id,
+      title: projectData.name,
+      description: projectData.description,
+      master_plan: projectPlan,
+      initial_prompt: projectData.description,
+      keywords: projectData.keywords.join(', '),
+      num_sprints: 10,
+      current_sprint: 1,
+      complete: false,
+      created_at: new Date().toISOString(),
+      due_date: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString(),
+      achievements: ''
+    }
+
+    try {
+      await createProject(newProject);
+      for (const task of tasks) {
+        console.log(task);
+        const newTask = {
+          ...task,
+          id: uuidv4(),
+          project_id: newProject.id,
+          due_date: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString(),
+          created_at: new Date().toISOString(),
+          assignee_id: user.id,
+          title: task.title,
+          description: task.description,
+          priority: task.priority,
+          type: task.type,
+          status: 'todo',
+          sprint: 1,
+        }
+        await createTask(newTask);
+      }
+      console.log('Project and tasks created successfully');
+      navigate(`/project/${newProject.id}`);
+    } catch (error) {
+      console.error('Error creating project or tasks:', error);
+    }
+  };
 
   return (
     <div 
@@ -57,6 +114,7 @@ export default function NewProject({ isDarkMode }: { isDarkMode: boolean }) {
           <ProjectReviewTasks 
             isDarkMode={isDarkMode}
             projectPlan={projectPlan}
+            onComplete={handleProjectCreate}
           />
         )}
       </div>

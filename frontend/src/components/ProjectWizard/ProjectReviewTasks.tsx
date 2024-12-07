@@ -6,9 +6,10 @@ import AnimatedText from '../AnimatedText';
 interface ProjectReviewTasksProps {
   isDarkMode: boolean;
   projectPlan: string;
+  onComplete: (tasks: Task[]) => void;
 }
 
-export default function ProjectReviewTasks({ isDarkMode, projectPlan }: ProjectReviewTasksProps) {
+export default function ProjectReviewTasks({ isDarkMode, projectPlan, onComplete }: ProjectReviewTasksProps) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const fetchController = useRef(false);
@@ -53,8 +54,9 @@ export default function ProjectReviewTasks({ isDarkMode, projectPlan }: ProjectR
         <WeekOneTasks tasks={tasks} isDarkMode={isDarkMode} />
           <button
               className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded"
-            >
-              Create Project
+              onClick={() => onComplete(tasks)}
+          >
+            Create Project
           </button>
         </>
       )}
