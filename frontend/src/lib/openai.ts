@@ -151,7 +151,7 @@ export async function generateProjectPlan(
 
 export async function generateFirstWeekTasks(projectPlan: string): Promise<any> {
   const prompt = `
-    Based on the following project plan, generate a list of tasks for the first week:
+    Based on the following project plan, generate a list of 4-5 tasks for the first week:
     ${projectPlan}
   `;
 
