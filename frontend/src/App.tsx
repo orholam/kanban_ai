@@ -7,8 +7,10 @@ import KanbanBoard from './pages/KanbanBoard';
 import NewProject from './pages/NewProject';
 import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 import { supabase } from './lib/supabase';
 import type { Project } from './types';
+import { trackPage } from 'tenable-analytics';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -76,6 +78,10 @@ function AppContent() {
     fetchProjects();
   }, [user]);
 
+  useEffect(() => {
+    trackPage();
+  }, []);
+
   return (
     <BrowserRouter>
       <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -116,6 +122,7 @@ function AppContent() {
                 }
               />
               <Route path="/new-project/*" element={<NewProject isDarkMode={isDarkMode} />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
             </Routes>
           </main>
         </div>
