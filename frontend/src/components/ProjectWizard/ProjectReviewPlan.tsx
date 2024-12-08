@@ -74,7 +74,9 @@ export default function ProjectReviewPlan({ isDarkMode, projectData, onComplete 
 
       {/* Weekly Plan Section */}
       {loading ? (
-        <div className="animate-pulse">Generating project plan...</div>
+        <div className={`animate-pulse ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+        Generating project plan...
+      </div>
       ) : (
         <>
           <div>

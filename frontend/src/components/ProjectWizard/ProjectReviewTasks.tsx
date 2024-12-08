@@ -42,13 +42,15 @@ export default function ProjectReviewTasks({ isDarkMode, projectPlan, onComplete
       </h2>
       <AnimatedText 
         content={`This week, we’re taking the first week from the project plan and breaking it down into specific tasks.\n\nEach task will have clear objectives to ensure progress is measurable and aligned with the project goals. As you complete tasks throughout the week, move them to Done. At the end of the week, we’ll review how things are going, and if necessary, adjust the pace or modify the project plan.`}
-        isDarkMode={false} // or true, depending on your theme
+        isDarkMode={isDarkMode}
         className="min-h-[200px] max-h-[300px] p-4 rounded-lg border border-gray-200 dark:border-gray-700"
         speed={2}
       /> 
       <br/>
       {loading ? (
-        <div className="animate-pulse">Generating tasks...</div>
+        <div className={`animate-pulse ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+          Generating tasks...
+        </div>
       ) : (
         <>
         <WeekOneTasks tasks={tasks} isDarkMode={isDarkMode} />

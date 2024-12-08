@@ -3,14 +3,14 @@ import { animate, useMotionValue, motion } from 'framer-motion';
 
 interface AnimatedTextProps {
   content: string;
-  isDarkMode?: boolean;
+  isDarkMode: boolean;
   className?: string;
   onComplete?: () => void;
   delay?: number;
   speed?: number;
 }
 
-function useAnimatedText(text: string, delay: number = 0, speed: number = 1) {
+function useAnimatedText(text: string, delay: number = 0, speed: number = 1, isDarkMode: boolean) {
   const [displayText, setDisplayText] = useState('');
   const textProgress = useMotionValue(0);
   
@@ -19,7 +19,7 @@ function useAnimatedText(text: string, delay: number = 0, speed: number = 1) {
       type: "tween",
       duration: (text.length * 0.03) / speed,
       ease: "linear",
-      delay: delay,
+      delay: delay / 1000,
       onUpdate: latest => {
         setDisplayText(text.slice(0, Math.round(latest)));
       }
@@ -39,7 +39,7 @@ export default function AnimatedText({
   delay = 0,
   speed = 1
 }: AnimatedTextProps) {
-  const animatedText = useAnimatedText(content, delay, speed);
+  const animatedText = useAnimatedText(content, delay, speed, isDarkMode);
 
   useEffect(() => {
     if (animatedText === content && onComplete) {
