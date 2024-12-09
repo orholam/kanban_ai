@@ -44,4 +44,5 @@ export interface Project {
   description: string;
   tasks: Task[];
   num_sprints: number;
+  due_date: string;
 }

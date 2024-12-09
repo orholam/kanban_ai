@@ -228,6 +228,7 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentProject?.title}</h1>
+          <h2> {currentProject?.due_date} </h2>
           <div className="flex items-center gap-2">
             {!isEditingDescription && (
               <button
