@@ -20,7 +20,7 @@
     "react-datepicker": "^7.5.0",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.22.3",
-    "tenable-analytics": "^1.1.2",
+    "tenable-analytics": "^1.1.4",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
