@@ -121,7 +121,7 @@ function AppContent() {
                   </PrivateRoute>
                 }
               />
-              <Route path="/new-project/*" element={<NewProject isDarkMode={isDarkMode} />} />
+              <Route path="/new-project/*" element={<NewProject isDarkMode={isDarkMode} setProjects={setProjects} />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
             </Routes>
           </main>

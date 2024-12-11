@@ -15,12 +15,18 @@ interface ProjectData {
   keywords: string[];
 }
 
-export default function NewProject({ isDarkMode }: { isDarkMode: boolean }) {
+interface NewProjectProps {
+  isDarkMode: boolean;
+  setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
+}
+
+export default function NewProject({ isDarkMode, setProjects }: NewProjectProps) {
   const [projectData, setProjectData] = useState<ProjectData | null>(null);
   const [projectPlan, setProjectPlan] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -47,6 +53,8 @@ export default function NewProject({ isDarkMode }: { isDarkMode: boolean }) {
       console.error('Project plan is null');
       return;
     }
+
+    setIsLoading(true);
 
     const newProject = {
       id: uuidv4(),
@@ -85,9 +93,12 @@ export default function NewProject({ isDarkMode }: { isDarkMode: boolean }) {
         await createTask(newTask);
       }
       console.log('Project and tasks created successfully');
+      setProjects(prevProjects => [...prevProjects, newProject]);
+      setIsLoading(false);
       navigate(`/project/${newProject.id}`);
     } catch (error) {
       console.error('Error creating project or tasks:', error);
+      setIsLoading(false);
     }
   };
 
@@ -117,6 +128,8 @@ export default function NewProject({ isDarkMode }: { isDarkMode: boolean }) {
             onComplete={handleProjectCreate}
           />
         )}
+
+        {isLoading && <div className="loading-icon">Loading...</div>}
       </div>
     </div>
   );
