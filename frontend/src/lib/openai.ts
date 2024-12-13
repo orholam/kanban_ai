@@ -116,11 +116,10 @@ export async function generateProjectPlan(
 ): Promise<any> {
   const prompt = `
     Your task is to create a detailed no-nonsense development pipeline over the course of 10 weeks for a solopreneur.
-    Your project outline should not include planning - you are the planner.
-    It should dive right into the development process, starting with design, frontend, backend, and deployment.
-    Each week should be described in 1-2 sentences.
-    Create a detailed development plan for a project named "${projectDetails.name}".
-    Incorporate the following dev tools: ${projectDetails.keywords.join(', ')}.
+    Your project outline should not include planning - you are the planner. The start should be frontend dev, and the end should be deployment.
+    Each week should be described in 1-2 sentences, with specific references to the tools they selected or their project description.
+    Project name: "${projectDetails.name}".
+    Selected dev tools: ${projectDetails.keywords.join(', ')}.
     Web app description: ${projectDetails.description}.
   `;
 
@@ -189,6 +188,7 @@ export async function generateProjectOverview(
   projectDetails: { name: string; keywords: string[]; description: string }
 ): Promise<ReadableStream<Uint8Array> | null> {
   const prompt = `
+    You are a technical co-founder who is helping a non-technical founder build their project.
     Create a high-level project overview for "${projectDetails.name}".
     This project will use: ${projectDetails.keywords.join(', ')}.
     Project description: ${projectDetails.description}
@@ -200,10 +200,8 @@ export async function generateProjectOverview(
     - Cursor and Windsurf are popular coding assistants (like Copilot) IDEs
     - Supabase is a popular new database tool that supports Postgresql, storage, and auth.
 
-    Write a single informal sentence saying the idea is cool because of X and you're going to help them build it, but then dive right into the project plan in the next paragraph.
-    Explain how the tools they selected will be used to build the project, including any features or integrations they mentioned in the description.
-    Don't be afraid to be technical, and avoid using any buzzwords. If there's a good cop and bad cop, be the bad cop.
-    Then say below you're generating a project plan.
+    Be informal, but dive right into the project plan from a technical perspective, describing each part of the plan in a way that is tailored to their specific vision.
+    The response should be uniquely tailored to the type of project they are building and any features or integrations they mentioned in the description.
 
     The total length of your response should be 1-2 paragraphs.
   `;
