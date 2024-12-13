@@ -312,7 +312,7 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
                   </li>
                   <li>
                     <a href="https://x.com/JonWentel" target="_blank" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
-                      A project by <span className="text-indigo-500 text-[1.15em]">@jonwentel</span>
+                      A project by <span className="text-indigo-500">@jonwentel</span>
                     </a>
                   </li>
                 </ul>
