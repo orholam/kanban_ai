@@ -303,16 +303,16 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
                 </ul>
               </div>
               <div>
-                <h3 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Legal</h3>
+                <h3 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>About</h3>
                 <ul className="mt-4 space-y-4">
                   <li>
                     <a href="#" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
-                      Privacy
+                      Terms & Privacy
                     </a>
                   </li>
                   <li>
-                    <a href="#" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
-                      Terms
+                    <a href="https://x.com/JonWentel" target="_blank" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                      A project by <span className="text-indigo-500 text-[1.15em]">@jonwentel</span>
                     </a>
                   </li>
                 </ul>
