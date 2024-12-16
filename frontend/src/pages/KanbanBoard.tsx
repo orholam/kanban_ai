@@ -7,6 +7,7 @@ import CreateTaskModal from '../components/CreateTaskModal';
 import type { Project, Task } from '../types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { formatDistanceToNow, differenceInDays } from 'date-fns'; // Import date-fns for date calculations
 
 
 const MOCK_NEW_TASK = "Create project wizard using openai to create new projects and automatically generate tasks";
@@ -35,8 +36,6 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const [activeSprint, setActiveSprint] = useState(1);
   const [description, setDescription] = useState(DEFAULT_DESCRIPTION);
-  const [isEditingDescription, setIsEditingDescription] = useState(false);
-  const [tempDescription, setTempDescription] = useState(description);
   const [isLoading, setIsLoading] = useState(true);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -226,47 +225,33 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
   return (
     <div className={`h-full overflow-auto p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-200`}>
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-2">
-          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentProject?.title}</h1>
-          <h2> {currentProject?.due_date} </h2>
-          <div className="flex items-center gap-2">
-            {!isEditingDescription && (
-              <button
-                onClick={() => setIsEditingDescription(true)}
-                className={`text-gray-400 hover:${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
-            )}
+        <div className="flex items-stretch justify-between mb-2">
+          <div>
+            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentProject?.title}</h1>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>{currentProject?.description}</p>
+          </div>
+          <div className="flex items-center justify-center w-40 border p-4 rounded-lg text-center bg-gradient-to-r from-blue-500 to-indigo-500 shadow-lg">
+            <h2 className={`flex flex-col items-center ${isDarkMode ? 'text-white' : 'text-gray-100'}`}>
+              {currentProject?.due_date ? (
+                (() => {
+                  const daysLeft = differenceInDays(new Date(currentProject.due_date), new Date());
+                  return (
+                    <>
+                      <span className="text-4xl font-bold">
+                        {daysLeft}
+                      </span>
+                      <span className="text-base font-light tracking-wide">
+                        {daysLeft >= 0 ? 'days left' : 'days ago'}
+                      </span>
+                    </>
+                  );
+                })()
+              ) : (
+                <span className="text-base font-light">No due date</span>
+              )}
+            </h2>
           </div>
         </div>
-
-        {isEditingDescription ? (
-          <div className="flex items-start space-x-2">
-            <textarea
-              value={tempDescription}
-              onChange={(e) => setTempDescription(e.target.value)}
-              className="flex-1 p-2 text-sm text-gray-600 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              rows={2}
-            />
-            <div className="flex space-x-2">
-              <button
-                onClick={handleDescriptionSave}
-                className="p-2 text-green-600 hover:text-green-700"
-              >
-                <Check className="h-4 w-4" />
-              </button>
-              <button
-                onClick={handleDescriptionCancel}
-                className="p-2 text-red-600 hover:text-red-700"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        ) : (
-          <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>{currentProject?.description}</p>
-        )}
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0 mt-4">
           <div className="flex space-x-2">
