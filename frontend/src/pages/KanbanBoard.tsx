@@ -202,15 +202,6 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
     setDragOverColumn(null);
   };
 
-  const handleDescriptionSave = () => {
-    setDescription(tempDescription);
-    setIsEditingDescription(false);
-  };
-
-  const handleDescriptionCancel = () => {
-    setTempDescription(description);
-    setIsEditingDescription(false);
-  };
 
   const filteredTasks = tasks.filter(task => {
     if (!searchQuery) return true;
@@ -235,8 +226,8 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
             (() => {
               const daysLeft = differenceInDays(new Date(currentProject.due_date), new Date());
               return (
-                <div className={`flex items-center justify-center w-40 text-center shadow-lg rounded-lg border p-4 ${differenceInDays(new Date(currentProject?.due_date), new Date()) > 0 ? 'gradient-border' : 'bg-gradient-to-r from-blue-500 to-indigo-500'}`}>
-                  <h2 className={`flex flex-col items-center ${differenceInDays(new Date(currentProject?.due_date), new Date()) > 0 ? 'text-black' : 'text-white'}`}>
+                <div className={`flex items-center justify-center w-40 text-center shadow-lg rounded-lg border p-4 ${daysLeft > 0 ? 'gradient-border' : 'bg-gradient-to-r from-blue-500 to-indigo-500'}`}>
+                  <h2 className={`flex flex-col items-center ${daysLeft > 0 ? 'text-black' : 'text-white'}`}>
                     <span className="text-4xl font-bold">
                       {daysLeft}
                     </span>
