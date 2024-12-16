@@ -230,27 +230,26 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
             <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentProject?.title}</h1>
             <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>{currentProject?.description}</p>
           </div>
-          <div className="flex items-center justify-center w-40 border p-4 rounded-lg text-center bg-gradient-to-r from-blue-500 to-indigo-500 shadow-lg">
-            <h2 className={`flex flex-col items-center ${isDarkMode ? 'text-white' : 'text-gray-100'}`}>
-              {currentProject?.due_date ? (
-                (() => {
-                  const daysLeft = differenceInDays(new Date(currentProject.due_date), new Date());
-                  return (
-                    <>
-                      <span className="text-4xl font-bold">
-                        {daysLeft}
-                      </span>
-                      <span className="text-base font-light tracking-wide">
-                        {daysLeft >= 0 ? 'days left' : 'days ago'}
-                      </span>
-                    </>
-                  );
-                })()
-              ) : (
-                <span className="text-base font-light">No due date</span>
-              )}
-            </h2>
-          </div>
+          
+          {currentProject?.due_date ? (
+            (() => {
+              const daysLeft = differenceInDays(new Date(currentProject.due_date), new Date());
+              return (
+                <div className={`flex items-center justify-center w-40 text-center shadow-lg rounded-lg border p-4 ${differenceInDays(new Date(currentProject?.due_date), new Date()) > 0 ? 'gradient-border' : 'bg-gradient-to-r from-blue-500 to-indigo-500'}`}>
+                  <h2 className={`flex flex-col items-center ${differenceInDays(new Date(currentProject?.due_date), new Date()) > 0 ? 'text-black' : 'text-white'}`}>
+                    <span className="text-4xl font-bold">
+                      {daysLeft}
+                    </span>
+                    <span className="text-base font-light tracking-wide">
+                      {daysLeft >= 0 ? 'days left' : 'days ago'}
+                    </span>
+                  </h2>
+                </div>
+              );
+            })()
+            ) : (
+              <span className="text-base font-light">No due date</span>
+            )}
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0 mt-4">
