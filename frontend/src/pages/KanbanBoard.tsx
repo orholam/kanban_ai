@@ -241,7 +241,7 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
                       {daysLeft}
                     </span>
                     <span className="text-base font-light tracking-wide">
-                      {daysLeft >= 0 ? 'days left' : 'days ago'}
+                      days left
                     </span>
                   </h2>
                 </div>
@@ -343,5 +343,6 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
         />
       )}
     </div>
+    
   );
 }

@@ -68,7 +68,7 @@ export default function NewProject({ isDarkMode, setProjects }: NewProjectProps)
       current_sprint: 1,
       complete: false,
       created_at: new Date().toISOString(),
-      due_date: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString(),
+      due_date: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
       achievements: ''
     }
 
@@ -80,7 +80,7 @@ export default function NewProject({ isDarkMode, setProjects }: NewProjectProps)
           ...task,
           id: uuidv4(),
           project_id: newProject.id,
-          due_date: new Date(new Date().setDate(new Date().getDate() + 30)).toISOString(),
+          due_date: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
           created_at: new Date().toISOString(),
           assignee_id: user.id,
           title: task.title,
