@@ -11,6 +11,8 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import { supabase } from './lib/supabase';
 import type { Project } from './types';
 import { trackPage } from 'tenable-analytics';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -123,6 +125,8 @@ function AppContent() {
               />
               <Route path="/new-project/*" element={<NewProject isDarkMode={isDarkMode} setProjects={setProjects} />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
             </Routes>
           </main>
         </div>
