@@ -98,7 +98,7 @@ export default function Login({ isDarkMode }: { isDarkMode: boolean }) {
               },
             }}
             theme={isDarkMode ? 'dark' : 'light'}
-            providers={['google', 'github']}
+            providers={['google']}
             redirectTo={`${window.location.origin}/kanban`}
           />
         </div>

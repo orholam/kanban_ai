@@ -93,7 +93,7 @@ export default function Header({ isDarkMode, toggleTheme, onSearch }: HeaderProp
                   }`}>
                     <div className="py-1">
                       <div className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-900'} border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                        <p className="font-medium">Username</p>
+                        <p className="font-medium">{user.name || 'Guest'}</p>
                         <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{user.email}</p>
                       </div>
                       <a href="#" className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>Profile Settings</a>

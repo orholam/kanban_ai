@@ -46,3 +46,10 @@ export interface Project {
   num_sprints: number;
   due_date: string;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  // Add any other properties that are part of the User object
+}
