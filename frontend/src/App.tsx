@@ -13,6 +13,7 @@ import type { Project } from './types';
 import { trackPage } from 'tenable-analytics';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import { Toaster } from 'sonner';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -139,6 +140,7 @@ export default function App() {
   return (
     <AuthProvider>
       <AppContent />
+      <Toaster />
     </AuthProvider>
   );
 }

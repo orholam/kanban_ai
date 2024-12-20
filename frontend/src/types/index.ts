@@ -4,15 +4,15 @@ export type Status = 'todo' | 'in-progress' | 'in-review';
 
 export interface Task {
   id: string;
-  projectID: string;
+  project_id: string;
   title: string;
   description: string;
   type: TaskType;
   priority: Priority;
   status: Status;
   sprint: number;
-  dueDate: string;
-  assignee: {
+  due_date: string;
+  assignee_id: {
     id: string;
     name: string;
     avatar: string;
@@ -50,6 +50,6 @@ export interface Project {
 export interface User {
   id: string;
   email: string;
-  name?: string;
+  name: string;
   // Add any other properties that are part of the User object
 }

@@ -8,6 +8,7 @@ import type { Project, Task } from '../types';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { formatDistanceToNow, differenceInDays } from 'date-fns'; // Import date-fns for date calculations
+import { toast } from 'sonner';
 
 
 const MOCK_NEW_TASK = "Create project wizard using openai to create new projects and automatically generate tasks";
@@ -135,6 +136,7 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
     if (data) {
       console.log(data[0]);
       setTasks(prevTasks => prevTasks.map(task => (task.id === data[0].id ? { ...data[0], isAnimated: true } : task)));
+      toast.success('Sprint updated');
     }
   };
 
@@ -151,7 +153,7 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
     }
 
     setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
-
+    toast.success('Task deleted');
   };
 
   const handleCreateTask = async (newTask: Task) => {
@@ -168,9 +170,32 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
 
       if (data) {
         setTasks(prevTasks => [...prevTasks, { ...data, isAnimated: true }]);
+        toast.success('Task created');
       }
     } catch (error) {
       console.error('Error creating task:', error);
+    }
+  };
+
+  const handleDescriptionChange = async (taskId: string, newDescription: string) => {
+    try {
+      const { data, error } = await supabase
+      .from('tasks')
+      .update({ description: newDescription })
+      .eq('id', taskId)
+      .select()
+
+      if (error) {
+        console.error('Error updating description:', error);
+        return;
+      }
+      if (data) {
+        console.log(data[0]);
+        setTasks(prevTasks => prevTasks.map(task => (task.id === data[0].id ? { ...data[0], isAnimated: true } : task)));
+        toast.success('Description updated');
+      }
+    } catch (error) {
+      console.error('Error updating description:', error);
     }
   };
 
@@ -323,6 +348,7 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
           onClose={() => setSelectedTask(null)}
           onStatusChange={handleStatusChange}
           onSprintChange={handleSprintChange}
+          onDescriptionChange={handleDescriptionChange}
         />
       )}
 
