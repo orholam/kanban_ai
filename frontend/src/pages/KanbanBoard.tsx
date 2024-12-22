@@ -40,6 +40,7 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
   const [isLoading, setIsLoading] = useState(true);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [daysLeft, setDaysLeft] = useState(0);
 
   useEffect(() => {
     if (projects.length === 0) return;
@@ -91,6 +92,7 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
     };
 
     fetchData();
+    setDaysLeft(differenceInDays(new Date(currentProject?.due_date), new Date()));
   }, [currentProject?.id]);
 
 
@@ -198,18 +200,6 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
       console.error('Error updating description:', error);
     }
   };
-
-  // const handleSprintChange = (taskId: string, newSprint: number) => {
-  //   const updatedTasks = tasks.map(task =>
-  //     task.id === taskId ? { ...task, sprint: newSprint } : task
-  //   );
-  //   setTasks(updatedTasks);
-  //
-  //   if (selectedTask?.id === taskId) {
-  //     const updatedTask = updatedTasks.find(task => task.id === taskId);
-  //     if (updatedTask) setSelectedTask(updatedTask);
-  //   }
-  // };
 
   const handleDragOver = (e: React.DragEvent, columnId: string) => {
     e.preventDefault();
