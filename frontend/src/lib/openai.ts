@@ -115,7 +115,7 @@ export async function generateProjectPlan(
   projectDetails: { name: string; keywords: string[]; description: string }
 ): Promise<any> {
   const prompt = `
-    Your task is to create a detailed no-nonsense development pipeline over the course of 10 weeks for a solopreneur.
+    Your task is to create a detailed no-nonsense development pipeline over the course of 10 weeks for a solopreneur as their technical co-founder.
     Your project outline should not include planning - you are the planner. The start should be frontend dev, and the end should be deployment.
     Each week should be described in 1-2 sentences, with specific references to the tools they selected or their project description.
     Project name: "${projectDetails.name}".
