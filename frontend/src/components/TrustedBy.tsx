@@ -29,7 +29,7 @@ export function TrustedBy({ isDarkMode }: TrustedByProps) {
           </div>
         ))}
         <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-gray-900 bg-indigo-600 flex items-center justify-center">
-          <span className="text-xs font-medium text-white">18+</span>
+          <span className="text-xs font-medium text-white">100+</span>
         </div>
       </div>
       <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
