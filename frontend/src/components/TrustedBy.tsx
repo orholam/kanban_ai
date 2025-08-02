@@ -33,7 +33,7 @@ export function TrustedBy({ isDarkMode }: TrustedByProps) {
         </div>
       </div>
       <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-        Trusted by 21+ indie founders
+        Trusted by 104+ indie founders
       </span>
     </div>
   );
