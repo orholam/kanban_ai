@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Check, X } from 'lucide-react';
 import TaskCard from '../components/TaskCard';
 import TaskModal from '../components/TaskModal';
 import CreateTaskModal from '../components/CreateTaskModal';
 import type { Project, Task } from '../types';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { formatDistanceToNow, differenceInDays } from 'date-fns'; // Import date-fns for date calculations
 import { toast } from 'sonner';
@@ -24,14 +24,10 @@ interface KanbanBoardProps {
   searchQuery: string;
 }
 
-export interface Task {
-  id: string;
-  // ... other existing properties ...
-  isAnimated?: boolean;
-}
-
 export default function KanbanBoard({ isDarkMode, projects, searchQuery }: KanbanBoardProps) {
   const { projectId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]); // Add explicit Task[] type
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
@@ -41,6 +37,8 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [daysLeft, setDaysLeft] = useState(0);
+
+
 
   useEffect(() => {
     if (projects.length === 0) return;
@@ -236,26 +234,6 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
             <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentProject?.title}</h1>
             <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>{currentProject?.description}</p>
           </div>
-          
-          {currentProject?.due_date ? (
-            (() => {
-              const daysLeft = differenceInDays(new Date(currentProject.due_date), new Date());
-              return (
-                <div className={`flex items-center justify-center w-40 text-center rounded-lg border p-4 ${daysLeft > 0 ? 'gradient-border' : 'shadow-lg bg-gradient-to-r from-blue-500 to-indigo-500'}`}>
-                  <h2 className={`flex flex-col items-center ${daysLeft > 0 ? 'text-black' : 'text-white'}`}>
-                    <span className="text-4xl font-bold">
-                      {daysLeft}
-                    </span>
-                    <span className="text-base font-light tracking-wide">
-                      days left
-                    </span>
-                  </h2>
-                </div>
-              );
-            })()
-            ) : (
-              <span className="text-base font-light">No due date</span>
-            )}
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0 mt-4">

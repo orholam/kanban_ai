@@ -28,20 +28,20 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
     setSprint(task.sprint);
   }, [task.status, task.sprint]);
 
-  const handleStatusChange = (e) => {
-    const newStatus = e.target.value;
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newStatus = e.target.value as 'todo' | 'in-progress' | 'in-review';
     setStatus(newStatus); // Update the local state
     onStatusChange(task.id, newStatus); // Trigger the parent handler
   };
 
-  const handleSprintChange = (e) => {
+  const handleSprintChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newSprint = parseInt(e.target.value);
     console.log(e.target.value);
     setSprint(newSprint);
     onSprintChange(task.id, newSprint);
   };
 
-  const handleDescriptionChange = (e) => {
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newDescription = e.target.value;
     setDescription(newDescription);
 
@@ -146,18 +146,10 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
               <div>
                 <h3 className="text-sm font-medium text-gray-900 mb-2">Assignee</h3>
                 <div className="flex items-center">
-                  {task.assignee_id.avatar ? (
-                    <img
-                      src={task.assignee_id.avatar}
-                      alt={task.assignee_id.name}
-                      className="h-8 w-8 rounded-full"
-                    />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                      <User className="h-5 w-5 text-gray-500" />
-                    </div>
-                  )}
-                  <span className="ml-2 text-sm text-gray-900">{task.assignee_id.name}</span>
+                  <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                    <User className="h-5 w-5 text-gray-500" />
+                  </div>
+                  <span className="ml-2 text-sm text-gray-900">User ID: {task.assignee_id}</span>
                 </div>
               </div>
 

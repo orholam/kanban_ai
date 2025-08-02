@@ -12,11 +12,8 @@ export interface Task {
   status: Status;
   sprint: number;
   due_date: string;
-  assignee_id: {
-    id: string;
-    name: string;
-    avatar: string;
-  };
+  assignee_id: string; // Changed from object to string to match database schema
+  created_at: string;
   comments?: Comment[];
   isAnimated?: boolean;
 }
@@ -42,9 +39,17 @@ export interface Project {
   id: string;
   title: string;
   description: string;
-  tasks: Task[];
+  master_plan: string;
+  initial_prompt: string;
+  keywords: string;
   num_sprints: number;
+  current_sprint: number;
   due_date: string;
+  achievements: string;
+  complete: boolean;
+  created_at: string;
+  user_id: string;
+  tasks: Task[];
 }
 
 export interface User {

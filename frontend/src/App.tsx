@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -14,10 +14,42 @@ import { trackPage } from 'tenable-analytics';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import { Toaster } from 'sonner';
+import Feedback from './pages/Feedback';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   return user ? <>{children}</> : <Navigate to="/login" />;
+}
+
+function KanbanBoardWrapper({ isDarkMode, projects, searchQuery, isLoading }: { isDarkMode: boolean; projects: Project[]; searchQuery: string; isLoading: boolean }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Only redirect if user is authenticated, not loading, and has no projects
+    if (user && !isLoading && projects.length === 0) {
+      navigate('/new-project');
+    }
+  }, [user, projects.length, isLoading, navigate]);
+
+  // Don't render anything if redirecting
+  if (user && !isLoading && projects.length === 0) {
+    return null;
+  }
+
+  // Show loading state while fetching projects
+  if (isLoading) {
+    return (
+      <div className={`h-full flex items-center justify-center ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Loading projects...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <KanbanBoard isDarkMode={isDarkMode} projects={projects} searchQuery={searchQuery} />;
 }
 
 function AppContent() {
@@ -94,7 +126,7 @@ function AppContent() {
           onSearch={setSearchQuery}
         />
         <div className="flex flex-1 overflow-hidden">
-          {user && <Sidebar isDarkMode={isDarkMode} projects={projects} />}
+          {user && <Sidebar isDarkMode={isDarkMode} projects={projects} user={user} />}
           <main className="flex-1">
             <Routes>
               <Route 
@@ -108,7 +140,7 @@ function AppContent() {
                 path="/kanban"
                 element={
                   <PrivateRoute>
-                    <KanbanBoard isDarkMode={isDarkMode} projects={projects} />
+                    <KanbanBoardWrapper isDarkMode={isDarkMode} projects={projects} searchQuery={searchQuery} isLoading={isLoading} />
                   </PrivateRoute>
                 }
               />
@@ -116,18 +148,41 @@ function AppContent() {
                 path="/project/:projectId"
                 element={
                   <PrivateRoute>
-                    <KanbanBoard 
+                    <KanbanBoardWrapper 
                       isDarkMode={isDarkMode} 
                       projects={projects}
                       searchQuery={searchQuery}
+                      isLoading={isLoading}
                     />
                   </PrivateRoute>
                 }
               />
-              <Route path="/new-project/*" element={<NewProject isDarkMode={isDarkMode} setProjects={setProjects} />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route 
+                path="/new-project/*" 
+                element={
+                  <PrivateRoute>
+                    <NewProject isDarkMode={isDarkMode} setProjects={setProjects} />
+                  </PrivateRoute>
+                } 
+              />
+              <Route 
+                path="/analytics" 
+                element={
+                  <PrivateRoute>
+                    <AnalyticsPage isDarkMode={isDarkMode} />
+                  </PrivateRoute>
+                } 
+              />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route 
+                path="/feedback" 
+                element={
+                  <PrivateRoute>
+                    <Feedback />
+                  </PrivateRoute>
+                } 
+              />
             </Routes>
           </main>
         </div>

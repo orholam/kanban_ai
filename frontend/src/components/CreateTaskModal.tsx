@@ -32,12 +32,12 @@ export default function CreateTaskModal({ onClose, onCreateTask, projectId }: Cr
       project_id: projectId,
       title: title,
       description: description,
-      type: type,
-      priority: priority,
-      status: status,
+      type: type as 'bug' | 'feature' | 'scope',
+      priority: priority as 'low' | 'medium' | 'high',
+      status: status as 'todo' | 'in-progress' | 'in-review',
       sprint: parseInt(sprint.toString()),
       due_date: dueDate.toISOString().split('T')[0],
-      assignee_id: user?.id || null,
+      assignee_id: user?.id || '',
       created_at: new Date().toISOString().split('T')[0],
     };
 
@@ -176,9 +176,11 @@ export default function CreateTaskModal({ onClose, onCreateTask, projectId }: Cr
                   <div className="absolute z-50 bg-white shadow-lg rounded-md p-2">
                     <DatePicker
                       selected={dueDate}
-                      onChange={(date: Date) => {
-                        setDueDate(date);
-                        setShowCalendar(false);
+                      onChange={(date: Date | null) => {
+                        if (date) {
+                          setDueDate(date);
+                          setShowCalendar(false);
+                        }
                       }}
                       onClickOutside={() => setShowCalendar(false)}
                       inline

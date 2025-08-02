@@ -3,6 +3,7 @@ import { Search, Bell, Settings, Sun, Moon } from 'lucide-react';
 import Logo from '../assets/kanban_ai_logo5.png';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { getUserInitials, getDisplayName } from '../lib/userUtils';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -57,23 +58,6 @@ export default function Header({ isDarkMode, toggleTheme, onSearch }: HeaderProp
             {/* Most controls only visible when logged in */}
             {user && (
               <>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search tasks..."
-                    onChange={(e) => onSearch(e.target.value)}
-                    className={`w-64 pl-10 pr-4 py-2 rounded-lg border ${
-                      isDarkMode 
-                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                        : 'border-gray-300 text-gray-900'
-                    } focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
-                  />
-                  <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                </div>
-
-                <button className={`p-2 ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}>
-                  <Bell className="h-6 w-6" />
-                </button>
                 <button className={`p-2 ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}>
                   <Settings className="h-6 w-6" />
                 </button>
@@ -84,7 +68,7 @@ export default function Header({ isDarkMode, toggleTheme, onSearch }: HeaderProp
                     onClick={handleProfileClick}
                     className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-medium cursor-pointer"
                   >
-                    {user.email ? user.email.substring(0, 2).toUpperCase() : 'JD'}
+                    {user ? getUserInitials(user) : 'U'}
                   </div>
                   <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg ${
                     isDarkMode ? 'bg-gray-800' : 'bg-white'
@@ -93,7 +77,7 @@ export default function Header({ isDarkMode, toggleTheme, onSearch }: HeaderProp
                   }`}>
                     <div className="py-1">
                       <div className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-900'} border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                        <p className="font-medium">{user.name || 'Guest'}</p>
+                        <p className="font-medium">{user ? getDisplayName(user) : 'Unknown User'}</p>
                         <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{user.email}</p>
                       </div>
                       <a href="#" className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>Profile Settings</a>

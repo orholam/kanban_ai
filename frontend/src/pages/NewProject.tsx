@@ -6,8 +6,9 @@ import { createProject } from '../api/createProject';
 import { createTask } from '../api/createTask';
 import { useAuth } from '../contexts/AuthContext';
 import { v4 as uuidv4 } from 'uuid';
-import { Task } from '../types';
+import { Task, Project } from '../types';
 import { useNavigate } from 'react-router-dom';
+import Intro from '../components/ProjectWizard/Intro';
 
 interface ProjectData {
   name: string;
@@ -56,9 +57,10 @@ export default function NewProject({ isDarkMode, setProjects }: NewProjectProps)
 
     setIsLoading(true);
 
+    const project_id = uuidv4();
+
     const newProject = {
-      id: uuidv4(),
-      user_id: user.id,
+      id: project_id,
       title: projectData.name,
       description: projectData.description,
       master_plan: projectPlan,
@@ -69,11 +71,20 @@ export default function NewProject({ isDarkMode, setProjects }: NewProjectProps)
       complete: false,
       created_at: new Date().toISOString(),
       due_date: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
-      achievements: ''
+      achievements: '',
+      user_id: user.id
+    }
+    const newCollaboratorConnection = {
+      id: uuidv4(),
+      project_id: project_id,
+      user_id: user.id,
+      invited_at: new Date().toISOString(),
+      accepted: true,
+      role: 'owner'
     }
 
     try {
-      await createProject(newProject);
+      await createProject(newProject, newCollaboratorConnection);
       for (const task of tasks) {
         console.log(task);
         const newTask = {
@@ -93,7 +104,7 @@ export default function NewProject({ isDarkMode, setProjects }: NewProjectProps)
         await createTask(newTask);
       }
       console.log('Project and tasks created successfully');
-      setProjects(prevProjects => [...prevProjects, newProject]);
+      setProjects(prevProjects => [...prevProjects, { ...newProject, tasks: [] }]);
       setIsLoading(false);
       navigate(`/project/${newProject.id}`);
     } catch (error) {
@@ -108,6 +119,7 @@ export default function NewProject({ isDarkMode, setProjects }: NewProjectProps)
       className={`flex-1 p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} h-full overflow-auto p-6 pb-40`}
     >
       <div className="max-w-2xl mx-auto space-y-8">
+        <Intro />
         <ProjectDetails 
           isDarkMode={isDarkMode} 
           onComplete={setProjectData} 
