@@ -88,20 +88,55 @@ function AppContent() {
       }
 
       try {
-        console.log("Fetching projects TEST");
+        console.log("Fetching projects for user:", user.id);
         setIsLoading(true);
-        let { data: projects, error } = await supabase
-          .from('projects')
-          .select('*');
+        
+        // Fetch projects where the current user is a collaborator
+        let { data: collaborations, error } = await supabase
+          .from('project_collaborators')
+          .select(`
+            project_id,
+            projects (
+              id,
+              title,
+              description,
+              master_plan,
+              initial_prompt,
+              keywords,
+              num_sprints,
+              current_sprint,
+              due_date,
+              achievements,
+              complete,
+              created_at,
+              user_id
+            )
+          `)
+          .eq('user_id', user.id)
+          .eq('accepted', true);
 
         if (error) {
           console.error('Error fetching projects:', error);
           return;
         }
 
-        if (projects) {
-          console.log(projects);
-          setProjects(projects);
+        if (collaborations) {
+          // Extract the project data from the joined result
+          const userProjects: Project[] = collaborations
+            .map(collaboration => {
+              const project = collaboration.projects as any;
+              if (project) {
+                return {
+                  ...project,
+                  tasks: [] // Initialize with empty tasks array
+                } as Project;
+              }
+              return null;
+            })
+            .filter((project): project is Project => project !== null);
+          
+          console.log('User projects:', userProjects);
+          setProjects(userProjects);
         }
       } catch (err) {
         console.error('Failed to fetch projects:', err);
