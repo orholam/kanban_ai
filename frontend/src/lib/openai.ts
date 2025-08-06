@@ -193,12 +193,15 @@ export async function generateProjectOverview(
     This project will use: ${projectDetails.keywords.join(', ')}.
     Project description: ${projectDetails.description}
 
-    Some background information on recent advancements in tech - only include if relevant to the project:
-    - Elevenlabs introduced conversational voice model
+    Some background information on vibe coding tools:
     - All major LLMs now support function calling
     - Bolt.new, Loveable, and V0 are the top new prompt -> app tools, which work well for frontend as a starting pointbut also integrate well with supabase for backend.
     - Cursor and Windsurf are popular coding assistants (like Copilot) IDEs
     - Supabase is a popular new database tool that supports Postgresql, storage, and auth.
+
+    Some recent developments from past month that may be useful - only include if relevant to the project!!!:
+    - Play AI, Hume and Elevenlabs best voice models
+    - Crew, MCP, OpenAI Agent SDK, and more - great agent frameworks
 
     Be informal, but dive right into the project plan from a technical perspective, describing each part of the plan in a way that is tailored to their specific vision.
     The response should be uniquely tailored to the type of project they are building and any features or integrations they mentioned in the description.
