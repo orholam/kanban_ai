@@ -34,7 +34,7 @@ export default function CreateTaskModal({ onClose, onCreateTask, projectId }: Cr
       description: description,
       type: type as 'bug' | 'feature' | 'scope',
       priority: priority as 'low' | 'medium' | 'high',
-      status: status as 'todo' | 'in-progress' | 'in-review',
+      status: status as 'todo' | 'in-progress' | 'done',
       sprint: parseInt(sprint.toString()),
       due_date: dueDate.toISOString().split('T')[0],
       assignee_id: user?.id || '',
@@ -94,7 +94,7 @@ export default function CreateTaskModal({ onClose, onCreateTask, projectId }: Cr
                 >
                   <option value="todo">Todo</option>
                   <option value="in-progress">In Progress</option>
-                  <option value="in-review">In Review</option>
+                  <option value="done">Done</option>
                 </select>
               </div>
               <div>

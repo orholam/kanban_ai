@@ -33,7 +33,7 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
   }, [task.status, task.sprint, task.title]);
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newStatus = e.target.value as 'todo' | 'in-progress' | 'in-review';
+    const newStatus = e.target.value as 'todo' | 'in-progress' | 'done';
     setStatus(newStatus); // Update the local state
     onStatusChange(task.id, newStatus); // Trigger the parent handler
   };
@@ -114,7 +114,7 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
                   >
                     <option value="todo">Todo</option>
                     <option value="in-progress">In Progress</option>
-                    <option value="in-review">In Review</option>
+                    <option value="done">Done</option>
                   </select>
                 </div>
                 <div>

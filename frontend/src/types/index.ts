@@ -1,6 +1,6 @@
 export type Priority = 'low' | 'medium' | 'high';
 export type TaskType = 'bug' | 'feature' | 'scope';
-export type Status = 'todo' | 'in-progress' | 'in-review';
+export type Status = 'todo' | 'in-progress' | 'done';
 
 export interface Task {
   id: string;
