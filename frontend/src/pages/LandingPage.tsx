@@ -7,8 +7,7 @@ import sprintPlanning from '../assets/undraw_choose_card_n0x0.svg'
 import taskManagement from '../assets/undraw_join_re_w1lh.svg'
 import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
 import { TrustedBy } from '../components/TrustedBy'
-
-
+import SEO from '../components/SEO'
 
 export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
   const { user } = useAuth()
@@ -18,7 +17,14 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
   }
 
   return (
-    <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} h-full overflow-y-auto`}>
+    <>
+      <SEO 
+        title="Kanban AI - AI-Powered Project Management for Side Projects"
+        description="Transform your side projects from ideas to reality with AI-assisted project management. Get personalized guidance, automated task breakdowns, and intelligent progress tracking. Perfect for developers, entrepreneurs, and creators."
+        keywords="kanban, AI, project management, side projects, task management, productivity, development, agile, scrum, AI assistant, project planning, development tools, MVP, startup"
+        url="https://kanbanai.dev"
+      />
+      <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} h-full overflow-y-auto`}>
       {/* Hero Section */}
       <div className="relative isolate px-6 pt-14 lg:px-8">
         <div className="mx-auto max-w-4xl py-8 sm:py-16 lg:py-24">
@@ -322,5 +328,6 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
         </div>
       </div>
     </div>
+    </>
   )
 } 

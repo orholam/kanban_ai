@@ -1,0 +1,21 @@
+{
+  "name": "Kanban AI - AI-Powered Project Management",
+  "short_name": "Kanban AI",
+  "description": "Transform your side projects from ideas to reality with AI-assisted project management. Get personalized guidance, automated task breakdowns, and intelligent progress tracking.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "business", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+} 

@@ -12,21 +12,25 @@ interface TaskModalProps {
   onStatusChange: (taskId: string, newStatus: string) => void;
   onSprintChange: (taskId: string, newSprint: number) => void;
   onDescriptionChange: (taskId: string, newDescription: string) => void;
+  onTitleChange: (taskId: string, newTitle: string) => void;
 }
 
-export default function TaskModal({ task, onClose, onStatusChange, onSprintChange, onDescriptionChange }: TaskModalProps) {
+export default function TaskModal({ task, onClose, onStatusChange, onSprintChange, onDescriptionChange, onTitleChange }: TaskModalProps) {
   const [status, setStatus] = useState(task.status); // Local state for the status
   const [sprint, setSprint] = useState(task.sprint); // Local state for the sprint
   const [dueDate, setDueDate] = useState(new Date(task.due_date));
   const [showCalendar, setShowCalendar] = useState(false);
   const [description, setDescription] = useState(task.description);
+  const [title, setTitle] = useState(task.title); // Local state for the title
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const titleDebounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Update local state whenever the task prop changes
   useEffect(() => {
     setStatus(task.status);
     setSprint(task.sprint);
-  }, [task.status, task.sprint]);
+    setTitle(task.title);
+  }, [task.status, task.sprint, task.title]);
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value as 'todo' | 'in-progress' | 'in-review';
@@ -54,6 +58,19 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
     }, 3000); // Adjust the delay as needed
   };
 
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTitle = e.target.value;
+    setTitle(newTitle);
+
+    if (titleDebounceTimeout.current) {
+      clearTimeout(titleDebounceTimeout.current);
+    }
+
+    titleDebounceTimeout.current = setTimeout(() => {
+      onTitleChange(task.id, newTitle);
+    }, 3000); // Adjust the delay as needed
+  };
+
   return (
       <div
         className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -65,8 +82,14 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
         >
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">{task.title}</h2>
+              <div className="flex-1">
+                <input
+                  type="text"
+                  value={title}
+                  onChange={handleTitleChange}
+                  className="text-xl font-semibold text-gray-900 bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 rounded px-2 py-1 w-full"
+                  placeholder="Enter task title..."
+                />
                 <div className="flex justify-between space-x-2 mt-1">
                   <p className="text-sm text-left text-gray-500">{task.id}</p>
                   <p className="text-sm text-right text-gray-500">{task.project_id}</p>
@@ -74,7 +97,7 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
               </div>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-500"
+                className="text-gray-400 hover:text-gray-500 ml-4"
               >
                 <X className="h-6 w-6" />
               </button>

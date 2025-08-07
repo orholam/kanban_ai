@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://kanbanai.dev/sitemap.xml
+
+# Disallow private/authenticated areas
+Disallow: /kanban
+Disallow: /project/
+Disallow: /new-project
+Disallow: /analytics
+Disallow: /feedback
+
+# Allow important public pages
+Allow: /
+Allow: /login
+Allow: /privacy-policy
+Allow: /terms-of-service 

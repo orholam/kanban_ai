@@ -1,26 +1,94 @@
 import React from 'react';
+import SEO from '../components/SEO';
 
 const PrivacyPolicy: React.FC = () => {
     return (
-        <div className="privacy-policy p-6 m-6">
-            <h1>Privacy Policy</h1>
-            <p>This privacy policy sets out how [Your Company Name] uses and protects any information that you give [Your Company Name] when you use this website.</p>
-            
-            <h2>Information We Collect</h2>
-            <p>We may collect the following information: name, contact information including email address, demographic information such as postcode, preferences, and interests.</p>
-            
-            <h2>What We Do with the Information</h2>
-            <p>We require this information to understand your needs and provide you with a better service, and in particular for the following reasons: Internal record keeping, improvement of our products and services.</p>
-            
-            <h2>Security</h2>
-            <p>We are committed to ensuring that your information is secure. In order to prevent unauthorized access or disclosure, we have put in place suitable physical, electronic, and managerial procedures to safeguard and secure the information we collect online.</p>
-            
-            <h2>Cookies</h2>
-            <p>A cookie is a small file which asks permission to be placed on your computer's hard drive. Once you agree, the file is added and the cookie helps analyze web traffic or lets you know when you visit a particular site.</p>
-            
-            <h2>Controlling Your Personal Information</h2>
-            <p>We reserve the right to change this policy at any time. If you have any questions about our privacy policy, please contact us at [Your Contact Information].</p>
-        </div>
+        <>
+            <SEO 
+                title="Privacy Policy - Kanban AI"
+                description="Learn about how Kanban AI collects, uses, and protects your personal information. Our privacy policy explains your rights and our data practices."
+                keywords="privacy policy, data protection, personal information, kanban AI, user privacy"
+                url="https://kanbanai.dev/privacy-policy"
+            />
+            <div className="max-w-4xl mx-auto px-6 py-12">
+                <h1 className="text-3xl font-bold mb-8">Privacy Policy</h1>
+                <p className="mb-6">Last updated: January 15, 2024</p>
+                
+                <section className="mb-8">
+                    <h2 className="text-2xl font-semibold mb-4">Introduction</h2>
+                    <p className="mb-4">
+                        Kanban AI ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI-powered project management platform.
+                    </p>
+                </section>
+
+                <section className="mb-8">
+                    <h2 className="text-2xl font-semibold mb-4">Information We Collect</h2>
+                    <h3 className="text-xl font-medium mb-2">Personal Information</h3>
+                    <ul className="list-disc pl-6 mb-4">
+                        <li>Name and email address when you create an account</li>
+                        <li>Profile information and preferences</li>
+                        <li>Project data and task information</li>
+                        <li>Usage data and analytics</li>
+                    </ul>
+                    
+                    <h3 className="text-xl font-medium mb-2">Technical Information</h3>
+                    <ul className="list-disc pl-6 mb-4">
+                        <li>IP address and device information</li>
+                        <li>Browser type and version</li>
+                        <li>Operating system</li>
+                        <li>Usage patterns and interactions</li>
+                    </ul>
+                </section>
+
+                <section className="mb-8">
+                    <h2 className="text-2xl font-semibold mb-4">How We Use Your Information</h2>
+                    <ul className="list-disc pl-6 mb-4">
+                        <li>Provide and maintain our services</li>
+                        <li>Personalize your experience and AI recommendations</li>
+                        <li>Improve our platform and develop new features</li>
+                        <li>Communicate with you about updates and changes</li>
+                        <li>Ensure security and prevent fraud</li>
+                    </ul>
+                </section>
+
+                <section className="mb-8">
+                    <h2 className="text-2xl font-semibold mb-4">Data Security</h2>
+                    <p className="mb-4">
+                        We implement appropriate technical and organizational measures to protect your personal information against unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over the internet is 100% secure.
+                    </p>
+                </section>
+
+                <section className="mb-8">
+                    <h2 className="text-2xl font-semibold mb-4">Data Sharing</h2>
+                    <p className="mb-4">
+                        We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this policy or as required by law.
+                    </p>
+                </section>
+
+                <section className="mb-8">
+                    <h2 className="text-2xl font-semibold mb-4">Your Rights</h2>
+                    <p className="mb-4">You have the right to:</p>
+                    <ul className="list-disc pl-6 mb-4">
+                        <li>Access your personal information</li>
+                        <li>Correct inaccurate data</li>
+                        <li>Request deletion of your data</li>
+                        <li>Object to processing of your data</li>
+                        <li>Data portability</li>
+                    </ul>
+                </section>
+
+                <section className="mb-8">
+                    <h2 className="text-2xl font-semibold mb-4">Contact Us</h2>
+                    <p className="mb-4">
+                        If you have any questions about this Privacy Policy or our data practices, please contact us at:
+                    </p>
+                    <p className="mb-4">
+                        Email: privacy@kanbanai.dev<br/>
+                        Address: [Your Business Address]
+                    </p>
+                </section>
+            </div>
+        </>
     );
 };
 

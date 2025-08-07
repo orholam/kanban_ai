@@ -6,7 +6,7 @@ import { Navigate } from 'react-router-dom';
 import TypewriterText from '../components/TypeWriterText';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
+import SEO from '../components/SEO';
 
 export default function Login({ isDarkMode }: { isDarkMode: boolean }) {
   const { user } = useAuth()
@@ -16,7 +16,14 @@ export default function Login({ isDarkMode }: { isDarkMode: boolean }) {
   }
 
   return (
-    <div className={`min-h-screen flex ${isDarkMode ? 'bg-gray-300' : 'bg-gray-200'}`}>
+    <>
+      <SEO 
+        title="Login - Kanban AI"
+        description="Sign in to Kanban AI and start transforming your side projects with AI-powered project management. Get personalized guidance and intelligent progress tracking."
+        keywords="login, sign in, kanban AI, project management, AI assistant"
+        url="https://kanbanai.dev/login"
+      />
+      <div className={`min-h-screen flex ${isDarkMode ? 'bg-gray-300' : 'bg-gray-200'}`}>
         {/* Left side */}
         <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-indigo-900/80 to-gray-900/80 z-10" />
@@ -104,5 +111,6 @@ export default function Login({ isDarkMode }: { isDarkMode: boolean }) {
         </div>
       </div>
     </div>
+    </>
   )
 } 

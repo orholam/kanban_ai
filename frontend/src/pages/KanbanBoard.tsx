@@ -199,6 +199,28 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
     }
   };
 
+  const handleTitleChange = async (taskId: string, newTitle: string) => {
+    try {
+      const { data, error } = await supabase
+      .from('tasks')
+      .update({ title: newTitle })
+      .eq('id', taskId)
+      .select()
+
+      if (error) {
+        console.error('Error updating title:', error);
+        return;
+      }
+      if (data) {
+        console.log(data[0]);
+        setTasks(prevTasks => prevTasks.map(task => (task.id === data[0].id ? { ...data[0], isAnimated: true } : task)));
+        toast.success('Title updated');
+      }
+    } catch (error) {
+      console.error('Error updating title:', error);
+    }
+  };
+
   const handleDragOver = (e: React.DragEvent, columnId: string) => {
     e.preventDefault();
     setDragOverColumn(columnId);
@@ -317,6 +339,7 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
           onStatusChange={handleStatusChange}
           onSprintChange={handleSprintChange}
           onDescriptionChange={handleDescriptionChange}
+          onTitleChange={handleTitleChange}
         />
       )}
 
