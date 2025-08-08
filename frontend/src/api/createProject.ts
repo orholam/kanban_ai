@@ -34,11 +34,20 @@ export async function createProject(projectData: ProjectData, collaboratorConnec
       throw new Error('User must be authenticated to create a project');
     }
     
+    // Validate mandatory fields
+    if (!projectData.title || projectData.title.trim() === '') {
+      throw new Error('Project title is required');
+    }
+    
+    if (!projectData.description || projectData.description.trim() === '') {
+      throw new Error('Project description is required');
+    }
+    
     // Ensure we only send fields that exist in the projects table
     const projectDataForInsert = {
       id: projectData.id,
-      title: projectData.title,
-      description: projectData.description,
+      title: projectData.title.trim(),
+      description: projectData.description.trim(),
       master_plan: projectData.master_plan,
       initial_prompt: projectData.initial_prompt,
       keywords: projectData.keywords,
