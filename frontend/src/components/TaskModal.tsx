@@ -13,9 +13,10 @@ interface TaskModalProps {
   onSprintChange: (taskId: string, newSprint: number) => void;
   onDescriptionChange: (taskId: string, newDescription: string) => void;
   onTitleChange: (taskId: string, newTitle: string) => void;
+  onDueDateChange: (taskId: string, newDueDate: Date) => void;
 }
 
-export default function TaskModal({ task, onClose, onStatusChange, onSprintChange, onDescriptionChange, onTitleChange }: TaskModalProps) {
+export default function TaskModal({ task, onClose, onStatusChange, onSprintChange, onDescriptionChange, onTitleChange, onDueDateChange }: TaskModalProps) {
   const [status, setStatus] = useState(task.status); // Local state for the status
   const [sprint, setSprint] = useState(task.sprint); // Local state for the sprint
   const [dueDate, setDueDate] = useState(new Date(task.due_date));
@@ -30,7 +31,8 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
     setStatus(task.status);
     setSprint(task.sprint);
     setTitle(task.title);
-  }, [task.status, task.sprint, task.title]);
+    setDueDate(new Date(task.due_date));
+  }, [task.status, task.sprint, task.title, task.due_date]);
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value as 'todo' | 'in-progress' | 'done';
@@ -71,6 +73,14 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
     }, 3000); // Adjust the delay as needed
   };
 
+  const handleDateChange = (date: Date | null) => {
+    if (date) {
+      setDueDate(date);
+      setShowCalendar(false);
+      onDueDateChange(task.id, date);
+    }
+  };
+
   return (
       <div
         className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
@@ -90,10 +100,6 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
                   className="text-xl font-semibold text-gray-900 bg-transparent border-none outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 rounded px-2 py-1 w-full"
                   placeholder="Enter task title..."
                 />
-                <div className="flex justify-between space-x-2 mt-1">
-                  <p className="text-sm text-left text-gray-500">{task.id}</p>
-                  <p className="text-sm text-right text-gray-500">{task.project_id}</p>
-                </div>
               </div>
               <button
                 onClick={onClose}
@@ -151,13 +157,13 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
                     onClick={() => setShowCalendar(!showCalendar)}
                   >
                     <Calendar className="h-4 w-4 mr-2"/>
-                    {new Date(task.due_date).toLocaleDateString()}
+                    {dueDate.toLocaleDateString()}
                   </span>
                   {showCalendar && (
                     <div className="absolute z-50 bg-white shadow-lg rounded-md p-2">
                       <DatePicker
                         selected={dueDate}
-                        //onChange={handleDateChange}
+                        onChange={handleDateChange}
                         onClickOutside={() => setShowCalendar(false)} // Close when clicking outside
                         inline // Shows the calendar inline
                       />

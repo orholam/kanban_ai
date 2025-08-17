@@ -121,7 +121,7 @@ export default function NewProject({ isDarkMode, setProjects }: NewProjectProps)
       className={`flex-1 p-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} h-full overflow-auto p-6 pb-40`}
     >
       <div className="max-w-2xl mx-auto space-y-8">
-        <Intro />
+        <Intro isDarkMode={isDarkMode} />
         <ProjectDetails 
           isDarkMode={isDarkMode} 
           onComplete={setProjectData} 

@@ -221,6 +221,28 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
     }
   };
 
+  const handleDueDateChange = async (taskId: string, newDueDate: Date) => {
+    try {
+      const { data, error } = await supabase
+      .from('tasks')
+      .update({ due_date: newDueDate.toISOString() })
+      .eq('id', taskId)
+      .select()
+
+      if (error) {
+        console.error('Error updating due date:', error);
+        return;
+      }
+      if (data) {
+        console.log(data[0]);
+        setTasks(prevTasks => prevTasks.map(task => (task.id === data[0].id ? { ...data[0], isAnimated: true } : task)));
+        toast.success('Due date updated');
+      }
+    } catch (error) {
+      console.error('Error updating due date:', error);
+    }
+  };
+
   const handleDragOver = (e: React.DragEvent, columnId: string) => {
     e.preventDefault();
     setDragOverColumn(columnId);
@@ -340,6 +362,7 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
           onSprintChange={handleSprintChange}
           onDescriptionChange={handleDescriptionChange}
           onTitleChange={handleTitleChange}
+          onDueDateChange={handleDueDateChange}
         />
       )}
 
