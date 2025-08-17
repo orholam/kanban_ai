@@ -7,6 +7,7 @@ interface ProjectData {
   master_plan: string;
   initial_prompt: string;
   keywords: string;
+  projectType: string; // Add this field
   num_sprints: number;
   current_sprint: number;
   complete: boolean;
@@ -51,6 +52,7 @@ export async function createProject(projectData: ProjectData, collaboratorConnec
       master_plan: projectData.master_plan,
       initial_prompt: projectData.initial_prompt,
       keywords: projectData.keywords,
+      projectType: projectData.projectType, // Add this field
       num_sprints: projectData.num_sprints,
       current_sprint: projectData.current_sprint,
       due_date: projectData.due_date,

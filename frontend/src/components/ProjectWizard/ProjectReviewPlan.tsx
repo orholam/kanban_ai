@@ -9,6 +9,7 @@ interface ProjectReviewPlanProps {
     name: string;
     description: string;
     keywords: string[];
+    type: string;
   };
   onComplete: (plan: string) => void;
 }
@@ -31,12 +32,22 @@ export default function ProjectReviewPlan({ isDarkMode, projectData, onComplete 
     const fetchData = async () => {
       try {
         // Start the streaming overview
-        const overviewStream = await generateProjectOverview(projectData);
+        const overviewStream = await generateProjectOverview({
+          name: projectData.name,
+          description: projectData.description,
+          keywords: projectData.keywords,
+          projectType: projectData.type
+        });
         setStreamingData(overviewStream);
 
         // Generate the weekly plan
         console.log("generating project plan");
-        const data = await generateProjectPlan(projectData);
+        const data = await generateProjectPlan({
+          name: projectData.name,
+          description: projectData.description,
+          keywords: projectData.keywords,
+          projectType: projectData.type
+        });
         const args = JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
         setWeekPlan(args.weeks);
         setLoading(false);

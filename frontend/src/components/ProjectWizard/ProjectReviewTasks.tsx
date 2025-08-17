@@ -2,14 +2,16 @@ import React, { useEffect, useState, useRef } from 'react';
 import { generateFirstWeekTasks } from '../../lib/openai';
 import WeekOneTasks from './WeekOneTasks';
 import AnimatedText from '../AnimatedText';
+import { Task } from '../../types';
 
 interface ProjectReviewTasksProps {
   isDarkMode: boolean;
   projectPlan: string;
+  projectType: string; // Add this field
   onComplete: (tasks: Task[]) => void;
 }
 
-export default function ProjectReviewTasks({ isDarkMode, projectPlan, onComplete }: ProjectReviewTasksProps) {
+export default function ProjectReviewTasks({ isDarkMode, projectPlan, projectType, onComplete }: ProjectReviewTasksProps) {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const fetchController = useRef(false);
@@ -22,7 +24,7 @@ export default function ProjectReviewTasks({ isDarkMode, projectPlan, onComplete
       try {
         console.log("projectPlan");
         console.log(projectPlan);
-        const data = await generateFirstWeekTasks(projectPlan);
+        const data = await generateFirstWeekTasks(projectPlan, projectType);
         const args = JSON.parse(data.choices[0].message.tool_calls[0].function.arguments);
         setTasks(args.tasks);
         setLoading(false);
@@ -33,7 +35,7 @@ export default function ProjectReviewTasks({ isDarkMode, projectPlan, onComplete
     };
 
     fetchTasks();
-  }, [projectPlan]);
+  }, [projectPlan, projectType]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">

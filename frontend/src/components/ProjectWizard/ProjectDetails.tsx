@@ -1,26 +1,85 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { CursorComplete } from '../Magic/CursorComplete';
+import TypeSelector from './TypeSelector';
+import { BookIcon, Brain, Calendar, Smartphone } from 'lucide-react';
 
 interface ProjectDetailsProps {
   isDarkMode: boolean;
-  onComplete: (data: { name: string; description: string; keywords: string[] }) => void;
+  onComplete: (data: { name: string; description: string; keywords: string[]; type: string }) => void;
 }
 
-const RECOMMENDED_STACKS = [
+const TYPES = [
   {
-    name: 'AI Stack',
-    stack: ['Bolt.new', 'Cursor', 'Supabase']
+      id: 1,
+      name: "SaaS App",
+      icon: <Smartphone className="w-5 h-5" />,
   },
   {
-    name: 'Full-Stack JavaScript',
-    stack: ['React', 'MongoDB', 'Express', 'Node.js']
-  }
+      id: 2,
+      name: "AI Tool",
+      icon: <Brain className="w-5 h-5" />,
+  },
+  {
+      id: 3,
+      name: "Blog/Website",
+      icon: <BookIcon className="w-5 h-5" />,
+  },
+  {
+      id: 4,
+      name: "Event Planning",
+      icon: <Calendar className="w-5 h-5" />,
+  },
 ];
+
+const RECOMMENDED_STACKS = {
+  "SaaS App": [
+    {
+      name: 'AI Stack',
+      stack: ['Bolt.new', 'Cursor', 'Supabase']
+    },
+    {
+      name: 'Full-Stack JavaScript',
+      stack: ['React', 'MongoDB', 'Express', 'Node.js']
+    }
+  ],
+  "AI Tool": [
+    {
+      name: 'AI Stack',
+      stack: ['Bolt.new', 'Cursor', 'Supabase']
+    },
+    {
+      name: 'Standalone Script',
+      stack: ['Cron Job', 'Python', 'Venv']
+    }
+  ],
+  "Blog/Website": [
+    {
+      name: 'Classic Stack',
+      stack: ['Wordpress', 'Elementor', 'Google Analytics']
+    },
+    {
+      name: 'E-Commerce Stack',
+      stack: ['Shopify', 'Stripe', 'Algolia']
+    }
+  ],
+  "Event Planning": [
+    {
+      name: 'Event Planning Stack',
+      stack: ['Eventbrite', 'Google Calendar', 'Google Maps']
+    },
+    {
+      name: 'Wedding Planning',
+      stack: ['WithJoy', 'Gmail', 'Google Calendar']
+    }
+  ]
+};
 
 export default function ProjectDetails({ isDarkMode, onComplete }: ProjectDetailsProps) {
   const [projectName, setProjectName] = useState('');
   const [description, setDescription] = useState('');
   const [stackItems, setStackItems] = useState<string[]>([]);
   const [stackInput, setStackInput] = useState('');
+  const [typeInput, setTypeInput] = useState('SaaS App');
 
   const projectNameRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
@@ -42,7 +101,8 @@ export default function ProjectDetails({ isDarkMode, onComplete }: ProjectDetail
     onComplete({
       name: projectName,
       description,
-      keywords: stackItems
+      keywords: stackItems,
+      type: typeInput
     });
   };
 
@@ -92,6 +152,10 @@ export default function ProjectDetails({ isDarkMode, onComplete }: ProjectDetail
           />
         </div>
 
+        <div className="mt-1">
+          <TypeSelector type={typeInput} updateType={setTypeInput} types={TYPES}/>
+        </div>
+
         <div>
           <label 
             htmlFor="description" 
@@ -115,7 +179,18 @@ export default function ProjectDetails({ isDarkMode, onComplete }: ProjectDetail
             spellCheck={false}
           />
         </div>
-
+          
+        {/*
+        <div className="mt-4">
+          <label 
+            htmlFor="description-cursor" 
+            className={`block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'} mb-2`}
+          >
+            Description (Cursor)
+          </label>
+          <CursorComplete prompt="Continue the user's thought, extend a single sentence. Do NOT suggest long complex sentences. Continue exactly where the user left off. The user is developing an app and they are writing a description for their app." timeToWait={1500} height={200} />
+        </div>
+        */}
         <div>
           <label 
             htmlFor="stack" 
@@ -180,7 +255,7 @@ export default function ProjectDetails({ isDarkMode, onComplete }: ProjectDetail
               Recommended Stacks
             </h4>
             <div className="space-y-3">
-              {RECOMMENDED_STACKS.map((recommendedStack, index) => (
+              {RECOMMENDED_STACKS[typeInput as keyof typeof RECOMMENDED_STACKS]?.map((recommendedStack, index) => (
                 <div 
                   key={index}
                   className={`p-4 rounded-lg border transform transition-all duration-200 ${

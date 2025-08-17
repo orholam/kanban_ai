@@ -42,6 +42,7 @@ export interface Project {
   master_plan: string;
   initial_prompt: string;
   keywords: string;
+  projectType: string; // Add this field for project type
   num_sprints: number;
   current_sprint: number;
   due_date: string;

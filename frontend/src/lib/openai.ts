@@ -1,3 +1,5 @@
+import { getPromptsForProjectType } from './prompts';
+
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
@@ -112,12 +114,12 @@ const tools2 = [
 ]
 
 export async function generateProjectPlan(
-  projectDetails: { name: string; keywords: string[]; description: string }
+  projectDetails: { name: string; keywords: string[]; description: string; projectType: string }
 ): Promise<any> {
+  const prompts = getPromptsForProjectType(projectDetails.projectType);
+  
   const prompt = `
-    Your task is to create a detailed no-nonsense development pipeline over the course of 10 weeks for a solopreneur as their technical co-founder.
-    Your project outline should not include planning - you are the planner. The start should be frontend dev, and the end should be deployment.
-    Each week should be described in 1-2 sentences, with specific references to the tools they selected or their project description.
+    ${prompts.projectPlan}
     Project name: "${projectDetails.name}".
     Selected dev tools: ${projectDetails.keywords.join(', ')}.
     Web app description: ${projectDetails.description}.
@@ -148,9 +150,11 @@ export async function generateProjectPlan(
   return data;
 }
 
-export async function generateFirstWeekTasks(projectPlan: string): Promise<any> {
+export async function generateFirstWeekTasks(projectPlan: string, projectType: string): Promise<any> {
+  const prompts = getPromptsForProjectType(projectType);
+  
   const prompt = `
-    Based on the following project plan, generate a list of 4-5 tasks for the first week:
+    ${prompts.firstWeekTasks}
     ${projectPlan}
   `;
 
@@ -185,10 +189,12 @@ export async function generateFirstWeekTasks(projectPlan: string): Promise<any> 
 // Other information should cycle through - tech headlines, so users can take advantage of the cutting edge tools.
 
 export async function generateProjectOverview(
-  projectDetails: { name: string; keywords: string[]; description: string }
+  projectDetails: { name: string; keywords: string[]; description: string; projectType: string }
 ): Promise<ReadableStream<Uint8Array> | null> {
+  const prompts = getPromptsForProjectType(projectDetails.projectType);
+  
   const prompt = `
-    You are a technical co-founder who is helping a non-technical founder build their project.
+    ${prompts.projectOverview}
     Create a high-level project overview for "${projectDetails.name}".
     This project will use: ${projectDetails.keywords.join(', ')}.
     Project description: ${projectDetails.description}
@@ -202,9 +208,6 @@ export async function generateProjectOverview(
     Some recent developments from past month that may be useful - only include if relevant to the project!!!:
     - Play AI, Hume and Elevenlabs best voice models
     - Crew, MCP, OpenAI Agent SDK, and more - great agent frameworks
-
-    Be informal, but dive right into the project plan from a technical perspective, describing each part of the plan in a way that is tailored to their specific vision.
-    The response should be uniquely tailored to the type of project they are building and any features or integrations they mentioned in the description.
 
     The total length of your response should be 1-2 paragraphs.
   `;
@@ -231,4 +234,30 @@ export async function generateProjectOverview(
   }
 
   return response.body;
+}
+
+export async function autocompletion(prompt: string): Promise<any> {
+  const requestBody = {
+    model: 'gpt-4o-mini',
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.7,
+    max_tokens: 1000,
+    // Removed stream: true since we're parsing as JSON
+  };
+  
+  const response = await fetch(OPENAI_API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    throw new Error(`OpenAI API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data;
 }

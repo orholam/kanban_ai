@@ -14,6 +14,7 @@ interface ProjectData {
   name: string;
   description: string;
   keywords: string[];
+  type: string;
 }
 
 interface NewProjectProps {
@@ -66,6 +67,7 @@ export default function NewProject({ isDarkMode, setProjects }: NewProjectProps)
       master_plan: projectPlan,
       initial_prompt: projectData.description,
       keywords: projectData.keywords.join(', '),
+      projectType: projectData.type, // Add this field
       num_sprints: 10,
       current_sprint: 1,
       complete: false,
@@ -133,10 +135,11 @@ export default function NewProject({ isDarkMode, setProjects }: NewProjectProps)
           />
         )}
         
-        {projectPlan && (
+        {projectPlan && projectData && (
           <ProjectReviewTasks 
             isDarkMode={isDarkMode}
             projectPlan={projectPlan}
+            projectType={projectData.type}
             onComplete={handleProjectCreate}
           />
         )}
