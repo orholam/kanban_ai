@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Check, X, Eye, EyeOff, FileText } from 'lucide-react';
+import { Plus, Pencil, Check, X, Eye, EyeOff, FileText, Link } from 'lucide-react';
 import TaskCard from '../components/TaskCard';
 import TaskModal from '../components/TaskModal';
 import CreateTaskModal from '../components/CreateTaskModal';
@@ -333,6 +333,18 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery, setProj
     }
   };
 
+  const handleCopyProjectLink = async () => {
+    if (!currentProject) return;
+    
+    const projectUrl = `${window.location.origin}/public/project/${currentProject.id}`;
+    try {
+      await navigator.clipboard.writeText(projectUrl);
+      toast.success('Project link copied to clipboard!');
+    } catch (clipboardError) {
+      toast.error('Failed to copy link to clipboard');
+    }
+  };
+
   const handleDragOver = (e: React.DragEvent, columnId: string) => {
     e.preventDefault();
     setDragOverColumn(columnId);
@@ -368,34 +380,53 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery, setProj
             <div className="flex items-center gap-2 mb-2">
               <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentProject?.title}</h1>
               {currentProject && (
-                <button
-                  onClick={handlePrivacyToggle}
-                  disabled={isPrivacyUpdating}
-                  aria-label={`Make project ${currentProject.private === false ? 'private' : 'public'}`}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
-                    currentProject.private === false 
-                      ? isDarkMode ? 'bg-green-900/20 text-green-400 hover:bg-green-900/30' : 'bg-green-100 text-green-600 hover:bg-green-200'
-                      : isDarkMode ? 'bg-gray-700/50 text-gray-400 hover:bg-gray-700/70' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
-                  }`}
-                  title={`Click to make project ${currentProject.private === false ? 'private' : 'public'}`}
-                >
-                  <div className="flex items-center">
-                    {isPrivacyUpdating ? (
-                      <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></div>
-                    ) : currentProject.private === false ? (
-                      <Eye className="h-3.5 w-3.5" />
-                      ) : (
-                      <EyeOff className="h-3.5 w-3.5" />
-                    )}
-                  </div>
-                  <span className={`text-xs font-medium ${
-                    currentProject.private === false 
-                      ? isDarkMode ? 'text-green-400' : 'text-green-600'
-                      : isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`}>
-                    {isPrivacyUpdating ? 'Updating...' : (currentProject.private === false ? 'Public' : 'Private')}
-                  </span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePrivacyToggle}
+                    disabled={isPrivacyUpdating}
+                    aria-label={`Make project ${currentProject.private === false ? 'private' : 'public'}`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                      currentProject.private === false 
+                        ? isDarkMode ? 'bg-green-900/20 text-green-400 hover:bg-green-900/30' : 'bg-green-100 text-green-600 hover:bg-green-200'
+                        : isDarkMode ? 'bg-gray-700/50 text-gray-400 hover:bg-gray-700/70' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                    }`}
+                    title={`Click to make project ${currentProject.private === false ? 'private' : 'public'}`}
+                  >
+                    <div className="flex items-center">
+                      {isPrivacyUpdating ? (
+                        <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></div>
+                      ) : currentProject.private === false ? (
+                        <Eye className="h-3.5 w-3.5" />
+                        ) : (
+                        <EyeOff className="h-3.5 w-3.5" />
+                      )}
+                    </div>
+                    <span className={`text-xs font-medium ${
+                      currentProject.private === false 
+                        ? isDarkMode ? 'text-green-400' : 'text-green-600'
+                        : isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      {isPrivacyUpdating ? 'Updating...' : (currentProject.private === false ? 'Public' : 'Private')}
+                    </span>
+                  </button>
+                  {currentProject.private === false && (
+                    <button
+                      onClick={handleCopyProjectLink}
+                      aria-label="Copy project link"
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                        isDarkMode ? 'bg-blue-900/20 text-blue-400 hover:bg-blue-900/30' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                      }`}
+                      title="Copy project link to clipboard"
+                    >
+                      <Link className="h-3.5 w-3.5" />
+                      <span className={`text-xs font-medium ${
+                        isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                      }`}>
+                        Copy Link
+                      </span>
+                    </button>
+                  )}
+                </div>
               )}
             </div>
             <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>{currentProject?.description}</p>
