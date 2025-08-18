@@ -23,6 +23,8 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
   const [showCalendar, setShowCalendar] = useState(false);
   const [description, setDescription] = useState(task.description);
   const [title, setTitle] = useState(task.title); // Local state for the title
+  const [isClosing, setIsClosing] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const titleDebounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -33,6 +35,12 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
     setTitle(task.title);
     setDueDate(new Date(task.due_date));
   }, [task.status, task.sprint, task.title, task.due_date]);
+
+  // Trigger entrance animation
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value as 'todo' | 'in-progress' | 'done';
@@ -81,13 +89,33 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
     }
   };
 
+  const handleClose = () => {
+    setIsClosing(true);
+    // Wait for animation to complete before calling onClose
+    setTimeout(() => {
+      onClose();
+    }, 200); // Match CSS transition duration
+  };
+
   return (
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-        onClick={onClose}
+        className={`fixed inset-0 flex items-center justify-center z-50 transition-all duration-200 ease-out ${
+          isClosing 
+            ? 'bg-black bg-opacity-0' 
+            : isVisible
+            ? 'bg-black bg-opacity-50'
+            : 'bg-black bg-opacity-0'
+        }`}
+        onClick={handleClose}
       >
         <div
-          className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+          className={`bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-200 ease-out ${
+            isClosing 
+              ? 'scale-95 opacity-0' 
+              : isVisible
+              ? 'scale-100 opacity-100'
+              : 'scale-95 opacity-0'
+          }`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="p-6">
@@ -102,7 +130,7 @@ export default function TaskModal({ task, onClose, onStatusChange, onSprintChang
                 />
               </div>
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="text-gray-400 hover:text-gray-500 ml-4"
               >
                 <X className="h-6 w-6" />
