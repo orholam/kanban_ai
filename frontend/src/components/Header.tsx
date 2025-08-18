@@ -79,6 +79,15 @@ export default function Header({ isDarkMode, toggleTheme, onSearch }: HeaderProp
                       <div className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-900'} border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                         <p className="font-medium">{user ? getDisplayName(user) : 'Unknown User'}</p>
                         <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{user.email}</p>
+                        <div className="mt-2">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            isDarkMode 
+                              ? 'bg-gradient-to-r from-indigo-400 to-purple-400 text-white shadow-md' 
+                              : 'bg-gradient-to-r from-indigo-400 to-purple-400 text-white shadow-md'
+                          }`}>
+                            ✨ Pro Plan
+                          </span>
+                        </div>
                       </div>
                       <a href="#" className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>Profile Settings</a>
                       <a href="#" className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>Preferences</a>
