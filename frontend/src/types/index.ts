@@ -50,6 +50,7 @@ export interface Project {
   complete: boolean;
   created_at: string;
   user_id: string;
+  private?: boolean; // Add private field, optional since existing projects might not have it
   tasks: Task[];
 }
 

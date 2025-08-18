@@ -8,6 +8,7 @@ import NewProject from './pages/NewProject';
 import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
 import AnalyticsPage from './pages/AnalyticsPage';
+import PublicProject from './pages/PublicProject';
 import { supabase } from './lib/supabase';
 import type { Project } from './types';
 import { trackPage } from 'tenable-analytics';
@@ -21,7 +22,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return user ? <>{children}</> : <Navigate to="/login" />;
 }
 
-function KanbanBoardWrapper({ isDarkMode, projects, searchQuery, isLoading }: { isDarkMode: boolean; projects: Project[]; searchQuery: string; isLoading: boolean }) {
+function KanbanBoardWrapper({ isDarkMode, projects, searchQuery, isLoading, setProjects }: { isDarkMode: boolean; projects: Project[]; searchQuery: string; isLoading: boolean; setProjects: (projects: Project[]) => void }) {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -49,7 +50,7 @@ function KanbanBoardWrapper({ isDarkMode, projects, searchQuery, isLoading }: { 
     );
   }
 
-  return <KanbanBoard isDarkMode={isDarkMode} projects={projects} searchQuery={searchQuery} />;
+  return <KanbanBoard isDarkMode={isDarkMode} projects={projects} searchQuery={searchQuery} setProjects={setProjects} />;
 }
 
 function AppContent() {
@@ -109,7 +110,8 @@ function AppContent() {
               achievements,
               complete,
               created_at,
-              user_id
+              user_id,
+              private
             )
           `)
           .eq('user_id', user.id)
@@ -128,6 +130,7 @@ function AppContent() {
               if (project) {
                 return {
                   ...project,
+                  private: project.private ?? true, // Default to private if field is missing
                   tasks: [] // Initialize with empty tasks array
                 } as Project;
               }
@@ -154,74 +157,119 @@ function AppContent() {
 
   return (
     <BrowserRouter>
-      <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <Header 
-          isDarkMode={isDarkMode} 
-          toggleTheme={toggleTheme}
-          onSearch={setSearchQuery}
+      <Routes>
+        {/* Public routes that need full page layout */}
+        <Route
+          path="/public/project/:projectId"
+          element={
+            <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+              <Header 
+                isDarkMode={isDarkMode} 
+                toggleTheme={toggleTheme}
+                onSearch={setSearchQuery}
+              />
+              <div className="flex-1 overflow-y-auto">
+                <PublicProject isDarkMode={isDarkMode} />
+              </div>
+            </div>
+          }
         />
-        <div className="flex flex-1 overflow-hidden">
-          {user && <Sidebar isDarkMode={isDarkMode} projects={projects} user={user} />}
-          <main className="flex-1">
-            <Routes>
-              <Route 
-                path="/" 
-                element={
-                  user ? <Navigate to="/kanban" /> : <LandingPage isDarkMode={isDarkMode} />
-                } 
-              />
-              <Route path="/login" element={<Login isDarkMode={isDarkMode} />} />
-              <Route
-                path="/kanban"
-                element={
-                  <PrivateRoute>
-                    <KanbanBoardWrapper isDarkMode={isDarkMode} projects={projects} searchQuery={searchQuery} isLoading={isLoading} />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/project/:projectId"
-                element={
-                  <PrivateRoute>
-                    <KanbanBoardWrapper 
-                      isDarkMode={isDarkMode} 
-                      projects={projects}
-                      searchQuery={searchQuery}
-                      isLoading={isLoading}
-                    />
-                  </PrivateRoute>
-                }
-              />
-              <Route 
-                path="/new-project/*" 
-                element={
-                  <PrivateRoute>
-                    <NewProject isDarkMode={isDarkMode} setProjects={setProjects} />
-                  </PrivateRoute>
-                } 
-              />
-              <Route 
-                path="/analytics" 
-                element={
-                  <PrivateRoute>
-                    <AnalyticsPage isDarkMode={isDarkMode} />
-                  </PrivateRoute>
-                } 
-              />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/terms-of-service" element={<TermsOfService />} />
-              <Route 
-                path="/feedback" 
-                element={
-                  <PrivateRoute>
-                    <Feedback />
-                  </PrivateRoute>
-                } 
-              />
-            </Routes>
-          </main>
-        </div>
-      </div>
+        <Route path="/privacy-policy" element={
+          <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            <Header 
+              isDarkMode={isDarkMode} 
+              toggleTheme={toggleTheme}
+              onSearch={setSearchQuery}
+            />
+            <div className="flex-1 overflow-y-auto">
+              <PrivacyPolicy />
+            </div>
+          </div>
+        } />
+        <Route path="/terms-of-service" element={
+          <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            <Header 
+              isDarkMode={isDarkMode} 
+              toggleTheme={toggleTheme}
+              onSearch={setSearchQuery}
+            />
+            <div className="flex-1 overflow-y-auto">
+              <TermsOfService />
+            </div>
+          </div>
+        } />
+        
+        {/* Main app layout for authenticated routes */}
+        <Route path="*" element={
+          <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            <Header 
+              isDarkMode={isDarkMode} 
+              toggleTheme={toggleTheme}
+              onSearch={setSearchQuery}
+            />
+            <div className="flex flex-1 overflow-hidden">
+              {user && <Sidebar isDarkMode={isDarkMode} projects={projects} user={user} />}
+              <main className="flex-1">
+                <Routes>
+                  <Route 
+                    path="/" 
+                    element={
+                      user ? <Navigate to="/kanban" /> : <LandingPage isDarkMode={isDarkMode} />
+                    } 
+                  />
+                  <Route path="/login" element={<Login isDarkMode={isDarkMode} />} />
+                  <Route
+                    path="/kanban"
+                    element={
+                      <PrivateRoute>
+                        <KanbanBoardWrapper isDarkMode={isDarkMode} projects={projects} searchQuery={searchQuery} isLoading={isLoading} setProjects={setProjects} />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/project/:projectId"
+                    element={
+                      <PrivateRoute>
+                        <KanbanBoardWrapper 
+                          isDarkMode={isDarkMode} 
+                          projects={projects}
+                          searchQuery={searchQuery}
+                          isLoading={isLoading}
+                          setProjects={setProjects}
+                        />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route 
+                    path="/new-project/*" 
+                    element={
+                      <PrivateRoute>
+                        <NewProject isDarkMode={isDarkMode} setProjects={setProjects} />
+                      </PrivateRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/analytics" 
+                    element={
+                      <PrivateRoute>
+                        <AnalyticsPage isDarkMode={isDarkMode} />
+                      </PrivateRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/feedback" 
+                    element={
+                      <PrivateRoute>
+                        <Feedback />
+                      </PrivateRoute>
+                    } 
+                  />
+                </Routes>
+              </main>
+            </div>
+          </div>
+        } />
+      </Routes>
     </BrowserRouter>
   );
 }

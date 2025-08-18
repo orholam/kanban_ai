@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Check, X } from 'lucide-react';
+import { Plus, Pencil, Check, X, Eye, EyeOff } from 'lucide-react';
 import TaskCard from '../components/TaskCard';
 import TaskModal from '../components/TaskModal';
 import CreateTaskModal from '../components/CreateTaskModal';
@@ -22,9 +22,10 @@ interface KanbanBoardProps {
   isDarkMode: boolean;
   projects: Project[];
   searchQuery: string;
+  setProjects?: (projects: Project[]) => void;
 }
 
-export default function KanbanBoard({ isDarkMode, projects, searchQuery }: KanbanBoardProps) {
+export default function KanbanBoard({ isDarkMode, projects, searchQuery, setProjects }: KanbanBoardProps) {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -37,7 +38,16 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [daysLeft, setDaysLeft] = useState(0);
+  const [isCondensed, setIsCondensed] = useState(() => {
+    const saved = localStorage.getItem('kanban-condensed-mode');
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [isPrivacyUpdating, setIsPrivacyUpdating] = useState(false);
 
+  const handleCondensedToggle = (newValue: boolean) => {
+    setIsCondensed(newValue);
+    localStorage.setItem('kanban-condensed-mode', JSON.stringify(newValue));
+  };
 
 
   useEffect(() => {
@@ -243,6 +253,64 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
     }
   };
 
+  const handlePrivacyToggle = async () => {
+    if (!currentProject || isPrivacyUpdating) return;
+    
+    try {
+      setIsPrivacyUpdating(true);
+      const newPrivacyStatus = !currentProject.private;
+      
+      // Update the project in the database
+      const { data, error } = await supabase
+        .from('projects')
+        .update({ private: newPrivacyStatus })
+        .eq('id', currentProject.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating project privacy:', error);
+        toast.error('Failed to update project privacy');
+        return;
+      }
+
+      if (data) {
+        // Update local state
+        setCurrentProject(prev => prev ? { ...prev, private: newPrivacyStatus } : null);
+        
+        // Update projects list
+        const updatedProjects = projects.map(project => 
+          project.id === currentProject.id 
+            ? { ...project, private: newPrivacyStatus }
+            : project
+        );
+        
+        // Update parent projects state if setProjects is available
+        if (setProjects) {
+          setProjects(updatedProjects);
+        }
+        
+        // If making public, copy URL and show success toast
+        if (!newPrivacyStatus) {
+          const projectUrl = `${window.location.origin}/public/project/${currentProject.id}`;
+          try {
+            await navigator.clipboard.writeText(projectUrl);
+            toast.success('Project made public! URL copied to clipboard');
+          } catch (clipboardError) {
+            toast.success('Project made public!');
+          }
+        } else {
+          toast.success('Project made private');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating project privacy:', error);
+      toast.error('Failed to update project privacy');
+    } finally {
+      setIsPrivacyUpdating(false);
+    }
+  };
+
   const handleDragOver = (e: React.DragEvent, columnId: string) => {
     e.preventDefault();
     setDragOverColumn(columnId);
@@ -275,7 +343,39 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
       <div className="mb-6">
         <div className="flex items-stretch justify-between mb-2">
           <div>
-            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentProject?.title}</h1>
+            <div className="flex items-center gap-2 mb-2">
+              <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{currentProject?.title}</h1>
+              {currentProject && (
+                <button
+                  onClick={handlePrivacyToggle}
+                  disabled={isPrivacyUpdating}
+                  aria-label={`Make project ${currentProject.private === false ? 'private' : 'public'}`}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 ${
+                    currentProject.private === false 
+                      ? isDarkMode ? 'bg-green-900/20 text-green-400 hover:bg-green-900/30' : 'bg-green-100 text-green-600 hover:bg-green-200'
+                      : isDarkMode ? 'bg-gray-700/50 text-gray-400 hover:bg-gray-700/70' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                  }`}
+                  title={`Click to make project ${currentProject.private === false ? 'private' : 'public'}`}
+                >
+                  <div className="flex items-center">
+                    {isPrivacyUpdating ? (
+                      <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-current"></div>
+                    ) : currentProject.private === false ? (
+                      <Eye className="h-3.5 w-3.5" />
+                      ) : (
+                      <EyeOff className="h-3.5 w-3.5" />
+                    )}
+                  </div>
+                  <span className={`text-xs font-medium ${
+                    currentProject.private === false 
+                      ? isDarkMode ? 'text-green-400' : 'text-green-600'
+                      : isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
+                    {isPrivacyUpdating ? 'Updating...' : (currentProject.private === false ? 'Public' : 'Private')}
+                  </span>
+                </button>
+              )}
+            </div>
             <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>{currentProject?.description}</p>
           </div>
         </div>
@@ -298,7 +398,26 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
               </button>
             ))}
           </div>
-          <div className="flex space-x-4">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <label className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Condensed:
+              </label>
+              <button
+                onClick={() => handleCondensedToggle(!isCondensed)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                  isCondensed 
+                    ? 'bg-indigo-600' 
+                    : isDarkMode ? 'bg-gray-600' : 'bg-gray-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    isCondensed ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
             <button 
               onClick={() => setIsCreateModalOpen(true)}
               className="inline-flex items-center px-6 py-2 rounded-md shadow-sm text-sm font-medium text-white w-40
@@ -346,6 +465,7 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery }: Kanba
                       onClick={setSelectedTask}
                       onDeleteTask={handleDeleteTask}
                       isDarkMode={isDarkMode}
+                      isCondensed={isCondensed}
                     />
                   </div>
                 ))}

@@ -74,7 +74,8 @@ export default function NewProject({ isDarkMode, setProjects }: NewProjectProps)
       created_at: new Date().toISOString(),
       due_date: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString(),
       achievements: '',
-      user_id: user.id
+      user_id: user.id,
+      private: true // Default new projects to private
     }
     const newCollaboratorConnection = {
       id: uuidv4(),

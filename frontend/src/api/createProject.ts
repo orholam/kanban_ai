@@ -15,6 +15,7 @@ interface ProjectData {
   due_date: string;
   achievements: string;
   user_id: string;
+  private?: boolean; // Add private field
 }
 
 interface CollaboratorConnectionData {
@@ -59,7 +60,8 @@ export async function createProject(projectData: ProjectData, collaboratorConnec
       achievements: projectData.achievements,
       complete: projectData.complete,
       created_at: projectData.created_at,
-      user_id: projectData.user_id
+      user_id: projectData.user_id,
+      private: projectData.private ?? true // Default to private if not specified
     };
     
     // Create the project without a specific owner field
