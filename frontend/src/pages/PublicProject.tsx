@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Eye, EyeOff, Calendar, Users, Clock, CheckCircle } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import type { Project, Task } from '../types';
 import { supabase } from '../lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
@@ -198,20 +199,8 @@ export default function PublicProject({ isDarkMode }: PublicProjectProps) {
 
       {/* Project Overview */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className={`p-6 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border`}>
-            <div className="flex items-center">
-              <div className={`p-2 rounded-lg ${isDarkMode ? 'bg-blue-900/20' : 'bg-blue-100'}`}>
-                <Calendar className={`h-6 w-6 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-              </div>
-              <div className="ml-4">
-                <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Sprints</p>
-                <p className={`text-2xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {project.num_sprints}
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+
 
           <div className={`p-6 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border`}>
             <div className="flex items-center">
@@ -259,11 +248,40 @@ export default function PublicProject({ isDarkMode }: PublicProjectProps) {
         {/* Project Description */}
         <div className={`mb-8 p-6 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border`}>
           <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            About This Project
+            Notes
           </h2>
-          <p className={`text-base leading-relaxed ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-            {project.description}
-          </p>
+          {project.notes ? (
+            <div className="markdown-content prose prose-sm max-w-none">
+              <ReactMarkdown
+                components={{
+                  p: ({ children, ...props }) => <p className={`text-base leading-relaxed mb-4 last:mb-0 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} {...props}>{children}</p>,
+                  a: ({ children, ...props }) => <a className={`text-blue-400 hover:text-blue-300 hover:underline transition-colors ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} {...props}>{children}</a>,
+                  h1: ({ children, ...props }) => <h1 className={`text-2xl font-bold mb-4 mt-6 first:mt-0 border-b border-gray-600 pb-2 ${isDarkMode ? 'text-white border-gray-700' : 'text-gray-900 border-gray-300'}`} {...props}>{children}</h1>,
+                  h2: ({ children, ...props }) => <h2 className={`text-xl font-semibold mb-3 mt-5 first:mt-0 ${isDarkMode ? 'text-white' : 'text-gray-900'}`} {...props}>{children}</h2>,
+                  h3: ({ children, ...props }) => <h3 className={`text-lg font-medium mb-2 mt-4 first:mt-0 ${isDarkMode ? 'text-white' : 'text-gray-900'}`} {...props}>{children}</h3>,
+                  ul: ({ children, ...props }) => <ul className={`list-disc list-inside mb-4 space-y-1 last:mb-0 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} {...props}>{children}</ul>,
+                  ol: ({ children, ...props }) => <ol className={`list-decimal list-inside mb-4 space-y-1 last:mb-0 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} {...props}>{children}</ol>,
+                  li: ({ children, ...props }) => <li className={`text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} {...props}>{children}</li>,
+                  strong: ({ children, ...props }) => <strong className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`} {...props}>{children}</strong>,
+                  em: ({ children, ...props }) => <em className={`italic ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} {...props}>{children}</em>,
+                  code: ({ children, ...props }) => <code className={`bg-gray-700 text-gray-200 px-2 py-1 rounded text-sm font-mono shadow-sm ${isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-gray-200 text-gray-800'}`} {...props}>{children}</code>,
+                  pre: ({ children, ...props }) => <pre className={`bg-gray-800 text-gray-200 p-4 rounded-lg overflow-x-auto mb-4 last:mb-0 shadow-sm ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'}`} {...props}>{children}</pre>,
+                  blockquote: ({ children, ...props }) => <blockquote className={`border-l-4 border-gray-600 pl-4 italic mb-4 last:mb-0 shadow-sm ${isDarkMode ? 'text-gray-400 bg-gray-800/50' : 'text-gray-600 bg-gray-100'}`} {...props}>{children}</blockquote>,
+                  hr: ({ ...props }) => <hr className={`my-6 border-gray-600 ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`} {...props} />,
+                  table: ({ children, ...props }) => <table className={`w-full border-collapse border border-gray-600 mb-4 last:mb-0 shadow-sm ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`} {...props}>{children}</table>,
+                  th: ({ children, ...props }) => <th className={`border border-gray-600 px-3 py-2 text-left font-semibold ${isDarkMode ? 'border-gray-700 bg-gray-800 text-white' : 'border-gray-300 bg-gray-100 text-gray-900'}`} {...props}>{children}</th>,
+                  td: ({ children, ...props }) => <td className={`border border-gray-600 px-3 py-2 ${isDarkMode ? 'border-gray-700 text-gray-300' : 'border-gray-300 text-gray-700'}`} {...props}>{children}</td>,
+                  input: ({ ...props }) => <input className={`mr-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} type="checkbox" {...props} />,
+                }}
+              >
+                {project.notes}
+              </ReactMarkdown>
+            </div>
+          ) : (
+            <p className={`text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} italic`}>
+              No notes available for this project.
+            </p>
+          )}
         </div>
 
         {/* Current Sprint Kanban Board */}

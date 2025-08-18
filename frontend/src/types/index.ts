@@ -51,6 +51,7 @@ export interface Project {
   created_at: string;
   user_id: string;
   private?: boolean; // Add private field, optional since existing projects might not have it
+  notes?: string; // Add notes field for project notes
   tasks: Task[];
 }
 

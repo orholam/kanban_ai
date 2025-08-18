@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@mdxeditor/editor": "^3.42.0",
     "framer-motion": "^11.13.1",
     "react-markdown": "^9.0.1",
     "react-textarea-autosize": "^8.5.6",

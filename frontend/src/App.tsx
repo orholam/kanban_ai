@@ -111,7 +111,8 @@ function AppContent() {
               complete,
               created_at,
               user_id,
-              private
+              private,
+              notes
             )
           `)
           .eq('user_id', user.id)

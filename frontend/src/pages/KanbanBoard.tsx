@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Check, X, Eye, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Check, X, Eye, EyeOff, FileText } from 'lucide-react';
 import TaskCard from '../components/TaskCard';
 import TaskModal from '../components/TaskModal';
 import CreateTaskModal from '../components/CreateTaskModal';
+import NotesEditor from '../components/NotesEditor';
 import type { Project, Task } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -37,6 +38,7 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery, setProj
   const [isLoading, setIsLoading] = useState(true);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [daysLeft, setDaysLeft] = useState(0);
   const [isCondensed, setIsCondensed] = useState(() => {
     const saved = localStorage.getItem('kanban-condensed-mode');
@@ -128,6 +130,26 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery, setProj
       setTasks(prevTasks => prevTasks.map(task => 
         task.id === data[0].id ? { ...data[0], isAnimated: true } : task
       ));
+    }
+  };
+
+  {/* handle notes change */}
+  const handleNotesChange = async (newNotes: string) => {
+    const { data, error } = await supabase
+    .from('projects')
+    .update({ notes: newNotes })
+    .eq('id', currentProject?.id)
+    .select()
+    .single();
+    
+    if (error) {
+      console.error('Error updating notes:', error);
+      return;
+    }
+    if (data) {
+      console.log(data[0]);
+      setCurrentProject(prevProject => prevProject ? { ...prevProject, notes: newNotes } : null);
+      toast.success('Notes updated');
     }
   };
 
@@ -418,15 +440,28 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery, setProj
                 />
               </button>
             </div>
-            <button 
-              onClick={() => setIsCreateModalOpen(true)}
-              className="inline-flex items-center px-6 py-2 rounded-md shadow-sm text-sm font-medium text-white w-40
-                bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 hover:from-purple-700 hover:via-purple-600 hover:to-indigo-700
-                transition-all duration-200 ease-in-out"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New Task
-            </button>
+            <div className="flex space-x-3">
+              <button 
+                onClick={() => setIsNotesOpen(!isNotesOpen)}
+                className={`inline-flex items-center px-4 py-2 rounded-md shadow-sm text-sm font-medium transition-all duration-200 ease-in-out ${
+                    isDarkMode
+                      ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 border border-gray-600'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Notes
+              </button>
+              <button 
+                onClick={() => setIsCreateModalOpen(true)}
+                className="inline-flex items-center px-6 py-2 rounded-md shadow-sm text-sm font-medium text-white w-40
+                  bg-gradient-to-r from-purple-600 via-purple-500 to-indigo-600 hover:from-purple-700 hover:via-purple-600 hover:to-indigo-700
+                  transition-all duration-200 ease-in-out"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New Task
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -493,6 +528,9 @@ export default function KanbanBoard({ isDarkMode, projects, searchQuery, setProj
           projectId={currentProject?.id || ''}
         />
       )}
+
+      {/* Notes Editor */}
+      <NotesEditor isOpen={isNotesOpen} onToggle={() => setIsNotesOpen(!isNotesOpen)} initialNotes={currentProject?.notes} onNotesChange={handleNotesChange}/>
     </div>
     
   );

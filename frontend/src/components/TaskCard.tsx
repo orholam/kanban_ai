@@ -43,14 +43,6 @@ export default function TaskCard({ task, onClick, onDeleteTask, isDarkMode , isC
         isDarkMode ? 'bg-gray-900 border-gray-900' : 'bg-white border-gray-200'
       } p-4 rounded-lg shadow-sm border cursor-move hover:shadow-md transition-all`}
     >
-      {!isCondensed && (
-        <div className="flex items-center justify-end mb-2">
-          <span className={`text-xs px-2 py-1 rounded-full ${priorityColors[task.priority]}`}>
-            {task.priority}
-          </span>
-        </div>
-      )}
-
       {isCondensed ? (
         <div className="flex items-center justify-between">
           <h3 className={`text-sm font-medium ${isDarkMode ? 'text-gray-100' : 'text-gray-900'}`}>
@@ -69,13 +61,26 @@ export default function TaskCard({ task, onClick, onDeleteTask, isDarkMode , isC
             {task.title}
           </h3>
 
-          <div className="flex items-center space-x-2 mb-3">
-            <span className={`text-xs px-2 py-1 rounded-full ${typeColors[task.type]}`}>
-              {task.type}
-            </span>
-          </div>
+          {task.description && (
+            <div className="mb-3">
+              <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                {task.description.length > 120 
+                  ? `${task.description.substring(0, 120)}...` 
+                  : task.description
+                }
+              </p>
+            </div>
+          )}
 
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className={`text-xs px-2 py-1 rounded-full ${typeColors[task.type]}`}>
+                {task.type}
+              </span>
+              <span className={`text-xs px-2 py-1 rounded-full ${priorityColors[task.priority]}`}>
+                {task.priority}
+              </span>
+            </div>
             <button
               onClick={handleDelete}
               className={`${isDarkMode ? 'text-gray-500 hover:text-red-400' : 'text-gray-400 hover:text-red-500'} transition-colors`}

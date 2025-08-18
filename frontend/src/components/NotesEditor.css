@@ -1,0 +1,172 @@
+/* NotesEditor custom styles to fix z-index and bullet point issues */
+
+/* Ensure the NotesEditor container has proper z-index */
+.notes-editor-container {
+  z-index: 9999 !important;
+  /* Smooth animation properties */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+  /* Initial state - hidden and translated to the right */
+  opacity: 80;
+  transform: translateX(100%);
+  /* Smooth transitions */
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Animation class for when editor is open */
+.notes-editor-container.animate-in {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Animation class for when editor is closing */
+.notes-editor-container.closing {
+  opacity: 80;
+  transform: translateX(100%);
+}
+
+/* Fix all MDXEditor modal and popup z-index issues */
+.mdXEditor-root [data-radix-popper-content-wrapper] {
+  z-index: 10000 !important;
+}
+
+.mdXEditor-root [role="dialog"] {
+  z-index: 10000 !important;
+}
+
+.mdXEditor-root [role="menu"] {
+  z-index: 10000 !important;
+}
+
+.mdXEditor-root [role="tooltip"] {
+  z-index: 10000 !important;
+}
+
+/* Target the portal container specifically */
+#mdxeditor-portal-container {
+  z-index: 10000 !important;
+}
+
+#mdxeditor-portal-container * {
+  pointer-events: auto;
+}
+
+/* Fix bullet points and list styling */
+.mdXEditor-root ul {
+  list-style-type: disc !important;
+  padding-left: 1.5em !important;
+}
+
+.mdXEditor-root ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5em !important;
+}
+
+.mdXEditor-root li {
+  display: list-item !important;
+}
+
+/* Ensure toolbar is above content */
+.mdXEditor-root .mdxeditor-toolbar {
+  z-index: 10001 !important;
+  position: relative;
+}
+
+/* Fix any floating elements */
+.mdXEditor-root .mdxeditor-floating {
+  z-index: 10000 !important;
+}
+
+/* Ensure proper positioning for all popups */
+.mdXEditor-root [data-radix-popper-content-wrapper],
+.mdXEditor-root [data-radix-tooltip-content],
+.mdXEditor-root [data-radix-dropdown-menu-content] {
+  z-index: 10000 !important;
+  position: relative;
+}
+
+/* Additional selectors for MDXEditor components */
+[data-radix-popper-content-wrapper] {
+  z-index: 10000 !important;
+}
+
+[role="dialog"] {
+  z-index: 10000 !important;
+}
+
+[role="menu"] {
+  z-index: 10000 !important;
+}
+
+[role="tooltip"] {
+  z-index: 10000 !important;
+}
+
+/* Fix for any floating content */
+[data-radix-floating] {
+  z-index: 10000 !important;
+}
+
+/* Ensure dropdowns appear above everything */
+[data-radix-dropdown-menu-content] {
+  z-index: 10000 !important;
+}
+
+/* Fix for tooltips */
+[data-radix-tooltip-content] {
+  z-index: 10000 !important;
+}
+
+/* Fix scrolling issues */
+.notes-editor-container .mdXEditor-root {
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.notes-editor-container .mdXEditor-root .mdxeditor-root-contenteditable {
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* Ensure the content area is scrollable */
+.notes-editor-container .mdXEditor-root .mdxeditor-root-contenteditable > div {
+  min-height: 100% !important;
+}
+
+/* Fix toolbar positioning */
+.notes-editor-container .mdxeditor-toolbar {
+  position: sticky !important;
+  top: 0 !important;
+  background: white !important;
+  z-index: 10001 !important;
+}
+
+/* Ensure smooth scrolling */
+.notes-editor-container * {
+  scroll-behavior: smooth;
+}
+
+/* Fix for MDXEditor content scrolling */
+.mdXEditor-root .mdxeditor-root-contenteditable {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+.mdXEditor-root .mdxeditor-root-contenteditable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.mdXEditor-root .mdxeditor-root-contenteditable::-webkit-scrollbar-track {
+  background: #f7fafc;
+}
+
+.mdXEditor-root .mdxeditor-root-contenteditable::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.mdXEditor-root .mdxeditor-root-contenteditable::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+} 

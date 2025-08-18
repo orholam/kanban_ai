@@ -16,6 +16,7 @@ interface ProjectData {
   achievements: string;
   user_id: string;
   private?: boolean; // Add private field
+  notes?: string; // Add notes field
 }
 
 interface CollaboratorConnectionData {
@@ -61,7 +62,8 @@ export async function createProject(projectData: ProjectData, collaboratorConnec
       complete: projectData.complete,
       created_at: projectData.created_at,
       user_id: projectData.user_id,
-      private: projectData.private ?? true // Default to private if not specified
+      private: projectData.private ?? true, // Default to private if not specified
+      notes: projectData.notes // Add notes field
     };
     
     // Create the project without a specific owner field

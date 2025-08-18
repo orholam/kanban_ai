@@ -29,3 +29,235 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #666;
 }
+
+/* Markdown content styles */
+.markdown-content {
+  @apply leading-relaxed;
+}
+
+.markdown-content > *:first-child {
+  @apply mt-0;
+}
+
+.markdown-content > *:last-child {
+  @apply mb-0;
+}
+
+.markdown-content code {
+  @apply font-mono text-sm;
+}
+
+.markdown-content pre {
+  @apply font-mono text-sm;
+}
+
+.markdown-content blockquote {
+  @apply font-serif;
+}
+
+.markdown-content ul {
+  @apply space-y-1;
+}
+
+.markdown-content ol {
+  @apply space-y-1;
+}
+
+.markdown-content li {
+  @apply leading-relaxed;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  @apply font-bold tracking-tight;
+}
+
+.markdown-content a {
+  @apply transition-colors duration-200;
+}
+
+.markdown-content code {
+  @apply break-words;
+}
+
+.markdown-content pre {
+  @apply break-words;
+}
+
+.markdown-content p + p {
+  @apply mt-4;
+}
+
+.markdown-content h1 + p,
+.markdown-content h2 + p,
+.markdown-content h3 + p {
+  @apply mt-2;
+}
+
+.markdown-content ul + p,
+.markdown-content ol + p {
+  @apply mt-4;
+}
+
+.markdown-content blockquote + p {
+  @apply mt-4;
+}
+
+.markdown-content table + p {
+  @apply mt-4;
+}
+
+.markdown-content pre code {
+  @apply bg-transparent p-0 text-inherit;
+}
+
+.markdown-content pre {
+  @apply shadow-sm;
+}
+
+.markdown-content blockquote {
+  @apply shadow-sm;
+}
+
+.markdown-content table {
+  @apply shadow-sm;
+}
+
+.markdown-content img {
+  @apply rounded-lg shadow-sm max-w-full h-auto;
+}
+
+.markdown-content .task-list-item {
+  @apply list-none;
+}
+
+.markdown-content .task-list-item input[type="checkbox"] {
+  @apply mr-2;
+}
+
+.markdown-content a:hover {
+  @apply text-opacity-80;
+}
+
+.markdown-content code:hover {
+  @apply shadow-sm;
+}
+
+.markdown-content pre:hover {
+  @apply shadow-md;
+}
+
+.markdown-content blockquote:hover {
+  @apply shadow-md;
+}
+
+.markdown-content table:hover {
+  @apply shadow-md;
+}
+
+/* Responsive markdown content */
+@media (max-width: 768px) {
+  .markdown-content {
+    @apply text-sm;
+  }
+  
+  .markdown-content h1 {
+    @apply text-xl;
+  }
+  
+  .markdown-content h2 {
+    @apply text-lg;
+  }
+  
+  .markdown-content h3 {
+    @apply text-base;
+  }
+  
+  .markdown-content pre {
+    @apply text-xs;
+  }
+}
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* MDXEditor specific styles to override Tailwind base resets */
+.mdXEditor-root h1 {
+  @apply text-3xl font-bold mt-6 mb-4;
+}
+
+.mdXEditor-root h2 {
+  @apply text-2xl font-bold mt-5 mb-3;
+}
+
+.mdXEditor-root h3 {
+  @apply text-xl font-bold mt-4 mb-2;
+}
+
+.mdXEditor-root h4 {
+  @apply text-lg font-bold mt-3 mb-2;
+}
+
+.mdXEditor-root h5 {
+  @apply text-base font-bold mt-2 mb-1;
+}
+
+.mdXEditor-root h6 {
+  @apply text-sm font-bold mt-2 mb-1;
+}
+
+.mdXEditor-root ul {
+  @apply list-disc list-inside mt-4 mb-4;
+}
+
+.mdXEditor-root ol {
+  @apply list-decimal list-inside mt-4 mb-4;
+}
+
+.mdXEditor-root li {
+  @apply mt-1 mb-1;
+}
+
+.mdXEditor-root p {
+  @apply mt-3 mb-3;
+}
+
+.mdXEditor-root blockquote {
+  @apply border-l-4 border-gray-300 pl-4 italic my-4;
+}
+
+.mdXEditor-root code {
+  @apply bg-gray-100 px-1 py-0.5 rounded text-sm font-mono;
+}
+
+.mdXEditor-root pre {
+  @apply bg-gray-100 p-4 rounded-lg overflow-x-auto my-4;
+}
+
+.mdXEditor-root pre code {
+  @apply bg-transparent p-0;
+}
+
+.mdXEditor-root table {
+  @apply border-collapse border border-gray-300 my-4;
+}
+
+.mdXEditor-root th,
+.mdXEditor-root td {
+  @apply border border-gray-300 px-3 py-2;
+}
+
+.mdXEditor-root th {
+  @apply bg-gray-50 font-semibold;
+}
