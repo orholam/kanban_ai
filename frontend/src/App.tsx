@@ -7,6 +7,7 @@ import KanbanBoard from './pages/KanbanBoard';
 import NewProject from './pages/NewProject';
 import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
+import Waitlist from './pages/Waitlist';
 import AnalyticsPage from './pages/AnalyticsPage';
 import PublicProject from './pages/PublicProject';
 import { supabase } from './lib/supabase';
@@ -219,6 +220,7 @@ function AppContent() {
                     } 
                   />
                   <Route path="/login" element={<Login isDarkMode={isDarkMode} />} />
+                  <Route path="/waitlist" element={<Waitlist isDarkMode={isDarkMode} />} />
                   <Route
                     path="/kanban"
                     element={

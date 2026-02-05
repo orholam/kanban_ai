@@ -68,20 +68,12 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
                 Get personalized guidance, automated task breakdowns, and intelligent progress tracking.
               </p>
               <div className="mt-10 flex items-center justify-center gap-x-6">
-                <Link to="/login"
+                <Link to="/waitlist"
                   className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
-                  Get started
+                  Join Waitlist
                   <ArrowRight className="ml-2 w-4 h-4 inline" />
                 </Link>
-                <a 
-                  href="https://github.com/orholam/kanban_ai" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className={`text-sm font-semibold leading-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}
-                >
-                  View on GitHub <span aria-hidden="true">→</span>
-                </a>
               </div>
             </div>
             
@@ -254,7 +246,7 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
                   </ul>
                 </div>
                 <Link
-                  to={tier.name === "Enterprise" ? "/contact" : "/login"}
+                  to={tier.name === "Enterprise" ? "/contact" : "/waitlist"}
                   className={`mt-8 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 
                     ${tier.featured
                       ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-indigo-600'
@@ -263,7 +255,7 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
                         : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
                     }`}
                 >
-                  {tier.name === "Enterprise" ? "Contact Sales" : "Get started"}
+                  {tier.name === "Enterprise" ? "Contact Sales" : "Join Waitlist"}
                 </Link>
               </div>
             ))}
@@ -282,10 +274,10 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
               </p>
               <div className="mt-8">
                 <Link
-                  to="/login"
+                  to="/waitlist"
                   className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                 >
-                  Get Started
+                  Join Waitlist
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </div>
@@ -297,13 +289,8 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
                 <h3 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Resources</h3>
                 <ul className="mt-4 space-y-4">
                   <li>
-                    <a href="https://github.com/orholam/kanban_ai" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
-                      GitHub
-                    </a>
-                  </li>
-                  <li>
-                    <Link to="/login" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
-                      Sign In
+                    <Link to="/waitlist" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                      Join Waitlist
                     </Link>
                   </li>
                 </ul>
