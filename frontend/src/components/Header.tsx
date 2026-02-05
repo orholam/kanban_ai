@@ -53,6 +53,20 @@ export default function Header({ isDarkMode, toggleTheme, onSearch }: HeaderProp
             <span className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Kanban AI</span>
           </Link>
 
+          {/* Navigation */}
+          <nav className="flex items-center space-x-6">
+            <Link
+              to="/blog"
+              className={`text-sm font-medium transition-colors ${
+                isDarkMode
+                  ? 'text-gray-300 hover:text-white'
+                  : 'text-gray-700 hover:text-gray-900'
+              }`}
+            >
+              Blog
+            </Link>
+          </nav>
+
           {/* Right section */}
           <div className="flex items-center space-x-4">
             {/* Most controls only visible when logged in */}

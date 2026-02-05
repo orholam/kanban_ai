@@ -17,6 +17,8 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import { Toaster } from 'sonner';
 import Feedback from './pages/Feedback';
+import Blog from './pages/Blog';
+import BlogPost from './pages/BlogPost';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -197,6 +199,30 @@ function AppContent() {
             />
             <div className="flex-1 overflow-y-auto">
               <TermsOfService />
+            </div>
+          </div>
+        } />
+        <Route path="/blog" element={
+          <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            <Header 
+              isDarkMode={isDarkMode} 
+              toggleTheme={toggleTheme}
+              onSearch={setSearchQuery}
+            />
+            <div className="flex-1 overflow-y-auto">
+              <Blog isDarkMode={isDarkMode} />
+            </div>
+          </div>
+        } />
+        <Route path="/blog/:slug" element={
+          <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            <Header 
+              isDarkMode={isDarkMode} 
+              toggleTheme={toggleTheme}
+              onSearch={setSearchQuery}
+            />
+            <div className="flex-1 overflow-y-auto">
+              <BlogPost isDarkMode={isDarkMode} />
             </div>
           </div>
         } />
