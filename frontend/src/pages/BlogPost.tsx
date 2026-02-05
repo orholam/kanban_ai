@@ -1,6 +1,7 @@
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { Calendar, Tag, ArrowLeft, User } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { getPostBySlug } from '../lib/blogUtils';
 import SEO from '../components/SEO';
 import { format } from 'date-fns';
@@ -98,6 +99,7 @@ export default function BlogPost({ isDarkMode }: BlogPostProps) {
               isDarkMode ? 'prose-invert' : ''
             }`}>
               <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
                 components={{
                   p: ({ children, ...props }) => (
                     <p
