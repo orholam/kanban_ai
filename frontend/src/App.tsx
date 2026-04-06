@@ -10,6 +10,7 @@ import { loadGuestDraft, guestDraftHasMeaningfulData, clearGuestDraft } from './
 import { migrateGuestDraft } from './lib/migrateGuestDraft';
 import { isWorkbenchPath } from './lib/siteMeta';
 import { applyWorkbenchDocumentMeta } from './lib/documentMeta';
+import { Analytics } from '@vercel/analytics/react';
 
 const KanbanBoard = lazy(() => import('./pages/KanbanBoard'));
 const NewProject = lazy(() => import('./pages/NewProject'));
@@ -451,6 +452,8 @@ export default function App() {
       <AuthProvider>
         <AppContent />
         <Toaster position="bottom-center" />
+        {/* Vercel: page views / visitors (dashboard). Separate from Supabase usage analytics on /analytics. */}
+        <Analytics />
       </AuthProvider>
     </BrowserRouter>
   );

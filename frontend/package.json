@@ -17,6 +17,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "@uiw/react-markdown-preview": "^5.1.5",
     "@uiw/react-md-editor": "^4.0.8",
+    "@vercel/analytics": "^2.0.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.0.0",
     "lucide-react": "^0.344.0",
@@ -31,12 +32,12 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@vercel/node": "^5.0.0",
     "@eslint/js": "^9.9.1",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@types/react-router-dom": "^5.3.3",
     "@types/uuid": "^9.0.8",
+    "@vercel/node": "^5.0.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.18",
     "eslint": "^9.9.1",
@@ -51,7 +52,13 @@
   },
   "description": "Kanban AI — AI-powered kanban boards, sprint planning, and task management (Vite + React frontend).",
   "main": "eslint.config.js",
-  "keywords": ["kanban AI", "Kanban AI", "AI kanban", "task management", "react"],
+  "keywords": [
+    "kanban AI",
+    "Kanban AI",
+    "AI kanban",
+    "task management",
+    "react"
+  ],
   "author": "",
   "license": "ISC"
 }
