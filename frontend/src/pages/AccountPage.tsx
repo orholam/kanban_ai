@@ -6,6 +6,14 @@ import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
 import SEO from '../components/SEO';
 import { getUserInitials } from '../lib/userUtils';
+import {
+  accountProfileDefaults,
+  fetchAccountProfile,
+  formatAccountRoleLabel,
+  formatSubscriptionPlanLabel,
+  upsertProfileDisplayFields,
+} from '../lib/accountProfile';
+import type { AccountProfileRow } from '../types';
 
 /** Base = already in the free product; Pro = trial extras. Differentiation is icon + text color only. */
 const PLAN_FEATURES: { id: string; text: string; scope: 'base' | 'pro' }[] = [
@@ -22,14 +30,31 @@ export default function AccountPage({ isDarkMode }: { isDarkMode: boolean }) {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
+  const [accountProfile, setAccountProfile] = useState<AccountProfileRow | null>(null);
 
   useEffect(() => {
     if (!user) return;
-    const name =
-      (typeof user.user_metadata?.name === 'string' && user.user_metadata.name) ||
-      (typeof user.user_metadata?.full_name === 'string' && user.user_metadata.full_name) ||
-      '';
-    setDisplayName(name);
+    let cancelled = false;
+    (async () => {
+      const row = await fetchAccountProfile(user.id);
+      if (cancelled) return;
+      setAccountProfile(row);
+      const metaName =
+        (typeof user.user_metadata?.name === 'string' && user.user_metadata.name) ||
+        (typeof user.user_metadata?.full_name === 'string' && user.user_metadata.full_name) ||
+        '';
+      if (row) {
+        const fromRow = [row.display_name, row.full_name, row.name].find(
+          (s) => typeof s === 'string' && s.trim(),
+        );
+        setDisplayName((typeof fromRow === 'string' && fromRow.trim()) || metaName || '');
+      } else {
+        setDisplayName(metaName || '');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   if (!user) {
@@ -50,6 +75,10 @@ export default function AccountPage({ isDarkMode }: { isDarkMode: boolean }) {
         },
       });
       if (error) throw error;
+      const { error: profileErr } = await upsertProfileDisplayFields(user.id, trimmedName);
+      if (profileErr) throw profileErr;
+      const row = await fetchAccountProfile(user.id);
+      if (row) setAccountProfile(row);
       toast.success('Profile updated.');
     } catch (err) {
       console.error(err);
@@ -73,6 +102,10 @@ export default function AccountPage({ isDarkMode }: { isDarkMode: boolean }) {
     : 'border-zinc-200 bg-white text-zinc-900 placeholder:text-zinc-400 focus:border-indigo-500 focus:ring-indigo-500/20';
 
   const emailDisplay = user.email ?? '—';
+  const defaults = accountProfileDefaults();
+  const subscriptionPlan = accountProfile?.subscription_plan ?? defaults.subscription_plan;
+  const accountRole = accountProfile?.account_role ?? defaults.account_role;
+  const isPro = subscriptionPlan === 'pro';
 
   return (
     <>
@@ -132,19 +165,38 @@ export default function AccountPage({ isDarkMode }: { isDarkMode: boolean }) {
 
                   <div className="relative z-[1]">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
-                      isDarkMode
-                        ? 'bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/25'
-                        : 'bg-amber-100 text-amber-900 ring-1 ring-amber-300/70'
-                    }`}
-                  >
-                    <Gift className="h-3 w-3" aria-hidden />
-                    Trial
-                  </span>
-                  <span className={`text-[11px] ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>
-                    No card · full Pro
-                  </span>
+                  {isPro ? (
+                    <>
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+                          isDarkMode
+                            ? 'bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/25'
+                            : 'bg-amber-100 text-amber-900 ring-1 ring-amber-300/70'
+                        }`}
+                      >
+                        <Gift className="h-3 w-3" aria-hidden />
+                        Trial
+                      </span>
+                      <span className={`text-[11px] ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                        No card · full Pro
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+                          isDarkMode
+                            ? 'bg-zinc-500/15 text-zinc-300 ring-1 ring-zinc-500/30'
+                            : 'bg-zinc-200 text-zinc-800 ring-1 ring-zinc-300/80'
+                        }`}
+                      >
+                        Free
+                      </span>
+                      <span className={`text-[11px] ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                        Subscription upgrades will appear here
+                      </span>
+                    </>
+                  )}
                 </div>
 
                 <div className="mt-4 flex items-center gap-2.5">
@@ -158,7 +210,7 @@ export default function AccountPage({ isDarkMode }: { isDarkMode: boolean }) {
                         : 'bg-gradient-to-br from-zinc-900 via-indigo-800 to-violet-700 bg-clip-text text-transparent'
                     }`}
                   >
-                    Pro
+                    {formatSubscriptionPlanLabel(subscriptionPlan)}
                   </h2>
                 </div>
 
@@ -167,7 +219,9 @@ export default function AccountPage({ isDarkMode }: { isDarkMode: boolean }) {
                     isDarkMode ? 'text-zinc-400' : 'text-zinc-600'
                   }`}
                 >
-                  Full Pro while we&apos;re in beta; subscriptions will land here later.
+                  {isPro
+                    ? "Full Pro while we're in beta; subscriptions will land here later."
+                    : "You're on the Free plan. Pro and checkout will connect to this tier when billing goes live."}
                 </p>
 
                 <ul className="mt-5 grid list-none gap-2.5">
@@ -245,6 +299,26 @@ export default function AccountPage({ isDarkMode }: { isDarkMode: boolean }) {
                       {displayName.trim() || user.email?.split('@')[0] || 'Member'}
                     </p>
                     <p className={`text-xs ${label}`}>Shown across the app</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span
+                        className={`inline-flex rounded-lg px-2 py-0.5 text-[11px] font-medium ${
+                          isDarkMode
+                            ? 'bg-zinc-800/90 text-zinc-300 ring-1 ring-zinc-700/80'
+                            : 'bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/90'
+                        }`}
+                      >
+                        Plan: {formatSubscriptionPlanLabel(subscriptionPlan)}
+                      </span>
+                      <span
+                        className={`inline-flex rounded-lg px-2 py-0.5 text-[11px] font-medium ${
+                          isDarkMode
+                            ? 'bg-zinc-800/90 text-zinc-300 ring-1 ring-zinc-700/80'
+                            : 'bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/90'
+                        }`}
+                      >
+                        Account: {formatAccountRoleLabel(accountRole)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

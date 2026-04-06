@@ -40,6 +40,14 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return user ? <>{children}</> : <Navigate to="/login" />;
 }
 
+function OwnerRoute({ children, isDarkMode }: { children: React.ReactNode; isDarkMode: boolean }) {
+  const { user, accountProfile, profileLoading } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (profileLoading) return <RouteFallback isDarkMode={isDarkMode} />;
+  if (accountProfile?.account_role !== 'owner') return <Navigate to="/kanban" replace />;
+  return <>{children}</>;
+}
+
 function KanbanBoardWrapper({
   isDarkMode,
   projects,
@@ -131,7 +139,9 @@ function AppContent() {
     setIsDarkMode(prev => !prev);
   };
 
-  const { user } = useAuth();
+  const { user, accountProfile, profileLoading } = useAuth();
+  const showAnalyticsLink =
+    Boolean(user) && !profileLoading && accountProfile?.account_role === 'owner';
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -319,6 +329,7 @@ function AppContent() {
                 isDarkMode={isDarkMode}
                 projects={projects}
                 user={user}
+                showAnalyticsLink={showAnalyticsLink}
                 onDeleteProject={handleDeleteProject}
               />
             )}
@@ -393,11 +404,11 @@ function AppContent() {
                 <Route
                   path="/analytics"
                   element={
-                    <PrivateRoute>
+                    <OwnerRoute isDarkMode={isDarkMode}>
                       <Suspense fallback={<RouteFallback isDarkMode={isDarkMode} />}>
                         <AnalyticsPage isDarkMode={isDarkMode} />
                       </Suspense>
-                    </PrivateRoute>
+                    </OwnerRoute>
                   }
                 />
                 <Route

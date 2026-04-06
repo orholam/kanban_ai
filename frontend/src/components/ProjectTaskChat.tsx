@@ -35,6 +35,7 @@ import { KANBAN_TASK_DRAG_MIME, parseTaskFromDataTransfer } from '../lib/taskDnD
 import { parseDbTimestamp } from '../lib/taskDb';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
+import { recordAnalyticsEvent } from '../lib/analyticsEvents';
 import { createTaskComment, deleteTaskComment, listTaskCommentsForTasks } from '../api/taskComments';
 import { KANBAN_AI_COMMENT_AUTHOR } from '../lib/kanbanAiComment';
 
@@ -439,7 +440,7 @@ export default function ProjectTaskChat({
   onUpdateTask,
   onDeleteTask,
 }: ProjectTaskChatProps) {
-  const { user } = useAuth();
+  const { user, accountProfile } = useAuth();
   const tasksRef = useRef<Task[]>(tasks);
   useEffect(() => {
     tasksRef.current = tasks;
@@ -708,10 +709,9 @@ export default function ProjectTaskChat({
           return JSON.stringify({ error: 'No valid fields to update; provide at least one of title, description, type, priority, status, sprint, due_date' });
         }
 
-        const undoPatch: AgentTaskPatch = {};
-        (Object.keys(patch) as (keyof AgentTaskPatch)[]).forEach((k) => {
-          undoPatch[k] = existing[k];
-        });
+        const undoPatch: AgentTaskPatch = Object.fromEntries(
+          (Object.keys(patch) as (keyof AgentTaskPatch)[]).map((k) => [k, existing[k]])
+        ) as AgentTaskPatch;
 
         try {
           await onUpdateTask(taskId, patch);
@@ -923,6 +923,27 @@ export default function ProjectTaskChat({
         );
         await lingerAfterToolIfNeeded();
         pendingAssistantReplyRef.current = reply;
+        if (guestMode) {
+          recordAnalyticsEvent(
+            'ai_interaction',
+            {
+              project_id: project.id,
+              attachment_count: attachSnap.length,
+              user_message_length: trimmed.length,
+            },
+            { kind: 'guest' }
+          );
+        } else if (user) {
+          recordAnalyticsEvent(
+            'ai_interaction',
+            {
+              project_id: project.id,
+              attachment_count: attachSnap.length,
+              user_message_length: trimmed.length,
+            },
+            { kind: 'user', userId: user.id, accountRole: accountProfile?.account_role }
+          );
+        }
       } catch (e) {
         pendingAssistantReplyRef.current = null;
         const msg = e instanceof Error ? e.message : 'Something went wrong';
@@ -940,6 +961,8 @@ export default function ProjectTaskChat({
       boardLoading,
       sending,
       guestMode,
+      user,
+      accountProfile?.account_role,
       composerAttachments,
       executeTool,
       applyProgressEvent,

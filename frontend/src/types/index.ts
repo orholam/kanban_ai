@@ -63,3 +63,33 @@ export interface User {
   name: string;
   // Add any other properties that are part of the User object
 }
+
+/** Account-level access (not the same as `project_collaborators.role`). */
+export type AccountRole = 'owner' | 'editor' | 'admin';
+
+export type SubscriptionPlan = 'free' | 'pro';
+
+/** Row in `analytics_events` (first-party usage telemetry). */
+export type AnalyticsEventType = 'sign_up' | 'sign_in' | 'ai_interaction' | 'task_write';
+
+export interface AnalyticsEventRow {
+  id: string;
+  created_at: string;
+  user_id: string | null;
+  guest_session_id?: string | null;
+  event_type: AnalyticsEventType;
+  metadata: Record<string, unknown>;
+}
+
+/** Row in `profiles` (synced on signup; display names also updated from Account). */
+export interface AccountProfileRow {
+  id: string;
+  full_name: string | null;
+  display_name: string | null;
+  name: string | null;
+  username: string | null;
+  account_role: AccountRole;
+  subscription_plan: SubscriptionPlan;
+  created_at?: string;
+  updated_at?: string;
+}

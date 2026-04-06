@@ -41,3 +41,5 @@ desktop.ini
 # Optional OS Files
 *.bak
 *.tmp
+.vercel
+.env*.local

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { MessageSquare, FolderPlus, Sparkles, LayoutDashboard, Trash2 } from 'lucide-react';
+import { MessageSquare, FolderPlus, Sparkles, LayoutDashboard, Trash2, BarChart3 } from 'lucide-react';
 import { User } from '@supabase/supabase-js';
 import { getUserInitials, getDisplayName } from '../lib/userUtils';
 import type { Project } from '../types';
@@ -8,6 +8,8 @@ interface SidebarProps {
   isDarkMode: boolean;
   projects: Project[];
   user: User | null;
+  /** App operator only: link to usage analytics. */
+  showAnalyticsLink?: boolean;
   onDeleteProject?: (projectId: string, projectTitle: string) => void;
 }
 
@@ -22,7 +24,13 @@ function navLinkBase(isDarkMode: boolean, active: boolean) {
     : 'text-zinc-600 hover:bg-zinc-100/90 hover:text-zinc-900';
 }
 
-export default function Sidebar({ isDarkMode, projects, user, onDeleteProject }: SidebarProps) {
+export default function Sidebar({
+  isDarkMode,
+  projects,
+  user,
+  showAnalyticsLink = false,
+  onDeleteProject,
+}: SidebarProps) {
   const location = useLocation();
   const accountActive = location.pathname === '/account';
 
@@ -64,6 +72,19 @@ export default function Sidebar({ isDarkMode, projects, user, onDeleteProject }:
             <MessageSquare className="h-[18px] w-[18px] shrink-0 opacity-80" />
             Feedback
           </Link>
+
+          {showAnalyticsLink ? (
+            <Link
+              to="/analytics"
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${navLinkBase(
+                isDarkMode,
+                location.pathname === '/analytics'
+              )}`}
+            >
+              <BarChart3 className="h-[18px] w-[18px] shrink-0 opacity-80" />
+              Analytics
+            </Link>
+          ) : null}
 
           <div className="pt-5">
             <p

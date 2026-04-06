@@ -57,19 +57,34 @@ Kanban AI is your personal AI-powered project companion that helps you build, tr
    ```
 
 4. **Set up environment variables**
-   Create a `.env` file in the frontend directory:
+   Create a `.env` file in the frontend directory (only Supabase keys are exposed to the browser via `VITE_*`):
    ```env
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   VITE_OPENAI_API_KEY=your_openai_api_key
    ```
 
-5. **Start the development server**
-   ```bash
-   npm start
-   ```
+   LLM calls go through a Vercel serverless route at `/api/openai`, which uses a **server-only** `OPENAI_API_KEY` (never prefix it with `VITE_` — that would bundle the key into client JavaScript).
 
-The application will be available at `http://localhost:5173`
+5. **Run the app locally (frontend + LLM API)**
+
+   The Vite dev server proxies `/api` to a local Vercel dev process ([`frontend/vite.config.ts`](frontend/vite.config.ts)).
+
+   - In one terminal, from `frontend/`:
+     ```bash
+     npx vercel dev --listen 3000
+     ```
+     Ensure `OPENAI_API_KEY` is available there (e.g. `frontend/.env`, Vercel-linked project env, or `export OPENAI_API_KEY=...`).
+
+   - In another terminal, from `frontend/`:
+     ```bash
+     npm start
+     ```
+
+   The UI will be at `http://localhost:5173`. Without `vercel dev` on port 3000, AI features that hit `/api/openai` will not work locally.
+
+6. **Deploying on Vercel**
+
+   Add `OPENAI_API_KEY` in the Vercel project’s Environment Variables (Production and Preview as needed). The [`frontend/api/openai.ts`](frontend/api/openai.ts) handler reads it at runtime; no OpenAI key belongs in client env vars.
 
 ## 🏗️ **Tech Stack**
 

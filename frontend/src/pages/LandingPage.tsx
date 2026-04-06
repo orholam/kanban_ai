@@ -2,7 +2,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom';
-import promocard from '../assets/promoscreen.jpg'
+import promocard from '../assets/main_kanban.jpg'
 import sprintPlanning from '../assets/undraw_choose_card_n0x0.svg'
 import taskManagement from '../assets/undraw_join_re_w1lh.svg'
 import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
