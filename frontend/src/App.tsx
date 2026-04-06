@@ -11,6 +11,7 @@ import { migrateGuestDraft } from './lib/migrateGuestDraft';
 import { isWorkbenchPath } from './lib/siteMeta';
 import { applyWorkbenchDocumentMeta } from './lib/documentMeta';
 import { Analytics } from '@vercel/analytics/react';
+import { DOCUMENTATION_BOARD_BASE_PATH } from './documentation-board-feature/integration';
 
 const KanbanBoard = lazy(() => import('./pages/KanbanBoard'));
 const NewProject = lazy(() => import('./pages/NewProject'));
@@ -24,6 +25,9 @@ const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const Feedback = lazy(() => import('./pages/Feedback'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
+// DOCUMENTATION_BOARD — remove with `documentation-board-feature/`
+const DocumentationBoard = lazy(() => import('./documentation-board-feature/DocumentationBoard'));
+const DocumentationArticlePage = lazy(() => import('./documentation-board-feature/DocumentationArticle'));
 const AccountPage = lazy(() => import('./pages/AccountPage'));
 
 function RouteFallback({ isDarkMode }: { isDarkMode: boolean }) {
@@ -320,6 +324,33 @@ function AppContent() {
           </div>
         </div>
       } />
+      {/* DOCUMENTATION_BOARD — remove with `documentation-board-feature/` */}
+      <Route
+        path={DOCUMENTATION_BOARD_BASE_PATH}
+        element={
+          <div className={`flex h-screen flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+            <div className="flex-1 overflow-y-auto">
+              <Suspense fallback={<RouteFallback isDarkMode={isDarkMode} />}>
+                <DocumentationBoard isDarkMode={isDarkMode} />
+              </Suspense>
+            </div>
+          </div>
+        }
+      />
+      <Route
+        path={`${DOCUMENTATION_BOARD_BASE_PATH}/:slug`}
+        element={
+          <div className={`flex h-screen flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+            <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+            <div className="flex-1 overflow-y-auto">
+              <Suspense fallback={<RouteFallback isDarkMode={isDarkMode} />}>
+                <DocumentationArticlePage isDarkMode={isDarkMode} />
+              </Suspense>
+            </div>
+          </div>
+        }
+      />
 
       <Route path="*" element={
         <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>

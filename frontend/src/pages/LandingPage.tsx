@@ -9,6 +9,7 @@ import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
 import { TrustedBy } from '../components/TrustedBy'
 import SEO from '../components/SEO'
 import { DEFAULT_DESCRIPTION, DEFAULT_KEYWORDS, DEFAULT_TITLE } from '../lib/siteMeta'
+import { DOCUMENTATION_BOARD_BASE_PATH } from '../documentation-board-feature/integration'
 
 export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
   const { user } = useAuth()
@@ -295,6 +296,15 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
               <div>
                 <h3 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Resources</h3>
                 <ul className="mt-4 space-y-4">
+                  {/* DOCUMENTATION_BOARD */}
+                  <li>
+                    <Link
+                      to={DOCUMENTATION_BOARD_BASE_PATH}
+                      className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                      Documentation
+                    </Link>
+                  </li>
                   <li>
                     <Link to="/blog" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
                       Blog

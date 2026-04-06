@@ -1,0 +1,27 @@
+---
+description: Keep README and project documentation aligned with real behavior and setup
+alwaysApply: true
+---
+
+# README and documentation maintenance
+
+When your changes affect how someone runs, configures, understands, or extends the project, update documentation in the same change (or clearly call out that docs are stale if you cannot update them).
+
+## Prefer updating
+
+- **README.md**: setup/install, env vars, scripts, ports, architecture overview, links to deeper docs, troubleshooting that users hit in practice.
+- **Other project docs**: any markdown or doc files that describe behavior you changed (APIs, data models, deployment, feature flags, auth).
+
+## When it is appropriate
+
+- New or removed commands, dependencies, or environment variables.
+- Changed defaults, URLs, ports, or deployment steps.
+- New features or breaking changes that affect operators or contributors.
+- Anything a new developer would get wrong if they only read the README.
+
+## When you can skip doc updates
+
+- Pure refactors with no observable behavior or setup impact.
+- Internal-only renames with no external or contributor-facing effect.
+
+Keep edits proportional: fix what would mislead readers; avoid rewriting unrelated sections.

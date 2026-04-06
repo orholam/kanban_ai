@@ -4,6 +4,7 @@ import Logo from '../assets/kanban_ai_logo5.png';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { getUserInitials, getDisplayName } from '../lib/userUtils';
+import { DOCUMENTATION_BOARD_BASE_PATH } from '../documentation-board-feature/integration';
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -64,7 +65,18 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
           }`}
           aria-label="Main"
         >
-          <div className="flex items-center pr-1.5 sm:pr-2">
+          <div className="flex items-center gap-0.5 pr-1.5 sm:gap-1 sm:pr-2">
+            {/* DOCUMENTATION_BOARD */}
+            <Link
+              to={DOCUMENTATION_BOARD_BASE_PATH}
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                isDarkMode
+                  ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-100'
+                  : 'text-zinc-600 hover:bg-zinc-100/90 hover:text-zinc-900'
+              }`}
+            >
+              Docs
+            </Link>
             <Link
               to="/blog"
               className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
