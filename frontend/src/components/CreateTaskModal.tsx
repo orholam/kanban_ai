@@ -27,6 +27,7 @@ export default function CreateTaskModal({ onClose, onCreateTask, projectId }: Cr
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    const ts = new Date().toISOString();
     const newTask: Task = {
       id: uuidv4(),
       project_id: projectId,
@@ -38,7 +39,8 @@ export default function CreateTaskModal({ onClose, onCreateTask, projectId }: Cr
       sprint: parseInt(sprint.toString()),
       due_date: dueDate.toISOString().split('T')[0],
       assignee_id: user?.id || '',
-      created_at: new Date().toISOString().split('T')[0],
+      created_at: ts,
+      updated_at: ts,
     };
 
     onCreateTask(newTask);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, Settings, Sun, Moon } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import Logo from '../assets/kanban_ai_logo5.png';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
@@ -8,14 +8,13 @@ import { getUserInitials, getDisplayName } from '../lib/userUtils';
 interface HeaderProps {
   isDarkMode: boolean;
   toggleTheme: () => void;
-  onSearch: (query: string) => void;
 }
 
-export default function Header({ isDarkMode, toggleTheme, onSearch }: HeaderProps) {
+export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
   const { user, signOut } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  const closeDropdown = (e: MouseEvent) => {
+  const closeDropdown = () => {
     setIsProfileOpen(false);
     document.removeEventListener('click', closeDropdown);
   };
@@ -40,75 +39,113 @@ export default function Header({ isDarkMode, toggleTheme, onSearch }: HeaderProp
   };
 
   return (
-    <header className={`${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b`}>
-      <div className="max-w-[1920px] mx-auto px-4 sm:px-6">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-4">
-            <img 
-              src={Logo}
-              alt="Kanban AI Logo" 
-              className="h-10 w-auto"
-            />
-            <span className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Kanban AI</span>
-          </Link>
+    <header
+      className={`relative z-30 border-b backdrop-blur-xl ${
+        isDarkMode
+          ? 'border-zinc-800/60 bg-zinc-950/80'
+          : 'border-zinc-200/70 bg-white/80'
+      }`}
+    >
+      <div className="mx-auto flex h-16 max-w-[1920px] items-center justify-between gap-3 px-4 sm:gap-4 sm:px-6">
+        <Link to="/" className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-4">
+          <img src={Logo} alt="Kanban AI Logo" className="h-9 w-auto sm:h-10" />
+          <span
+            className={`truncate text-lg font-bold tracking-tight sm:text-xl ${
+              isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
+            }`}
+          >
+            Kanban AI
+          </span>
+        </Link>
 
-          {/* Navigation */}
-          <nav className="flex items-center space-x-6">
+        <nav
+          className={`flex min-w-0 items-center gap-0.5 sm:gap-1 ${
+            isDarkMode ? 'divide-x divide-zinc-800/80' : 'divide-x divide-zinc-200/80'
+          }`}
+          aria-label="Main"
+        >
+          <div className="flex items-center pr-1.5 sm:pr-2">
             <Link
               to="/blog"
-              className={`text-sm font-medium transition-colors ${
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 isDarkMode
-                  ? 'text-gray-300 hover:text-white'
-                  : 'text-gray-700 hover:text-gray-900'
+                  ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-100'
+                  : 'text-zinc-600 hover:bg-zinc-100/90 hover:text-zinc-900'
               }`}
             >
               Blog
             </Link>
-          </nav>
-
-          {/* Right section */}
-          <div className="flex items-center space-x-4">
-            {/* Most controls only visible when logged in */}
+          </div>
+          <div className="flex items-center gap-1 pl-1.5 sm:gap-2 sm:pl-2">
+            {!user && (
+              <Link
+                to="/login"
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  isDarkMode
+                    ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-100'
+                    : 'text-zinc-600 hover:bg-zinc-100/90 hover:text-zinc-900'
+                }`}
+              >
+                Sign in
+              </Link>
+            )}
             {user && (
               <>
-                <button className={`p-2 ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}>
-                  <Settings className="h-6 w-6" />
-                </button>
-                
-                {/* Profile dropdown section */}
                 <div className="relative">
-                  <div 
+                  <button
+                    type="button"
                     onClick={handleProfileClick}
-                    className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-medium cursor-pointer"
+                    className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-xs font-semibold text-white shadow-md ring-1 transition-opacity hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 ${
+                      isDarkMode
+                        ? 'bg-gradient-to-br from-indigo-500 to-violet-600 ring-indigo-400/30 focus-visible:ring-offset-zinc-950'
+                        : 'bg-gradient-to-br from-indigo-500 to-violet-600 ring-indigo-300/50 focus-visible:ring-offset-white'
+                    }`}
+                    aria-expanded={isProfileOpen}
+                    aria-haspopup="menu"
                   >
                     {user ? getUserInitials(user) : 'U'}
-                  </div>
-                  <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg ${
-                    isDarkMode ? 'bg-gray-800' : 'bg-white'
-                  } ring-1 ring-black ring-opacity-5 transition-all duration-200 ${
-                    isProfileOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-                  }`}>
+                  </button>
+                  <div
+                    className={`absolute right-0 mt-2 w-52 origin-top-right rounded-xl shadow-lg shadow-zinc-950/10 ring-1 transition-all duration-200 ${
+                      isDarkMode
+                        ? 'bg-zinc-900/95 ring-zinc-700/80 backdrop-blur-xl'
+                        : 'bg-white/95 ring-zinc-200/80 backdrop-blur-xl'
+                    } ${isProfileOpen ? 'visible opacity-100' : 'invisible opacity-0'}`}
+                    role="menu"
+                  >
                     <div className="py-1">
-                      <div className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-900'} border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                      <div
+                        className={`border-b px-4 py-3 text-sm ${
+                          isDarkMode ? 'border-zinc-800/80 text-zinc-100' : 'border-zinc-200/70 text-zinc-900'
+                        }`}
+                      >
                         <p className="font-medium">{user ? getDisplayName(user) : 'Unknown User'}</p>
-                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{user.email}</p>
+                        <p className={`mt-0.5 text-xs ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>{user.email}</p>
                         <div className="mt-2">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            isDarkMode 
-                              ? 'bg-gradient-to-r from-indigo-400 to-purple-400 text-white shadow-md' 
-                              : 'bg-gradient-to-r from-indigo-400 to-purple-400 text-white shadow-md'
-                          }`}>
+                          <span className="inline-flex items-center rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 px-2 py-1 text-xs font-medium text-white shadow-sm ring-1 ring-white/10">
                             ✨ Pro Plan
                           </span>
                         </div>
                       </div>
-                      <a href="#" className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>Profile Settings</a>
-                      <a href="#" className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-100'}`}>Preferences</a>
-                      <a 
-                        href="#" 
+                      <Link
+                        to="/account"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          document.removeEventListener('click', closeDropdown);
+                        }}
+                        className={`block px-4 py-2 text-sm ${
+                          isDarkMode ? 'text-zinc-300 hover:bg-zinc-800/80' : 'text-zinc-700 hover:bg-zinc-50'
+                        }`}
+                      >
+                        Account
+                      </Link>
+                      <a
+                        href="#"
                         onClick={handleSignOut}
-                        className={`block px-4 py-2 text-sm ${isDarkMode ? 'text-red-400 hover:bg-gray-700' : 'text-red-600 hover:bg-gray-100'}`}
+                        className={`block px-4 py-2 text-sm ${
+                          isDarkMode ? 'text-red-400 hover:bg-zinc-800/80' : 'text-red-600 hover:bg-red-50/80'
+                        }`}
                       >
                         Sign Out
                       </a>
@@ -117,17 +154,20 @@ export default function Header({ isDarkMode, toggleTheme, onSearch }: HeaderProp
                 </div>
               </>
             )}
-            {/* Theme toggle always visible */}
             <button
+              type="button"
               onClick={toggleTheme}
-              className={`p-2 rounded-full ${
-                isDarkMode ? 'text-yellow-500' : 'text-gray-400 hover:text-gray-600'
+              className={`rounded-lg p-2 transition-colors ${
+                isDarkMode
+                  ? 'text-amber-400 hover:bg-zinc-800/80 hover:text-amber-300'
+                  : 'text-zinc-500 hover:bg-zinc-100/90 hover:text-zinc-900'
               }`}
+              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              {isDarkMode ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
+              {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
           </div>
-        </div>
+        </nav>
       </div>
     </header>
   );

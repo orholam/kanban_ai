@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CursorComplete } from '../Magic/CursorComplete';
-import TypeSelector from './TypeSelector';
+import TypeSelector, { type WizardTypeOption } from './TypeSelector';
 import { BookIcon, Brain, Calendar, Smartphone } from 'lucide-react';
 
 interface ProjectDetailsProps {
@@ -8,26 +7,26 @@ interface ProjectDetailsProps {
   onComplete: (data: { name: string; description: string; keywords: string[]; type: string }) => void;
 }
 
-const TYPES = [
+const TYPES: WizardTypeOption[] = [
   {
-      id: 1,
-      name: "SaaS App",
-      icon: <Smartphone className="w-5 h-5" />,
+    id: 1,
+    name: 'SaaS App',
+    icon: <Smartphone className="w-5 h-5" />,
   },
   {
-      id: 2,
-      name: "AI Tool",
-      icon: <Brain className="w-5 h-5" />,
+    id: 2,
+    name: 'AI Tool',
+    icon: <Brain className="w-5 h-5" />,
   },
   {
-      id: 3,
-      name: "Blog/Website",
-      icon: <BookIcon className="w-5 h-5" />,
+    id: 3,
+    name: 'Blog/Website',
+    icon: <BookIcon className="w-5 h-5" />,
   },
   {
-      id: 4,
-      name: "Event Planning",
-      icon: <Calendar className="w-5 h-5" />,
+    id: 4,
+    name: 'Event Planning',
+    icon: <Calendar className="w-5 h-5" />,
   },
 ];
 

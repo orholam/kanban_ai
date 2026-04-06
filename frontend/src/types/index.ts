@@ -14,19 +14,21 @@ export interface Task {
   due_date: string;
   assignee_id: string; // Changed from object to string to match database schema
   created_at: string;
-  comments?: Comment[];
+  /** Set by Postgres (default/trigger). Guest boards set this client-side. */
+  updated_at: string;
   isAnimated?: boolean;
+  /** Client-only: brief highlight when the AI sidebar creates or updates this task. */
+  aiBrandish?: boolean;
 }
 
-export interface Comment {
+/** Row in `task_comments` (loaded in the task modal / public project view). */
+export interface TaskComment {
   id: string;
-  userId: string;
-  content: string;
-  createdAt: string;
-  user: {
-    name: string;
-    avatar: string;
-  };
+  task_id: string;
+  user_id: string;
+  body: string;
+  author_display_name: string | null;
+  created_at: string;
 }
 
 export interface Team {

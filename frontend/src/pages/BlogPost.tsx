@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { getPostBySlug } from '../lib/blogUtils';
 import SEO from '../components/SEO';
+import { DEFAULT_OG_IMAGE } from '../lib/siteMeta';
 import { format } from 'date-fns';
 
 interface BlogPostProps {
@@ -18,13 +19,22 @@ export default function BlogPost({ isDarkMode }: BlogPostProps) {
     return <Navigate to="/blog" replace />;
   }
 
+  const publishedIso = new Date(`${post.date}T12:00:00.000Z`).toISOString();
+
   return (
     <>
-      <SEO 
-        title={`${post.title} - Kanban AI Blog`}
+      <SEO
+        title={`${post.title} | Kanban AI Blog`}
         description={post.excerpt}
-        keywords={post.tags.join(', ')}
-        url={`https://kanbanai.dev/blog/${post.id}`}
+        keywords={[...post.tags, 'Kanban AI', 'kanban AI'].join(', ')}
+        url={`https://kanbanai.dev/blog/${slug}`}
+        type="article"
+        author={post.author}
+        publishedTime={publishedIso}
+        modifiedTime={publishedIso}
+        section="Productivity"
+        tags={post.tags}
+        image={post.featuredImage ?? DEFAULT_OG_IMAGE}
       />
       <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

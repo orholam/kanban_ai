@@ -4,10 +4,10 @@ import SEO from '../components/SEO';
 const TermsOfService: React.FC = () => {
     return (
         <>
-            <SEO 
-                title="Terms of Service - Kanban AI"
-                description="Read our terms of service to understand the rules and guidelines for using Kanban AI. Learn about your rights and responsibilities as a user."
-                keywords="terms of service, user agreement, kanban AI, project management, terms and conditions"
+            <SEO
+                title="Terms of Service — Kanban AI | Using our AI kanban product"
+                description="Terms for using Kanban AI: acceptable use, accounts, the AI kanban service, and limitations of liability."
+                keywords="Kanban AI terms, terms of service, kanban AI agreement"
                 url="https://kanbanai.dev/terms-of-service"
             />
             <div className="max-w-4xl mx-auto px-6 py-12">

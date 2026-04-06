@@ -8,6 +8,7 @@ import taskManagement from '../assets/undraw_join_re_w1lh.svg'
 import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
 import { TrustedBy } from '../components/TrustedBy'
 import SEO from '../components/SEO'
+import { DEFAULT_DESCRIPTION, DEFAULT_KEYWORDS, DEFAULT_TITLE } from '../lib/siteMeta'
 
 export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
   const { user } = useAuth()
@@ -18,11 +19,11 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
 
   return (
     <>
-      <SEO 
-        title="Kanban AI - AI-Powered Project Management for Side Projects"
-        description="Transform your side projects from ideas to reality with AI-assisted project management. Get personalized guidance, automated task breakdowns, and intelligent progress tracking. Perfect for developers, entrepreneurs, and creators."
-        keywords="kanban, AI, project management, side projects, task management, productivity, development, agile, scrum, AI assistant, project planning, development tools, MVP, startup"
-        url="https://kanbanai.dev"
+      <SEO
+        title={DEFAULT_TITLE}
+        description={DEFAULT_DESCRIPTION}
+        keywords={DEFAULT_KEYWORDS}
+        url="https://kanbanai.dev/"
       />
       <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} h-full overflow-y-auto`}>
       {/* Hero Section */}
@@ -60,6 +61,11 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
 
           <div className="mx-auto max-w-4xl py-8 sm:py-4">
             <div className="text-center">
+              <p
+                className={`mb-3 text-sm font-semibold uppercase tracking-[0.2em] ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}
+              >
+                Kanban AI
+              </p>
               <h1 className={`text-4xl font-bold tracking-tight sm:text-6xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 Your <span className="font-['Yellowtail'] text-indigo-500 text-[1.15em]">AI-powered</span> project companion
               </h1>
@@ -67,12 +73,13 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
                 Transform your side projects from ideas to reality with AI-assisted project management. 
                 Get personalized guidance, automated task breakdowns, and intelligent progress tracking.
               </p>
-              <div className="mt-10 flex items-center justify-center gap-x-6">
-                <Link to="/waitlist"
-                  className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              <div className="mt-10 flex flex-col items-center gap-2">
+                <Link
+                  to="/kanban"
+                  className="inline-flex items-center rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
-                  Join Waitlist
-                  <ArrowRight className="ml-2 w-4 h-4 inline" />
+                  Try now — no signup
+                  <ArrowRight className="ml-2 w-4 h-4" />
                 </Link>
               </div>
             </div>
@@ -246,7 +253,7 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
                   </ul>
                 </div>
                 <Link
-                  to={tier.name === "Enterprise" ? "/contact" : "/waitlist"}
+                  to={tier.name === "Enterprise" ? "/contact" : "/kanban"}
                   className={`mt-8 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 
                     ${tier.featured
                       ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-indigo-600'
@@ -255,7 +262,7 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
                         : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
                     }`}
                 >
-                  {tier.name === "Enterprise" ? "Contact Sales" : "Join Waitlist"}
+                  {tier.name === "Enterprise" ? "Contact Sales" : "Try now"}
                 </Link>
               </div>
             ))}
@@ -274,10 +281,10 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
               </p>
               <div className="mt-8">
                 <Link
-                  to="/waitlist"
+                  to="/kanban"
                   className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                 >
-                  Join Waitlist
+                  Try now
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </div>
@@ -289,8 +296,13 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
                 <h3 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Resources</h3>
                 <ul className="mt-4 space-y-4">
                   <li>
-                    <Link to="/waitlist" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
-                      Join Waitlist
+                    <Link to="/blog" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                      Blog
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/login" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                      Sign in
                     </Link>
                   </li>
                 </ul>
@@ -299,9 +311,20 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
                 <h3 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>About</h3>
                 <ul className="mt-4 space-y-4">
                   <li>
-                    <a href="#" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
-                      Terms & Privacy
-                    </a>
+                    <Link
+                      to="/terms-of-service"
+                      className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                      Terms of Service
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to="/privacy-policy"
+                      className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                      Privacy Policy
+                    </Link>
                   </li>
                   <li>
                     <a href="https://x.com/JonWentel" target="_blank" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>

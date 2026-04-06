@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { Session, User, AuthError } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabase'
+import { clearLocalSupabaseSession, supabase } from '../lib/supabase'
 
 interface AuthContextType {
   session: Session | null
@@ -30,10 +30,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      await clearLocalSupabaseSession()
+      return { error: null }
+    }
+    return { error: null }
+  }
+
   const value = {
     session,
     user,
-    signOut: () => supabase.auth.signOut()
+    signOut
   }
 
   return (

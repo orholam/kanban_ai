@@ -1,5 +1,16 @@
+import type { ReactNode } from 'react';
 
-export default function TypeSelector({ type, updateType, types }: { type: string, updateType: (type: string) => void, types: any[] }) {
+export type WizardTypeOption = { id: number; name: string; icon: ReactNode };
+
+export default function TypeSelector({
+  type,
+  updateType,
+  types,
+}: {
+  type: string;
+  updateType: (type: string) => void;
+  types: WizardTypeOption[];
+}) {
     // This is a wizard step that allows the user to select the type of project they want to create.
     // For example, mobile app, blog, or even something like an event they want to plan.
     // This should be only a selector, but should be horizontal scrolling where each option is a tile.

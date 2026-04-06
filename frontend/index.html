@@ -2,86 +2,152 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- Primary Meta Tags -->
-    <title>Kanban AI - AI-Powered Project Management for Side Projects</title>
-    <meta name="title" content="Kanban AI - AI-Powered Project Management for Side Projects" />
-    <meta name="description" content="Transform your side projects from ideas to reality with AI-assisted project management. Get personalized guidance, automated task breakdowns, and intelligent progress tracking. Perfect for developers, entrepreneurs, and creators." />
-    <meta name="keywords" content="kanban, AI, project management, side projects, task management, productivity, development, agile, scrum, AI assistant, project planning, development tools, MVP, startup" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <!-- Primary Meta Tags (fallback before React hydrates; crawlers that skip JS still see a strong snippet) -->
+    <title>Kanban AI — AI kanban boards &amp; AI task planning</title>
+    <meta name="title" content="Kanban AI — AI kanban boards &amp; AI task planning" />
+    <meta
+      name="description"
+      content="Kanban AI is the kanban AI app for shipping faster: AI-powered boards, columns, and sprint planning for builders and teams. Try a guest board with no signup."
+    />
+    <meta
+      name="keywords"
+      content="kanban AI, Kanban AI, AI kanban, AI kanban board, kanban app, AI task management, sprint planning"
+    />
     <meta name="author" content="Kanban AI" />
     <meta name="robots" content="index, follow" />
     <meta name="language" content="English" />
-    <meta name="revisit-after" content="7 days" />
-    
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://kanbanai.dev/" />
-    <meta property="og:title" content="Kanban AI - AI-Powered Project Management for Side Projects" />
-    <meta property="og:description" content="Transform your side projects from ideas to reality with AI-assisted project management. Get personalized guidance, automated task breakdowns, and intelligent progress tracking." />
+    <meta property="og:title" content="Kanban AI — AI kanban boards &amp; AI task planning" />
+    <meta
+      property="og:description"
+      content="Kanban AI is the kanban AI app for shipping faster: AI-powered boards, columns, and sprint planning for builders and teams."
+    />
     <meta property="og:image" content="https://kanbanai.dev/og-image.png" />
     <meta property="og:site_name" content="Kanban AI" />
     <meta property="og:locale" content="en_US" />
-    
+
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://kanbanai.dev/" />
-    <meta property="twitter:title" content="Kanban AI - AI-Powered Project Management for Side Projects" />
-    <meta property="twitter:description" content="Transform your side projects from ideas to reality with AI-assisted project management. Get personalized guidance, automated task breakdowns, and intelligent progress tracking." />
-    <meta property="twitter:image" content="https://kanbanai.dev/og-image.png" />
-    
-    <!-- Additional SEO Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://kanbanai.dev/" />
+    <meta name="twitter:title" content="Kanban AI — AI kanban boards &amp; AI task planning" />
+    <meta
+      name="twitter:description"
+      content="Kanban AI is the kanban AI app for shipping faster: AI-powered boards, columns, and sprint planning for builders and teams."
+    />
+    <meta name="twitter:image" content="https://kanbanai.dev/og-image.png" />
+
     <meta name="theme-color" content="#4f46e5" />
     <meta name="msapplication-TileColor" content="#4f46e5" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Kanban AI" />
-    
-    <!-- Canonical URL -->
+
     <link rel="canonical" href="https://kanbanai.dev/" />
-    
-    <!-- PWA Manifest -->
+
     <link rel="manifest" href="/manifest.json" />
-    
-    <!-- Preconnect to external domains -->
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Yellowtail&display=swap" rel="stylesheet">
-    
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "Kanban AI",
-      "description": "AI-powered project management tool for side projects. Transform ideas into reality with personalized guidance, automated task breakdowns, and intelligent progress tracking.",
-      "url": "https://kanbanai.dev",
-      "applicationCategory": "ProductivityApplication",
-      "operatingSystem": "Web",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      },
-      "author": {
-        "@type": "Organization",
-        "name": "Kanban AI"
-      },
-      "featureList": [
-        "AI-powered project planning",
-        "Automated task breakdown",
-        "Intelligent progress tracking",
-        "Personalized guidance",
-        "Kanban board management",
-        "Sprint planning",
-        "Development roadmap generation"
-      ]
-    }
+
+    <link href="https://fonts.googleapis.com/css2?family=Yellowtail&display=swap" rel="stylesheet" />
+
+    <!-- Site-wide structured data: helps Google understand brand + key URLs (sitelinks are still algorithmic) -->
+    <script id="ld-json-site" type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://kanbanai.dev/#website",
+            "url": "https://kanbanai.dev/",
+            "name": "Kanban AI",
+            "alternateName": ["KanbanAI", "AI Kanban", "kanban AI app", "Kanban AI software"],
+            "description": "AI-powered kanban boards and task planning for builders and small teams.",
+            "inLanguage": "en-US",
+            "publisher": { "@id": "https://kanbanai.dev/#organization" }
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://kanbanai.dev/#organization",
+            "name": "Kanban AI",
+            "url": "https://kanbanai.dev/",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://kanbanai.dev/favicon.svg"
+            }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Kanban AI",
+            "applicationCategory": "BusinessApplication",
+            "applicationSubCategory": "ProjectManagementApplication",
+            "operatingSystem": "Web",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "Kanban AI combines classic kanban columns with AI-assisted planning, task breakdown, and sprint tracking.",
+            "url": "https://kanbanai.dev/",
+            "author": { "@id": "https://kanbanai.dev/#organization" },
+            "featureList": [
+              "AI-assisted task breakdown",
+              "Kanban columns and cards",
+              "Sprint planning",
+              "Guest board without signup",
+              "Cloud sync for signed-in users"
+            ]
+          },
+          {
+            "@type": "ItemList",
+            "@id": "https://kanbanai.dev/#primary-nav",
+            "name": "Kanban AI — main pages",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "url": "https://kanbanai.dev/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Sign in",
+                "url": "https://kanbanai.dev/login"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Blog",
+                "url": "https://kanbanai.dev/blog"
+              },
+              {
+                "@type": "ListItem",
+                "position": 4,
+                "name": "Privacy Policy",
+                "url": "https://kanbanai.dev/privacy-policy"
+              },
+              {
+                "@type": "ListItem",
+                "position": 5,
+                "name": "Terms of Service",
+                "url": "https://kanbanai.dev/terms-of-service"
+              }
+            ]
+          }
+        ]
+      }
     </script>
-    
+
     <script
       src="https://script.refix.ai/script.min.js"
       type="text/javascript"

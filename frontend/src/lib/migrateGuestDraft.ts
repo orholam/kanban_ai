@@ -47,6 +47,7 @@ export async function migrateGuestDraft(
   const { project } = await createProject(newProject, collaborator);
 
   for (const task of draft.tasks) {
+    const created = task.created_at || now;
     const row = {
       id: uuidv4(),
       project_id: project.id,
@@ -57,7 +58,8 @@ export async function migrateGuestDraft(
       priority: task.priority,
       sprint: task.sprint,
       due_date: task.due_date,
-      created_at: task.created_at || now,
+      created_at: created,
+      updated_at: task.updated_at || created,
       assignee_id: user.id,
     };
     await createTask(row);

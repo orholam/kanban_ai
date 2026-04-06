@@ -1,15 +1,15 @@
 {
-  "name": "Kanban AI - AI-Powered Project Management",
+  "name": "Kanban AI — AI kanban boards & task planning",
   "short_name": "Kanban AI",
-  "description": "Transform your side projects from ideas to reality with AI-assisted project management. Get personalized guidance, automated task breakdowns, and intelligent progress tracking.",
+  "description": "Kanban AI is the kanban AI app for shipping faster: AI-powered boards, columns, and sprint planning. Try a guest board with no signup.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#fafafa",
   "theme_color": "#4f46e5",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/vite.svg",
+      "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
@@ -18,4 +18,4 @@
   "categories": ["productivity", "business", "utilities"],
   "lang": "en",
   "dir": "ltr"
-} 
+}

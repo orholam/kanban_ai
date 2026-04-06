@@ -10,23 +10,23 @@ interface AnimatedTextProps {
   speed?: number;
 }
 
-function useAnimatedText(text: string, delay: number = 0, speed: number = 1, isDarkMode: boolean) {
+function useAnimatedText(text: string, delay: number = 0, speed: number = 1) {
   const [displayText, setDisplayText] = useState('');
   const textProgress = useMotionValue(0);
-  
+
   useEffect(() => {
     const controls = animate(textProgress, text.length, {
       type: "tween",
       duration: (text.length * 0.03) / speed,
       ease: "linear",
       delay: delay / 1000,
-      onUpdate: latest => {
+      onUpdate: (latest) => {
         setDisplayText(text.slice(0, Math.round(latest)));
-      }
+      },
     });
 
     return () => controls.stop();
-  }, [text, delay, speed]);
+  }, [text, delay, speed, textProgress]);
 
   return displayText;
 }
@@ -39,7 +39,7 @@ export default function AnimatedText({
   delay = 0,
   speed = 1
 }: AnimatedTextProps) {
-  const animatedText = useAnimatedText(content, delay, speed, isDarkMode);
+  const animatedText = useAnimatedText(content, delay, speed);
 
   useEffect(() => {
     if (animatedText === content && onComplete) {

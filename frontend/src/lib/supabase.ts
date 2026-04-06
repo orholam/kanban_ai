@@ -9,26 +9,12 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 
-export async function getUserById(userId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('auth.users')
-      .select('id, email, raw_user_meta_data')
-      .eq('id', userId)
-      .single()
-
-    if (error) {
-      console.error('Error fetching user:', error)
-      return null
-    }
-
-    return {
-      id: data.id,
-      email: data.email,
-      name: data.raw_user_meta_data?.name || data.email?.split('@')[0] || 'Unknown User'
-    }
-  } catch (error) {
-    console.error('Error in getUserById:', error)
-    return null
-  }
-} 
+/**
+ * Clears persisted auth and in-memory session, and emits SIGNED_OUT.
+ * Needed when `signOut()` fails: `session_not_found` becomes `AuthSessionMissingError`,
+ * which GoTrueClient does not treat like 401/403, so it returns without calling `_removeSession`.
+ */
+export async function clearLocalSupabaseSession(): Promise<void> {
+  const auth = supabase.auth as unknown as { _removeSession(): Promise<void> }
+  await auth._removeSession()
+}

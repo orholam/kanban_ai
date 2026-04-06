@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Filter, X, ChevronDown } from 'lucide-react';
+import { Filter, ChevronDown } from 'lucide-react';
 import type { Task } from '../types';
+import { parseTaskDueDate } from '../lib/taskDb';
 
 interface EnhancedFiltersProps {
   tasks: Task[];
@@ -18,34 +19,33 @@ export default function EnhancedFilters({ tasks, onFilterChange, isDarkMode }: E
   const types = ['bug', 'feature', 'scope'];
   const statuses = ['todo', 'in-progress', 'done'];
 
-  const applyFilters = () => {
+  const applyFilters = React.useCallback(() => {
     let filtered = tasks;
 
-    // Priority filter
     if (priorityFilter) {
-      filtered = filtered.filter(task => task.priority === priorityFilter);
+      filtered = filtered.filter((task) => task.priority === priorityFilter);
     }
 
-    // Type filter
     if (typeFilter) {
-      filtered = filtered.filter(task => task.type === typeFilter);
+      filtered = filtered.filter((task) => task.type === typeFilter);
     }
 
-    // Status filter
     if (statusFilter) {
-      filtered = filtered.filter(task => task.status === statusFilter);
+      filtered = filtered.filter((task) => task.status === statusFilter);
     }
 
-    // Overdue filter
     if (overdueOnly) {
-      filtered = filtered.filter(task => {
-        const dueDate = new Date(task.due_date);
-        return dueDate < new Date();
+      filtered = filtered.filter((task) => {
+        const due = parseTaskDueDate(task.due_date);
+        const startOfDue = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+        const today = new Date();
+        const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        return startOfDue < startOfToday;
       });
     }
 
     onFilterChange(filtered);
-  };
+  }, [tasks, priorityFilter, typeFilter, statusFilter, overdueOnly, onFilterChange]);
 
   const clearFilters = () => {
     setPriorityFilter('');
@@ -57,7 +57,7 @@ export default function EnhancedFilters({ tasks, onFilterChange, isDarkMode }: E
 
   React.useEffect(() => {
     applyFilters();
-  }, [priorityFilter, typeFilter, statusFilter, overdueOnly]);
+  }, [applyFilters]);
 
   const activeFiltersCount = (priorityFilter ? 1 : 0) + (typeFilter ? 1 : 0) + (statusFilter ? 1 : 0) + (overdueOnly ? 1 : 0);
 

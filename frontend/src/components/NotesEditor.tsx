@@ -37,8 +37,6 @@ interface NotesEditorProps {
 }
 
 export default function NotesEditor({ isOpen = false, onToggle, showToggleButton = false, initialNotes, onNotesChange }: NotesEditorProps) {
-  console.log('initialNotes', initialNotes);
-
   const [notes, setNotes] = useState(() => {
     try {
       // Use initialNotes prop if provided and not null/undefined, otherwise load from localStorage
@@ -253,13 +251,20 @@ export default function NotesEditor({ isOpen = false, onToggle, showToggleButton
         
         {/* Editor */}
         <div className="flex-1 overflow-hidden">
-          {/* @ts-ignore - MDXEditor has React type compatibility issues */}
-          <MDXEditor 
+          {/* @ts-expect-error MDXEditor has React type compatibility issues with this project's React types */}
+          <MDXEditor
             markdown={notes}
             onChange={handleChange}
-            onError={(error: any) => {
+            onError={(error: unknown) => {
               console.warn('MDXEditor error:', error);
-              if (error && error.message && error.message.includes('XrayWrapper')) {
+              const message =
+                error &&
+                typeof error === 'object' &&
+                'message' in error &&
+                typeof (error as { message: unknown }).message === 'string'
+                  ? (error as { message: string }).message
+                  : '';
+              if (message.includes('XrayWrapper')) {
                 setHasError(true);
               }
             }}

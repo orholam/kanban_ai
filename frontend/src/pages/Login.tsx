@@ -2,25 +2,29 @@ import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import TypewriterText from '../components/TypeWriterText';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 
 export default function Login({ isDarkMode }: { isDarkMode: boolean }) {
-  const { user } = useAuth()
+  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const next = searchParams.get('next') || '/kanban';
 
   if (user) {
-    return <Navigate to="/kanban" />
+    return <Navigate to={next} replace />;
   }
+
+  const redirectTo = `${window.location.origin}/login?next=${encodeURIComponent(next)}`;
 
   return (
     <>
-      <SEO 
-        title="Login - Kanban AI"
-        description="Sign in to Kanban AI and start transforming your side projects with AI-powered project management. Get personalized guidance and intelligent progress tracking."
-        keywords="login, sign in, kanban AI, project management, AI assistant"
+      <SEO
+        title="Sign in — Kanban AI | AI kanban board & cloud sync"
+        description="Sign in to Kanban AI to save your AI kanban boards, sync across devices, and keep sprints and tasks in one place."
+        keywords="Kanban AI login, kanban AI account, sign in, AI kanban"
         url="https://kanbanai.dev/login"
       />
       <div className={`min-h-screen flex ${isDarkMode ? 'bg-gray-300' : 'bg-gray-200'}`}>
@@ -106,7 +110,7 @@ export default function Login({ isDarkMode }: { isDarkMode: boolean }) {
             }}
             theme={isDarkMode ? 'dark' : 'light'}
             providers={['google']}
-            redirectTo={`${window.location.origin}/kanban`}
+            redirectTo={redirectTo}
           />
         </div>
       </div>

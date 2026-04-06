@@ -23,7 +23,7 @@ function useAnimatedText(text: string) {
     });
 
     return () => controls.stop();
-  }, [text]);
+  }, [text, textProgress]);
 
   return displayText;
 }

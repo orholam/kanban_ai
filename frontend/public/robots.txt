@@ -1,18 +1,19 @@
 User-agent: *
 Allow: /
 
-# Sitemap location
 Sitemap: https://kanbanai.dev/sitemap.xml
 
-# Disallow private/authenticated areas
+# App / private surfaces — keep crawl budget on marketing & content URLs
 Disallow: /kanban
 Disallow: /project/
 Disallow: /new-project
 Disallow: /analytics
 Disallow: /feedback
+Disallow: /account
+Disallow: /public/project/
 
-# Allow important public pages
 Allow: /
 Allow: /login
+Allow: /blog
 Allow: /privacy-policy
-Allow: /terms-of-service 
+Allow: /terms-of-service

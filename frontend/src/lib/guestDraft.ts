@@ -74,7 +74,16 @@ export function loadGuestDraft(): GuestDraft {
       id: GUEST_PROJECT_ID,
       tasks: [],
     };
-    const tasks = Array.isArray(parsed.tasks) ? parsed.tasks : [];
+    const rawTasks = Array.isArray(parsed.tasks) ? parsed.tasks : [];
+    const now = new Date().toISOString();
+    const tasks = rawTasks.map((row) => {
+      const t = row as Task;
+      const created =
+        typeof t.created_at === 'string' && t.created_at.trim() ? t.created_at : now;
+      const updated =
+        typeof t.updated_at === 'string' && t.updated_at.trim() ? t.updated_at : created;
+      return { ...t, created_at: created, updated_at: updated };
+    });
     return { project, tasks };
   } catch {
     return { project: createDefaultGuestProject(), tasks: [] };

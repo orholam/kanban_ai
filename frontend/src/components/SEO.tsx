@@ -1,4 +1,17 @@
 import { useEffect } from 'react';
+import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_KEYWORDS,
+  DEFAULT_OG_IMAGE,
+  DEFAULT_TITLE,
+  SITE_NAME,
+} from '../lib/siteMeta';
+import {
+  upsertCanonical,
+  upsertMetaName,
+  upsertMetaProperty,
+  upsertPageJsonLd,
+} from '../lib/documentMeta';
 
 interface SEOProps {
   title?: string;
@@ -12,133 +25,119 @@ interface SEOProps {
   modifiedTime?: string;
   section?: string;
   tags?: string[];
+  /** Use for account-only or internal pages — keeps them out of the index. */
+  noindex?: boolean;
 }
 
-export default function SEO({ 
-  title = 'Kanban AI - AI-Powered Project Management for Side Projects',
-  description = 'Transform your side projects from ideas to reality with AI-assisted project management. Get personalized guidance, automated task breakdowns, and intelligent progress tracking.',
-  keywords = 'kanban, AI, project management, side projects, task management, productivity, development, agile, scrum, AI assistant, project planning, development tools, MVP, startup',
-  image = 'https://kanbanai.dev/og-image.jpg',
-  url = 'https://kanbanai.dev',
+export default function SEO({
+  title = DEFAULT_TITLE,
+  description = DEFAULT_DESCRIPTION,
+  keywords = DEFAULT_KEYWORDS,
+  image = DEFAULT_OG_IMAGE,
+  url = 'https://kanbanai.dev/',
   type = 'website',
   author,
   publishedTime,
   modifiedTime,
   section,
-  tags = []
+  tags = [],
+  noindex = false,
 }: SEOProps) {
   useEffect(() => {
-    // Update document title
+    document.querySelectorAll('meta[property^="article:"]').forEach((el) => el.remove());
+
+    const robotsContent = noindex ? 'noindex, nofollow' : 'index, follow';
+
     document.title = title;
+    upsertMetaName('description', description);
+    upsertMetaName('keywords', keywords);
+    upsertMetaName('author', author || SITE_NAME);
+    upsertMetaName('robots', robotsContent);
 
-    // Helper function to update or create meta tags
-    const updateMetaTag = (name: string, content: string, property = false) => {
-      const selector = property ? `meta[property="${name}"]` : `meta[name="${name}"]`;
-      let metaTag = document.querySelector(selector) as HTMLMetaElement;
-      
-      if (!metaTag) {
-        metaTag = document.createElement('meta');
-        if (property) {
-          metaTag.setAttribute('property', name);
-        } else {
-          metaTag.setAttribute('name', name);
-        }
-        document.head.appendChild(metaTag);
-      }
-      metaTag.setAttribute('content', content);
-    };
+    upsertMetaProperty('og:title', title);
+    upsertMetaProperty('og:description', description);
+    upsertMetaProperty('og:image', image);
+    upsertMetaProperty('og:url', url);
+    upsertMetaProperty('og:type', type);
+    upsertMetaProperty('og:site_name', SITE_NAME);
+    upsertMetaProperty('og:locale', 'en_US');
 
-    // Update basic meta tags
-    updateMetaTag('description', description);
-    updateMetaTag('keywords', keywords);
-    updateMetaTag('author', author || 'Kanban AI');
-    updateMetaTag('robots', 'index, follow');
+    upsertMetaName('twitter:card', 'summary_large_image');
+    upsertMetaName('twitter:title', title);
+    upsertMetaName('twitter:description', description);
+    upsertMetaName('twitter:image', image);
+    upsertMetaName('twitter:site', '@kanbanai');
+    upsertMetaName('twitter:creator', '@kanbanai');
 
-    // Update Open Graph tags
-    updateMetaTag('og:title', title, true);
-    updateMetaTag('og:description', description, true);
-    updateMetaTag('og:image', image, true);
-    updateMetaTag('og:url', url, true);
-    updateMetaTag('og:type', type, true);
-    updateMetaTag('og:site_name', 'Kanban AI', true);
-    updateMetaTag('og:locale', 'en_US', true);
-
-    // Update Twitter Card tags
-    updateMetaTag('twitter:card', 'summary_large_image');
-    updateMetaTag('twitter:title', title);
-    updateMetaTag('twitter:description', description);
-    updateMetaTag('twitter:image', image);
-    updateMetaTag('twitter:site', '@kanbanai');
-    updateMetaTag('twitter:creator', '@kanbanai');
-
-    // Update article-specific tags if provided
     if (type === 'article') {
-      if (publishedTime) {
-        updateMetaTag('article:published_time', publishedTime, true);
-      }
-      if (modifiedTime) {
-        updateMetaTag('article:modified_time', modifiedTime, true);
-      }
-      if (author) {
-        updateMetaTag('article:author', author, true);
-      }
-      if (section) {
-        updateMetaTag('article:section', section, true);
-      }
-      if (tags.length > 0) {
-        tags.forEach(tag => {
-          const tagMeta = document.createElement('meta');
-          tagMeta.setAttribute('property', 'article:tag');
-          tagMeta.setAttribute('content', tag);
-          document.head.appendChild(tagMeta);
-        });
-      }
+      if (publishedTime) upsertMetaProperty('article:published_time', publishedTime);
+      if (modifiedTime) upsertMetaProperty('article:modified_time', modifiedTime);
+      if (author) upsertMetaProperty('article:author', author);
+      if (section) upsertMetaProperty('article:section', section);
     }
 
-    // Update canonical URL
-    let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
-    if (!canonicalLink) {
-      canonicalLink = document.createElement('link');
-      canonicalLink.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonicalLink);
+    const articleTagEls: HTMLMetaElement[] = [];
+    if (type === 'article' && tags.length > 0) {
+      tags.forEach((tag) => {
+        const tagMeta = document.createElement('meta');
+        tagMeta.setAttribute('property', 'article:tag');
+        tagMeta.setAttribute('content', tag);
+        document.head.appendChild(tagMeta);
+        articleTagEls.push(tagMeta);
+      });
     }
-    canonicalLink.setAttribute('href', url);
 
-    // Add structured data for better SEO
-    const structuredData = {
-      "@context": "https://schema.org",
-      "@type": type === 'article' ? 'Article' : 'WebPage',
-      "name": title,
-      "description": description,
-      "url": url,
-      "image": image,
-      "author": {
-        "@type": "Organization",
-        "name": author || "Kanban AI"
+    upsertCanonical(url);
+
+    const pageLd: Record<string, unknown> = {
+      '@context': 'https://schema.org',
+      '@type': type === 'article' ? 'Article' : 'WebPage',
+      name: title,
+      description,
+      url,
+      image,
+      isPartOf: {
+        '@type': 'WebSite',
+        name: SITE_NAME,
+        url: 'https://kanbanai.dev/',
       },
-      "publisher": {
-        "@type": "Organization",
-        "name": "Kanban AI",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://kanbanai.dev/logo.png"
-        }
-      }
+      publisher: {
+        '@type': 'Organization',
+        name: SITE_NAME,
+        url: 'https://kanbanai.dev/',
+        logo: {
+          '@type': 'ImageObject',
+          url: 'https://kanbanai.dev/favicon.svg',
+        },
+      },
     };
 
-    // Remove existing structured data
-    const existingScript = document.querySelector('script[type="application/ld+json"]');
-    if (existingScript) {
-      existingScript.remove();
+    if (type === 'article') {
+      if (author) pageLd.author = { '@type': 'Person', name: author };
+      if (publishedTime) pageLd.datePublished = publishedTime;
+      if (modifiedTime) pageLd.dateModified = modifiedTime;
     }
 
-    // Add new structured data
-    const script = document.createElement('script');
-    script.setAttribute('type', 'application/ld+json');
-    script.textContent = JSON.stringify(structuredData);
-    document.head.appendChild(script);
+    upsertPageJsonLd(pageLd);
 
-  }, [title, description, keywords, image, url, type, author, publishedTime, modifiedTime, section, tags]);
+    return () => {
+      articleTagEls.forEach((el) => el.remove());
+      document.querySelectorAll('meta[property^="article:"]').forEach((el) => el.remove());
+    };
+  }, [
+    title,
+    description,
+    keywords,
+    image,
+    url,
+    type,
+    author,
+    publishedTime,
+    modifiedTime,
+    section,
+    tags,
+    noindex,
+  ]);
 
-  return null; // This component doesn't render anything
-} 
+  return null;
+}

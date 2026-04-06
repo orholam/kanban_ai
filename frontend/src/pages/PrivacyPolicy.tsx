@@ -4,10 +4,10 @@ import SEO from '../components/SEO';
 const PrivacyPolicy: React.FC = () => {
     return (
         <>
-            <SEO 
-                title="Privacy Policy - Kanban AI"
-                description="Learn about how Kanban AI collects, uses, and protects your personal information. Our privacy policy explains your rights and our data practices."
-                keywords="privacy policy, data protection, personal information, kanban AI, user privacy"
+            <SEO
+                title="Privacy Policy — Kanban AI | Data & AI kanban app"
+                description="How Kanban AI handles data for your AI kanban boards and account: what we collect, why we use it, and your choices."
+                keywords="Kanban AI privacy, kanban AI data, privacy policy"
                 url="https://kanbanai.dev/privacy-policy"
             />
             <div className="max-w-4xl mx-auto px-6 py-12">

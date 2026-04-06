@@ -13,10 +13,10 @@ export default function Blog({ isDarkMode }: BlogProps) {
 
   return (
     <>
-      <SEO 
-        title="Blog - Kanban AI"
-        description="Explore our blog posts about kanban software, project management tools, and productivity tips. Compare Trello, Asana, Jira, Monday.com, Notion, Linear, and more."
-        keywords="blog, kanban, project management, productivity, software comparison, trello, asana, jira"
+      <SEO
+        title="Kanban AI Blog — kanban software, AI task planning & productivity"
+        description="Guides and comparisons from the Kanban AI team: kanban tools, AI-assisted planning, sprint workflows, and productivity for builders and teams."
+        keywords="kanban AI blog, AI kanban, kanban software, task management, productivity, sprint planning"
         url="https://kanbanai.dev/blog"
       />
       <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>

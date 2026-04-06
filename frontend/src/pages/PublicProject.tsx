@@ -1,22 +1,140 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Eye, EyeOff, Calendar, Users, Clock, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Users, Clock, CheckCircle } from 'lucide-react';
+import { TaskCommentAuthorAvatar } from '../components/TaskCommentAuthorAvatar';
+import { displayTaskCommentAuthorName } from '../lib/kanbanAiComment';
 import ReactMarkdown from 'react-markdown';
-import type { Project, Task } from '../types';
+import type { Project, Task, TaskComment } from '../types';
 import { supabase } from '../lib/supabase';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import { listTaskCommentsForTasks } from '../api/taskComments';
+import { parseDbTimestamp } from '../lib/taskDb';
 
 interface PublicProjectProps {
   isDarkMode: boolean;
+}
+
+interface PublicTaskCardProps {
+  task: Task;
+  comments: TaskComment[];
+  isDarkMode: boolean;
+}
+
+function PublicTaskCard({ task, comments, isDarkMode }: PublicTaskCardProps) {
+  return (
+    <div
+      className={`p-3 rounded-md ${isDarkMode ? 'bg-gray-600' : 'bg-white'} border ${
+        isDarkMode ? 'border-gray-600' : 'border-gray-200'
+      }`}
+    >
+      <h4 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+        {task.title}
+      </h4>
+      <p
+        className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-2 overflow-hidden`}
+        style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}
+      >
+        {task.description}
+      </p>
+      <div className="flex items-center justify-between">
+        <span
+          className={`text-xs px-2 py-1 rounded-full ${
+            task.type === 'feature'
+              ? 'bg-blue-100 text-blue-800'
+              : task.type === 'bug'
+                ? 'bg-red-100 text-red-800'
+                : 'bg-gray-100 text-gray-800'
+          }`}
+        >
+          {task.type}
+        </span>
+        <span
+          className={`text-xs px-2 py-1 rounded-full ${
+            task.priority === 'high'
+              ? 'bg-red-100 text-red-800'
+              : task.priority === 'medium'
+                ? 'bg-yellow-100 text-yellow-800'
+                : 'bg-green-100 text-green-800'
+          }`}
+        >
+          {task.priority}
+        </span>
+      </div>
+      {comments.length > 0 && (
+        <div
+          className={`mt-2 space-y-2 border-t pt-2 ${
+            isDarkMode ? 'border-gray-500' : 'border-gray-200'
+          }`}
+        >
+          <p className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            Comments
+          </p>
+          <ul className="space-y-2">
+            {comments.map((c) => {
+              const name = c.author_display_name?.trim() || 'User';
+              const initials =
+                name
+                  .split(/\s+/)
+                  .map((w) => w[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase() || '?';
+              const commentAt = parseDbTimestamp(c.created_at);
+              return (
+                <li key={c.id} className="flex gap-2">
+                  <TaskCommentAuthorAvatar
+                    authorDisplayName={c.author_display_name}
+                    initials={initials}
+                    surface="public"
+                    isDarkMode={isDarkMode}
+                    size="sm"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <span className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-900'}`}>
+                        {displayTaskCommentAuthorName(c.author_display_name)}
+                      </span>
+                      <span className="mx-1 opacity-60">·</span>
+                      <span className="opacity-80">
+                        {commentAt ? formatDistanceToNow(commentAt, { addSuffix: true }) : '—'}
+                      </span>
+                    </div>
+                    <p
+                      className={`mt-0.5 text-xs whitespace-pre-wrap break-words ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}
+                    >
+                      {c.body}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function PublicProject({ isDarkMode }: PublicProjectProps) {
   const { projectId } = useParams();
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskComments, setTaskComments] = useState<TaskComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const commentsByTaskId = useMemo(() => {
+    const m = new Map<string, TaskComment[]>();
+    for (const c of taskComments) {
+      const list = m.get(c.task_id);
+      if (list) list.push(c);
+      else m.set(c.task_id, [c]);
+    }
+    return m;
+  }, [taskComments]);
 
   useEffect(() => {
     // Prevent search engine indexing
@@ -53,6 +171,8 @@ export default function PublicProject({ isDarkMode }: PublicProjectProps) {
           .single();
 
         if (projectError) {
+          setTasks([]);
+          setTaskComments([]);
           if (projectError.code === 'PGRST116') {
             setError('Project not found or is private');
           } else {
@@ -62,6 +182,8 @@ export default function PublicProject({ isDarkMode }: PublicProjectProps) {
         }
 
         if (!projectData) {
+          setTasks([]);
+          setTaskComments([]);
           setError('Project not found');
           return;
         }
@@ -76,16 +198,25 @@ export default function PublicProject({ isDarkMode }: PublicProjectProps) {
 
         if (tasksError) {
           console.error('Error fetching tasks:', tasksError);
+          setTaskComments([]);
         } else if (tasksData) {
-          console.log('Tasks fetched:', tasksData);
-          console.log('Tasks length:', tasksData.length);
           setTasks(tasksData);
+          try {
+            const ids = tasksData.map((t) => t.id);
+            const rows = await listTaskCommentsForTasks(ids);
+            setTaskComments(rows);
+          } catch (commentsErr) {
+            console.error('Error fetching task comments:', commentsErr);
+            setTaskComments([]);
+          }
         } else {
-          console.log('No tasks data received');
+          setTaskComments([]);
         }
 
       } catch (err) {
         console.error('Error fetching public project:', err);
+        setTasks([]);
+        setTaskComments([]);
         setError('Failed to load project');
       } finally {
         setIsLoading(false);
@@ -130,7 +261,6 @@ export default function PublicProject({ isDarkMode }: PublicProjectProps) {
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(task => task.status === 'done').length;
   const inProgressTasks = tasks.filter(task => task.status === 'in-progress').length;
-  const todoTasks = tasks.filter(task => task.status === 'todo').length;
 
   return (
     <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
@@ -169,7 +299,10 @@ export default function PublicProject({ isDarkMode }: PublicProjectProps) {
               </h1>
             </div>
             <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Created {formatDistanceToNow(new Date(project.created_at), { addSuffix: true })}
+              {(() => {
+                const t = parseDbTimestamp(project.created_at);
+                return t ? <>Created {formatDistanceToNow(t, { addSuffix: true })}</> : null;
+              })()}
             </div>
           </div>
           <p className={`mt-2 text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -311,30 +444,12 @@ export default function PublicProject({ isDarkMode }: PublicProjectProps) {
                   {tasks
                     .filter(task => task.status === 'todo' && task.sprint === project.current_sprint)
                     .map(task => (
-                      <div key={task.id} className={`p-3 rounded-md ${isDarkMode ? 'bg-gray-600' : 'bg-white'} border ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
-                        <h4 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {task.title}
-                        </h4>
-                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-2 overflow-hidden`} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                          {task.description}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            task.type === 'feature' ? 'bg-blue-100 text-blue-800' :
-                            task.type === 'bug' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {task.type}
-                          </span>
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            task.priority === 'high' ? 'bg-red-100 text-red-800' :
-                            task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {task.priority}
-                          </span>
-                        </div>
-                      </div>
+                      <PublicTaskCard
+                        key={task.id}
+                        task={task}
+                        comments={commentsByTaskId.get(task.id) ?? []}
+                        isDarkMode={isDarkMode}
+                      />
                     ))}
                 </div>
               </div>
@@ -353,30 +468,12 @@ export default function PublicProject({ isDarkMode }: PublicProjectProps) {
                   {tasks
                     .filter(task => task.status === 'in-progress' && task.sprint === project.current_sprint)
                     .map(task => (
-                      <div key={task.id} className={`p-3 rounded-md ${isDarkMode ? 'bg-gray-600' : 'bg-white'} border ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
-                        <h4 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {task.title}
-                        </h4>
-                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-2 overflow-hidden`} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                          {task.description}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            task.type === 'feature' ? 'bg-blue-100 text-blue-800' :
-                            task.type === 'bug' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {task.type}
-                          </span>
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            task.priority === 'high' ? 'bg-red-100 text-red-800' :
-                            task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {task.priority}
-                          </span>
-                        </div>
-                      </div>
+                      <PublicTaskCard
+                        key={task.id}
+                        task={task}
+                        comments={commentsByTaskId.get(task.id) ?? []}
+                        isDarkMode={isDarkMode}
+                      />
                     ))}
                 </div>
               </div>
@@ -395,30 +492,12 @@ export default function PublicProject({ isDarkMode }: PublicProjectProps) {
                   {tasks
                     .filter(task => task.status === 'done' && task.sprint === project.current_sprint)
                     .map(task => (
-                      <div key={task.id} className={`p-3 rounded-md ${isDarkMode ? 'bg-gray-600' : 'bg-white'} border ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
-                        <h4 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                          {task.title}
-                        </h4>
-                        <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-2 overflow-hidden`} style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                          {task.description}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            task.type === 'feature' ? 'bg-blue-100 text-blue-800' :
-                            task.type === 'bug' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {task.type}
-                          </span>
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            task.priority === 'high' ? 'bg-red-100 text-red-800' :
-                            task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {task.priority}
-                          </span>
-                        </div>
-                      </div>
+                      <PublicTaskCard
+                        key={task.id}
+                        task={task}
+                        comments={commentsByTaskId.get(task.id) ?? []}
+                        isDarkMode={isDarkMode}
+                      />
                     ))}
                 </div>
               </div>
