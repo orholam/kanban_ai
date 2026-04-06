@@ -1,4 +1,5 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { lazyWithRetry } from './lib/lazyWithRetry';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
@@ -13,22 +14,22 @@ import { applyWorkbenchDocumentMeta } from './lib/documentMeta';
 import { Analytics } from '@vercel/analytics/react';
 import { DOCUMENTATION_BOARD_BASE_PATH } from './documentation-board-feature/integration';
 
-const KanbanBoard = lazy(() => import('./pages/KanbanBoard'));
-const NewProject = lazy(() => import('./pages/NewProject'));
-const Login = lazy(() => import('./pages/Login'));
-const LandingPage = lazy(() => import('./pages/LandingPage'));
-const Waitlist = lazy(() => import('./pages/Waitlist'));
-const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
-const PublicProject = lazy(() => import('./pages/PublicProject'));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('./pages/TermsOfService'));
-const Feedback = lazy(() => import('./pages/Feedback'));
-const Blog = lazy(() => import('./pages/Blog'));
-const BlogPost = lazy(() => import('./pages/BlogPost'));
+const KanbanBoard = lazyWithRetry(() => import('./pages/KanbanBoard'));
+const NewProject = lazyWithRetry(() => import('./pages/NewProject'));
+const Login = lazyWithRetry(() => import('./pages/Login'));
+const LandingPage = lazyWithRetry(() => import('./pages/LandingPage'));
+const Waitlist = lazyWithRetry(() => import('./pages/Waitlist'));
+const AnalyticsPage = lazyWithRetry(() => import('./pages/AnalyticsPage'));
+const PublicProject = lazyWithRetry(() => import('./pages/PublicProject'));
+const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazyWithRetry(() => import('./pages/TermsOfService'));
+const Feedback = lazyWithRetry(() => import('./pages/Feedback'));
+const Blog = lazyWithRetry(() => import('./pages/Blog'));
+const BlogPost = lazyWithRetry(() => import('./pages/BlogPost'));
 // DOCUMENTATION_BOARD — remove with `documentation-board-feature/`
-const DocumentationBoard = lazy(() => import('./documentation-board-feature/DocumentationBoard'));
-const DocumentationArticlePage = lazy(() => import('./documentation-board-feature/DocumentationArticle'));
-const AccountPage = lazy(() => import('./pages/AccountPage'));
+const DocumentationBoard = lazyWithRetry(() => import('./documentation-board-feature/DocumentationBoard'));
+const DocumentationArticlePage = lazyWithRetry(() => import('./documentation-board-feature/DocumentationArticle'));
+const AccountPage = lazyWithRetry(() => import('./pages/AccountPage'));
 
 function RouteFallback({ isDarkMode }: { isDarkMode: boolean }) {
   return (

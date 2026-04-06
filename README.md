@@ -86,6 +86,8 @@ Kanban AI is your personal AI-powered project companion that helps you build, tr
 
    Add `OPENAI_API_KEY` in the Vercel project’s Environment Variables (Production and Preview as needed). The [`frontend/api/openai.ts`](frontend/api/openai.ts) handler reads it at runtime; no OpenAI key belongs in client env vars.
 
+   The app uses code-splitting; [`frontend/vercel.json`](frontend/vercel.json) sets long-lived caching for hashed `/assets/*` files and revalidation for HTML responses so open tabs pick up a fresh `index.html` after deploys. Lazy routes also retry once with a reload if a chunk fails to load (stale shell).
+
 ##  **Tech Stack**
 
 - **Frontend**: React 18, TypeScript, Vite

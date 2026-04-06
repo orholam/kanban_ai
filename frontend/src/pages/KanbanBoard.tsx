@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react';
+import { lazyWithRetry } from '../lib/lazyWithRetry';
 import { useParams, Link } from 'react-router-dom';
 import { Plus, Eye, EyeOff, FileText, Link as LinkIcon } from 'lucide-react';
 import TaskCard from '../components/TaskCard';
@@ -8,10 +9,10 @@ import { formatDueDateForDb, mergeTaskWithDbRow, taskInsertPayload } from '../li
 import { toast } from 'sonner';
 import { loadGuestDraft, saveGuestDraft } from '../lib/guestDraft';
 
-const TaskModal = lazy(() => import('../components/TaskModal'));
-const CreateTaskModal = lazy(() => import('../components/CreateTaskModal'));
-const NotesEditor = lazy(() => import('../components/NotesEditor'));
-const ProjectTaskChat = lazy(() => import('../components/ProjectTaskChat'));
+const TaskModal = lazyWithRetry(() => import('../components/TaskModal'));
+const CreateTaskModal = lazyWithRetry(() => import('../components/CreateTaskModal'));
+const NotesEditor = lazyWithRetry(() => import('../components/NotesEditor'));
+const ProjectTaskChat = lazyWithRetry(() => import('../components/ProjectTaskChat'));
 
 const STAGGER_DELAY_MS = 100; // Delay between each card animation
 

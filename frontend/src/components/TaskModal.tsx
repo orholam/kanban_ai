@@ -1,9 +1,10 @@
-import React, { lazy, Suspense, useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { Suspense, useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { lazyWithRetry } from '../lib/lazyWithRetry';
 import { Link } from 'react-router-dom';
 import { X, Calendar, User, Trash2, ArrowUp, Loader2, Sparkles } from 'lucide-react';
 import type { Task, TaskComment, Status } from '../types';
 
-const TaskModalCalendar = lazy(() => import('./TaskModalCalendar'));
+const TaskModalCalendar = lazyWithRetry(() => import('./TaskModalCalendar'));
 import TextareaAutosize from 'react-textarea-autosize';
 import { format, formatDistanceToNow, isValid, parseISO } from 'date-fns';
 import { parseDbTimestamp, parseTaskDueDate } from '../lib/taskDb';
