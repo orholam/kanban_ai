@@ -9,29 +9,29 @@
 
 Kanban AI is your personal AI-powered project companion that helps you build, track, and complete your side projects with intelligent guidance. Whether you're a developer looking to showcase new skills, an entrepreneur building your next SaaS, or a creator bringing ideas to life, Kanban AI provides the structure and support you need.
 
-## ✨ **Key Features**
+##  **Key Features**
 
-### 🎯 **AI-Powered Project Planning**
+###  **AI-Powered Project Planning**
 - **Smart Project Breakdown**: Describe your idea and let AI create a comprehensive 10-week development plan
 - **Personalized Roadmaps**: Tailored to your skills, tech stack, and learning goals
 - **Intelligent Task Generation**: AI creates specific, actionable tasks for each development phase
 
-### 📊 **Intelligent Progress Tracking**
+###  **Intelligent Progress Tracking**
 - **Adaptive Planning**: AI adjusts your roadmap based on your actual progress
 - **Smart Recommendations**: Get personalized suggestions when you're ahead or behind schedule
 - **Progress Analytics**: Visual insights into your development journey
 
-### 🎨 **Modern Kanban Interface**
+###  **Modern Kanban Interface**
 - **Drag-and-Drop Management**: Intuitive task organization with visual kanban boards
 - **Real-time Updates**: Seamless collaboration and progress tracking
 - **Dark/Light Mode**: Beautiful interface that adapts to your preferences
 
-### 🤖 **AI Assistant Integration**
+###  **AI Assistant Integration**
 - **Contextual Guidance**: Ask questions and get project-specific advice
 - **Roadblock Resolution**: AI helps you overcome technical challenges
 - **Learning Support**: Get explanations and resources for new technologies
 
-## 🚀 **Getting Started**
+##  **Getting Started**
 
 ### Prerequisites
 - Node.js (v16 or higher)
@@ -86,7 +86,7 @@ Kanban AI is your personal AI-powered project companion that helps you build, tr
 
    Add `OPENAI_API_KEY` in the Vercel project’s Environment Variables (Production and Preview as needed). The [`frontend/api/openai.ts`](frontend/api/openai.ts) handler reads it at runtime; no OpenAI key belongs in client env vars.
 
-## 🏗️ **Tech Stack**
+##  **Tech Stack**
 
 - **Frontend**: React 18, TypeScript, Vite
 - **Styling**: Tailwind CSS
@@ -97,7 +97,7 @@ Kanban AI is your personal AI-powered project companion that helps you build, tr
 - **UI Components**: Lucide React Icons
 - **Deployment**: Vercel
 
-## 📁 **Project Structure**
+##  **Project Structure**
 
 ```
 frontend/
@@ -113,7 +113,7 @@ frontend/
 └── package.json
 ```
 
-## 🎯 **Use Cases**
+##  **Use Cases**
 
 ### For Developers
 - **Skill Showcase**: Build projects that demonstrate new technologies
@@ -130,7 +130,7 @@ frontend/
 - **Goal Achievement**: Break down complex projects into manageable tasks
 - **Progress Visualization**: See your creative journey unfold
 
-## 🤝 **Contributing**
+##  **Contributing**
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
@@ -140,23 +140,18 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 **License**
+##  **License**
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 **Support**
+##  **Support**
 
 - **Documentation**: [https://kanbanai.dev/docs](https://kanbanai.dev/docs)
 - **Issues**: [GitHub Issues](https://github.com/orholam/kanban_ai/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/orholam/kanban_ai/discussions)
 
-## 🙏 **Acknowledgments**
 
-- Built with ❤️ using modern web technologies
-- Powered by OpenAI's GPT-4 for intelligent project planning
 - Hosted on Vercel for lightning-fast performance
 - Styled with Tailwind CSS for beautiful, responsive design
 
 ---
-
-**Ready to transform your side projects?** [Get started with Kanban AI](https://kanbanai.dev) today! 🚀
