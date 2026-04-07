@@ -8,7 +8,8 @@
 4. **Robots.txt**: Configured to guide search engine crawlers
 5. **PWA Support**: Added manifest.json for better mobile experience
 6. **Dynamic SEO**: Created SEO component for page-specific meta tags
-7. **Public Pages Only**: SEO only applied to public pages (landing, login, privacy, terms)
+7. **Public Content SEO**: SEO tags are applied to landing, docs, blog, login, privacy, and terms pages
+8. **Docs + Blog Discovery**: Sitemap includes docs/articles + blog/posts, and `index.html` includes a noscript crawlable link hub
 
 ## 🖼️ Open Graph Image Setup
 
@@ -34,6 +35,8 @@ The SEO component automatically:
 
 **Landing Page**: Rich description of your AI-powered project management tool
 **Login Page**: Clear call-to-action for signing in
+**Docs Hub + Articles**: Indexed knowledge-base style pages with article-level metadata
+**Blog + Posts**: Indexed article pages with canonical + article schema metadata
 **Privacy Policy**: Professional privacy information
 **Terms of Service**: Comprehensive terms and conditions
 

@@ -15,5 +15,10 @@ Disallow: /public/project/
 Allow: /
 Allow: /login
 Allow: /blog
+Allow: /blog/
+Allow: /blog/*
+Allow: /docs
+Allow: /docs/
+Allow: /docs/*
 Allow: /privacy-policy
 Allow: /terms-of-service

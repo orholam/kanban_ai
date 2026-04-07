@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { eachDayOfInterval, format, subDays } from 'date-fns';
+import { eachDayOfInterval, eachHourOfInterval, format, startOfHour, subDays, subHours } from 'date-fns';
 import { BarChart3, CalendarRange, Sparkles, LogIn, UserPlus, ListTodo } from 'lucide-react';
 import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
@@ -162,7 +162,8 @@ function DailyVolumeChart({
 
 export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
   const { user, accountProfile, profileLoading } = useAuth();
-  const [rangeDays, setRangeDays] = useState<7 | 30>(7);
+  const [range, setRange] = useState<'24h' | '7d' | '30d' | 'all'>('7d');
+  const [selectedSubject, setSelectedSubject] = useState<{ kind: 'user' | 'guest'; id: string } | null>(null);
   const [events, setEvents] = useState<AnalyticsEventRow[]>([]);
   const [nameByUserId, setNameByUserId] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -189,15 +190,21 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
     const load = async () => {
       setLoading(true);
       setError(null);
-      const since = new Date();
-      since.setDate(since.getDate() - rangeDays);
-
-      const { data: rows, error: qErr } = await supabase
+      const query = supabase
         .from('analytics_events')
         .select('id, created_at, user_id, guest_session_id, event_type, metadata')
-        .gte('created_at', since.toISOString())
         .order('created_at', { ascending: false })
-        .limit(10000);
+        .limit(50000);
+
+      if (range === '24h') {
+        query.gte('created_at', subHours(new Date(), 24).toISOString());
+      } else if (range === '7d') {
+        query.gte('created_at', subDays(new Date(), 7).toISOString());
+      } else if (range === '30d') {
+        query.gte('created_at', subDays(new Date(), 30).toISOString());
+      }
+
+      const { data: rows, error: qErr } = await query;
 
       if (cancelled) return;
 
@@ -257,18 +264,26 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
     return () => {
       cancelled = true;
     };
-  }, [user, profileLoading, accountProfile?.account_role, rangeDays]);
+  }, [user, profileLoading, accountProfile?.account_role, range]);
+
+  const filteredEvents = useMemo(() => {
+    if (!selectedSubject) return events;
+    if (selectedSubject.kind === 'user') {
+      return events.filter((e) => e.user_id === selectedSubject.id);
+    }
+    return events.filter((e) => (e.guest_session_id ?? '').trim() === selectedSubject.id);
+  }, [events, selectedSubject]);
 
   const totalsByType = useMemo(() => {
     const m: Partial<Record<AnalyticsEventType, number>> = {};
-    for (const e of events) {
+    for (const e of filteredEvents) {
       const t = e.event_type as AnalyticsEventType;
       m[t] = (m[t] ?? 0) + 1;
     }
     return m;
-  }, [events]);
+  }, [filteredEvents]);
 
-  const totalEvents = events.length;
+  const totalEvents = filteredEvents.length;
 
   const eventTypeMax = useMemo(
     () => Math.max(...EVENT_ORDER.map((k) => totalsByType[k] ?? 0), 1),
@@ -301,24 +316,50 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
   );
 
   const dailySeries = useMemo(() => {
+    const byBucket: Record<string, number> = {};
+    if (range === '24h') {
+      const end = startOfHour(new Date());
+      const start = subHours(end, 23);
+      const hours = eachHourOfInterval({ start, end });
+      for (const e of filteredEvents) {
+        const ts = new Date(e.created_at);
+        ts.setMinutes(0, 0, 0);
+        const key = format(ts, "yyyy-MM-dd'T'HH:00");
+        byBucket[key] = (byBucket[key] ?? 0) + 1;
+      }
+      return hours.map((h) => {
+        const key = format(h, "yyyy-MM-dd'T'HH:00");
+        return {
+          day: key,
+          label: format(h, 'ha'),
+          count: byBucket[key] ?? 0,
+        };
+      });
+    }
+
     const end = new Date();
     end.setHours(0, 0, 0, 0);
-    const start = subDays(end, rangeDays - 1);
-    const days = eachDayOfInterval({ start, end });
-    const byDay: Record<string, number> = {};
-    for (const e of events) {
+
+    const inferredStart = range === 'all'
+      ? (filteredEvents.length ? new Date(dayKey(filteredEvents[filteredEvents.length - 1].created_at)) : end)
+      : range === '7d'
+        ? subDays(end, 6)
+        : subDays(end, 29);
+
+    const days = eachDayOfInterval({ start: inferredStart, end });
+    for (const e of filteredEvents) {
       const k = dayKey(e.created_at);
-      byDay[k] = (byDay[k] ?? 0) + 1;
+      byBucket[k] = (byBucket[k] ?? 0) + 1;
     }
     return days.map((d) => {
       const day = format(d, 'yyyy-MM-dd');
       return {
         day,
         label: format(d, 'MMM d'),
-        count: byDay[day] ?? 0,
+        count: byBucket[day] ?? 0,
       };
     });
-  }, [events, rangeDays]);
+  }, [filteredEvents, range]);
 
   /** Non-zero segments with percentages that sum to 100% of activity (for donut). */
   const typeSegments = useMemo(() => {
@@ -370,16 +411,18 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
               </label>
               <select
                 id="analytics-range"
-                value={rangeDays}
-                onChange={(e) => setRangeDays(Number(e.target.value) as 7 | 30)}
+                value={range}
+                onChange={(e) => setRange(e.target.value as '24h' | '7d' | '30d' | 'all')}
                 className={
                   isDarkMode
                     ? 'rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100'
                     : 'rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900'
                 }
               >
-                <option value={7}>Last 7 days</option>
-                <option value={30}>Last 30 days</option>
+                <option value="24h">Last 24 hours</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+                <option value="all">All time</option>
               </select>
             </div>
           </div>
@@ -451,7 +494,9 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                   <div>
                     <h2 className="text-sm font-semibold uppercase tracking-wide">Volume over time</h2>
                     <p className={`mt-1 text-xs ${muted}`}>
-                      Events per day (chronological). Hover points for exact counts.
+                      {range === '24h'
+                        ? 'Events per hour (chronological). Hover points for exact counts.'
+                        : 'Events per day (chronological). Hover points for exact counts.'}
                     </p>
                   </div>
                   <p className={`text-xs tabular-nums ${muted}`}>{totalEvents} events in range</p>
@@ -543,7 +588,22 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                 </section>
 
                 <section className={`p-6 ${panel}`}>
-                  <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide">Top users &amp; guests</h2>
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="text-sm font-semibold uppercase tracking-wide">Top users &amp; guests</h2>
+                    {selectedSubject ? (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSubject(null)}
+                        className={`rounded-md px-2 py-1 text-xs font-medium ${
+                          isDarkMode
+                            ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'
+                            : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                        }`}
+                      >
+                        Clear person filter
+                      </button>
+                    ) : null}
+                  </div>
                   {topSubjects.length === 0 ? (
                     <p className={`text-sm ${muted}`}>No events in this window.</p>
                   ) : (
@@ -558,7 +618,13 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                                 <span className="flex flex-wrap items-center gap-2">
                                   {kind === 'guest' ? (
                                     <>
-                                      <span className="font-medium">Guest</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => setSelectedSubject({ kind: 'guest', id })}
+                                        className="font-medium underline-offset-2 hover:underline"
+                                      >
+                                        Guest {id.slice(0, 8)}
+                                      </button>
                                       <span
                                         className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
                                           isDarkMode
@@ -570,15 +636,17 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                                       </span>
                                     </>
                                   ) : (
-                                    <span className="font-medium">
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedSubject({ kind: 'user', id })}
+                                      className="font-medium underline-offset-2 hover:underline"
+                                    >
                                       {nameByUserId[id] ?? id.slice(0, 8)}
-                                    </span>
+                                    </button>
                                   )}
                                 </span>
                                 <span className={`mt-0.5 block truncate font-mono text-[10px] ${muted}`}>
-                                  {kind === 'guest'
-                                    ? 'All guest browsers combined (single bucket)'
-                                    : id}
+                                  {id}
                                 </span>
                               </span>
                               <span className="shrink-0 tabular-nums font-semibold">{count}</span>

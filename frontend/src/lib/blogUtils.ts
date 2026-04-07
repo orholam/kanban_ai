@@ -6,6 +6,7 @@ import enterprisePost from '../data/blog/enterprise-kanban-solutions.json';
 import openSourcePost from '../data/blog/open-source-kanban-alternatives.json';
 import mobileAppsPost from '../data/blog/mobile-kanban-apps-comparison.json';
 import stampAiEmailPost from '../data/blog/stamp-ai-native-email.json';
+import kanbanAiV01LaunchPost from '../data/blog/kanbanai-v0-1-launch.json';
 
 export interface BlogPost {
   id: string;
@@ -27,6 +28,7 @@ const allPosts: BlogPost[] = [
   openSourcePost as BlogPost,
   mobileAppsPost as BlogPost,
   stampAiEmailPost as BlogPost,
+  kanbanAiV01LaunchPost as BlogPost,
 ];
 
 /**
