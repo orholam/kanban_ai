@@ -290,6 +290,47 @@ const ASSISTANT_SUGGESTIONS: ReadonlyArray<{
   },
 ];
 
+const EMPTY_BOARD_ASSISTANT_SUGGESTIONS: ReadonlyArray<{
+  label: string;
+  hint: string;
+  prompt: string;
+  icon: SuggestionIconKey;
+  accent: 'violet' | 'indigo' | 'amber' | 'emerald';
+}> = [
+  {
+    label: 'Populate with test tasks',
+    hint: 'Quickly seed the board for testing',
+    icon: 'task',
+    accent: 'emerald',
+    prompt:
+      'There are no tasks yet. Create 6 realistic test tasks to populate the board so I can test workflows (drag/drop, status changes, and sprint planning). Include varied statuses, priorities, and task types.',
+  },
+  {
+    label: 'Plan week one',
+    hint: 'Set a realistic first sprint',
+    icon: 'next',
+    accent: 'violet',
+    prompt:
+      'There are no tasks yet. Create a practical week-one plan as 3-5 tasks in todo for sprint 1, ordered by what should happen first.',
+  },
+  {
+    label: 'Find missing foundations',
+    hint: 'Identify setup and risk-reduction work',
+    icon: 'stuck',
+    accent: 'amber',
+    prompt:
+      'For this project with no tasks, what foundational tasks are most important first (setup, architecture, validation, or risk reduction)? Create the top 3-4 tasks.',
+  },
+  {
+    label: 'Build roadmap structure',
+    hint: 'Draft milestone-level work breakdown',
+    icon: 'board',
+    accent: 'indigo',
+    prompt:
+      'Create a milestone-oriented starter board for this project: break the work into phases and add tasks for each phase with suggested priorities and sprints.',
+  },
+];
+
 const accentIconWrap: Record<
   (typeof ASSISTANT_SUGGESTIONS)[number]['accent'],
   { light: string; dark: string }
@@ -1008,6 +1049,8 @@ export default function ProjectTaskChat({
     ? 'bg-zinc-950/80 backdrop-blur-xl'
     : 'bg-zinc-50/80 backdrop-blur-xl';
   const headerBg = isDarkMode ? 'bg-zinc-950/40' : 'bg-white/50';
+  const visibleSuggestions =
+    !boardLoading && tasks.length === 0 ? EMPTY_BOARD_ASSISTANT_SUGGESTIONS : ASSISTANT_SUGGESTIONS;
 
   if (!open) {
     return (
@@ -1176,7 +1219,7 @@ export default function ProjectTaskChat({
                 </p>
 
                 <ul className="mt-10 flex flex-col gap-5">
-                  {ASSISTANT_SUGGESTIONS.map((s, i) => {
+                  {visibleSuggestions.map((s, i) => {
                     const Icon = SUGGESTION_ICON[s.icon];
                     const iconWrap = accentIconWrap[s.accent][isDarkMode ? 'dark' : 'light'];
                     const disabled = boardLoading || sending || openAiReady !== true;
