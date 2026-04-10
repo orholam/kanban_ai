@@ -4,26 +4,29 @@ import p3 from '../assets/p3_small.jpg'
 
 interface TrustedByProps {
   isDarkMode: boolean;
+  /** Defaults to the standard trust line; pass to align with landing variant tone. */
+  trustLabel?: string;
 }
 
-export function TrustedBy({ isDarkMode }: TrustedByProps) {
-  const founders = [
-    { src: p1, alt: 'Founder 1' },
-    { src: p2, alt: 'Founder 2' },
-    { src: p3, alt: 'Founder 3' },
+export function TrustedBy({ isDarkMode, trustLabel }: TrustedByProps) {
+  const avatars = [
+    { src: p1, alt: 'Customer' },
+    { src: p2, alt: 'Customer' },
+    { src: p3, alt: 'Customer' },
   ];
+  const label = trustLabel ?? 'Trusted by 104+ indie founders';
 
   return (
     <div className="flex items-center justify-center gap-x-2">
       <div className="flex -space-x-2">
-        {founders.map((founder, index) => (
+        {avatars.map((avatar, index) => (
           <div
             key={index}
             className="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-gray-900"
           >
             <img
-              src={founder.src}
-              alt={founder.alt}
+              src={avatar.src}
+              alt={avatar.alt}
               className="h-full w-full rounded-full object-cover"
             />
           </div>
@@ -33,7 +36,7 @@ export function TrustedBy({ isDarkMode }: TrustedByProps) {
         </div>
       </div>
       <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-        Trusted by 104+ indie founders
+        {label}
       </span>
     </div>
   );

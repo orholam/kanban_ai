@@ -70,7 +70,13 @@ export type AccountRole = 'owner' | 'editor' | 'admin';
 export type SubscriptionPlan = 'free' | 'pro';
 
 /** Row in `analytics_events` (first-party usage telemetry). */
-export type AnalyticsEventType = 'sign_up' | 'sign_in' | 'ai_interaction' | 'task_write';
+export type AnalyticsEventType =
+  | 'sign_up'
+  | 'sign_in'
+  | 'ai_interaction'
+  | 'task_write'
+  | 'lp_view'
+  | 'lp_cta_click';
 
 export interface AnalyticsEventRow {
   id: string;

@@ -99,6 +99,10 @@ Kanban AI is your personal AI-powered project companion that helps you build, tr
 - **UI Components**: Lucide React Icons
 - **Deployment**: Vercel
 
+### Owner: product analytics & landing A/B
+
+The owner-only `/analytics` view includes landing page A/B results. Bump **`LANDING_AB_TEST_VERSION`** in [`frontend/src/lib/landingAbTest.ts`](frontend/src/lib/landingAbTest.ts) whenever you materially change variant A or B so new traffic is tagged separately and the dashboard does not blend runs.
+
 ##  **Project Structure**
 
 ```

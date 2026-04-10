@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { eachDayOfInterval, eachHourOfInterval, format, startOfHour, subDays, subHours } from 'date-fns';
-import { BarChart3, CalendarRange, Sparkles, LogIn, UserPlus, ListTodo } from 'lucide-react';
+import { BarChart3, CalendarRange, Eye, MousePointerClick, Sparkles, LogIn, UserPlus, ListTodo } from 'lucide-react';
 import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
+import { landingAbVersionFromMetadata, LANDING_AB_TEST_VERSION } from '../lib/landingAbTest';
 import { supabase } from '../lib/supabase';
 import type { AnalyticsEventRow, AnalyticsEventType } from '../types';
 
@@ -11,8 +12,11 @@ const EVENT_LABELS: Record<AnalyticsEventType, string> = {
   sign_in: 'Sign-ins',
   ai_interaction: 'AI interactions',
   task_write: 'Task writes',
+  lp_view: 'Landing views',
+  lp_cta_click: 'CTA clicks',
 };
 
+/** Only product events are shown in the KPI tiles and charts. */
 const EVENT_ORDER: AnalyticsEventType[] = [
   'sign_up',
   'sign_in',
@@ -25,6 +29,8 @@ const EVENT_ICONS: Record<AnalyticsEventType, React.ElementType> = {
   sign_in: LogIn,
   ai_interaction: Sparkles,
   task_write: ListTodo,
+  lp_view: Eye,
+  lp_cta_click: MousePointerClick,
 };
 
 /** Distinct bar colors per event type (Tailwind-ish, inline for SVG/CSS). */
@@ -33,6 +39,8 @@ const EVENT_COLORS: Record<AnalyticsEventType, { fill: string; soft: string }> =
   sign_in: { fill: 'rgb(59 130 246)', soft: 'rgba(59, 130, 246, 0.2)' },
   ai_interaction: { fill: 'rgb(139 92 246)', soft: 'rgba(139, 92, 246, 0.2)' },
   task_write: { fill: 'rgb(245 158 11)', soft: 'rgba(245, 158, 11, 0.2)' },
+  lp_view: { fill: 'rgb(99 102 241)', soft: 'rgba(99, 102, 241, 0.2)' },
+  lp_cta_click: { fill: 'rgb(236 72 153)', soft: 'rgba(236, 72, 153, 0.2)' },
 };
 
 function dayKey(iso: string): string {
@@ -266,13 +274,36 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
     };
   }, [user, profileLoading, accountProfile?.account_role, range]);
 
+  /** Raw product events only — LP A/B test events are handled separately. */
+  const productEvents = useMemo(
+    () => events.filter((e) => e.event_type !== 'lp_view' && e.event_type !== 'lp_cta_click'),
+    [events],
+  );
+
   const filteredEvents = useMemo(() => {
-    if (!selectedSubject) return events;
+    if (!selectedSubject) return productEvents;
     if (selectedSubject.kind === 'user') {
-      return events.filter((e) => e.user_id === selectedSubject.id);
+      return productEvents.filter((e) => e.user_id === selectedSubject.id);
     }
-    return events.filter((e) => (e.guest_session_id ?? '').trim() === selectedSubject.id);
-  }, [events, selectedSubject]);
+    return productEvents.filter((e) => (e.guest_session_id ?? '').trim() === selectedSubject.id);
+  }, [productEvents, selectedSubject]);
+
+  /** A/B test metrics for the current experiment version only (see `landingAbTest.ts`). */
+  const abTestData = useMemo(() => {
+    const byVariant: Record<'A' | 'B', { views: number; clicks: number }> = {
+      A: { views: 0, clicks: 0 },
+      B: { views: 0, clicks: 0 },
+    };
+    for (const e of events) {
+      if (e.event_type !== 'lp_view' && e.event_type !== 'lp_cta_click') continue;
+      if (landingAbVersionFromMetadata(e.metadata) !== LANDING_AB_TEST_VERSION) continue;
+      const v = (e.metadata?.variant as string) as 'A' | 'B' | undefined;
+      if (v !== 'A' && v !== 'B') continue;
+      if (e.event_type === 'lp_view') byVariant[v].views++;
+      else if (e.event_type === 'lp_cta_click') byVariant[v].clicks++;
+    }
+    return byVariant;
+  }, [events]);
 
   const totalsByType = useMemo(() => {
     const m: Partial<Record<AnalyticsEventType, number>> = {};
@@ -290,10 +321,10 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
     [totalsByType]
   );
 
-  /** Aggregated by signed-in user or guest browser session. */
+  /** Aggregated by signed-in user or guest browser session (product events only). */
   const topSubjects = useMemo(() => {
     const m: Record<string, number> = {};
-    for (const e of events) {
+    for (const e of productEvents) {
       const key = e.user_id
         ? `user:${e.user_id}`
         : `guest:${(e.guest_session_id ?? '').trim() || 'unknown'}`;
@@ -308,7 +339,7 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
       })
       .sort((a, b) => b.count - a.count)
       .slice(0, 12);
-  }, [events]);
+  }, [productEvents]);
 
   const topSubjectMax = useMemo(
     () => Math.max(...topSubjects.map((u) => u.count), 1),
@@ -488,6 +519,146 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                   );
                 })}
               </div>
+
+              <section className={`p-6 ${panel}`}>
+                <div className="mb-5 flex items-center justify-between gap-2">
+                  <div>
+                    <div className="flex flex-wrap items-baseline gap-2">
+                      <h2 className="text-sm font-semibold uppercase tracking-wide">Landing page A/B test</h2>
+                      <span
+                        className={`rounded-md px-2 py-0.5 font-mono text-[11px] font-medium tabular-nums ${
+                          isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-700'
+                        }`}
+                        title="Matches events tagged with this experiment version"
+                      >
+                        v{LANDING_AB_TEST_VERSION}
+                      </span>
+                    </div>
+                    <p className={`mt-1 text-xs ${muted}`}>
+                      Conversion = CTA clicks ÷ page views. Range filter applies. Only events for this version are
+                      shown — bump{' '}
+                      <code
+                        className={`rounded px-1 py-0.5 font-mono text-[11px] ${
+                          isDarkMode ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-800'
+                        }`}
+                      >
+                        LANDING_AB_TEST_VERSION
+                      </code>{' '}
+                      in <code className={`rounded px-1 py-0.5 font-mono text-[11px] ${isDarkMode ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-800'}`}>landingAbTest.ts</code> when
+                      you change variant copy or layout so older runs do not mix in.
+                    </p>
+                    <p className={`mt-2 text-xs leading-relaxed ${muted}`}>
+                      <span className="font-medium text-zinc-500 dark:text-zinc-400">Preview without logging:</span>{' '}
+                      open{' '}
+                      <code
+                        className={`rounded px-1 py-0.5 font-mono text-[11px] ${
+                          isDarkMode ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-800'
+                        }`}
+                      >
+                        /?variant=A
+                      </code>{' '}
+                      or{' '}
+                      <code
+                        className={`rounded px-1 py-0.5 font-mono text-[11px] ${
+                          isDarkMode ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-800'
+                        }`}
+                      >
+                        /?variant=B
+                      </code>{' '}
+                      (exact uppercase). Works while signed in; no landing views or CTA clicks are recorded.
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {(['A', 'B'] as const).map((v) => {
+                    const d = abTestData[v];
+                    const rate = d.views > 0 ? ((d.clicks / d.views) * 100).toFixed(1) : null;
+                    const isWinner =
+                      rate !== null &&
+                      d.views > 0 &&
+                      abTestData[v === 'A' ? 'B' : 'A'].views > 0 &&
+                      d.clicks / d.views >
+                        abTestData[v === 'A' ? 'B' : 'A'].clicks /
+                          Math.max(abTestData[v === 'A' ? 'B' : 'A'].views, 1);
+                    return (
+                      <div
+                        key={v}
+                        className={`relative overflow-hidden rounded-xl p-4 ${
+                          isDarkMode
+                            ? isWinner
+                              ? 'border border-indigo-500/40 bg-indigo-950/30'
+                              : 'border border-zinc-700/60 bg-zinc-800/40'
+                            : isWinner
+                              ? 'border border-indigo-200 bg-indigo-50/60'
+                              : 'border border-zinc-200 bg-zinc-50'
+                        }`}
+                      >
+                        <div className="mb-3 flex items-center justify-between">
+                          <span
+                            className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-sm font-bold ${
+                              isDarkMode ? 'bg-zinc-700 text-zinc-100' : 'bg-zinc-200 text-zinc-800'
+                            }`}
+                          >
+                            {v}
+                          </span>
+                          {isWinner && (
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                                isDarkMode
+                                  ? 'bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-400/30'
+                                  : 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200'
+                              }`}
+                            >
+                              Leading
+                            </span>
+                          )}
+                        </div>
+                        <dl className="grid grid-cols-3 gap-3 text-center">
+                          <div>
+                            <dt className={`text-[10px] font-medium uppercase tracking-wide ${muted}`}>Views</dt>
+                            <dd className="mt-1 text-xl font-semibold tabular-nums">{d.views}</dd>
+                          </div>
+                          <div>
+                            <dt className={`text-[10px] font-medium uppercase tracking-wide ${muted}`}>Clicks</dt>
+                            <dd className="mt-1 text-xl font-semibold tabular-nums">{d.clicks}</dd>
+                          </div>
+                          <div>
+                            <dt className={`text-[10px] font-medium uppercase tracking-wide ${muted}`}>CVR</dt>
+                            <dd
+                              className={`mt-1 text-xl font-semibold tabular-nums ${
+                                rate !== null
+                                  ? isDarkMode
+                                    ? 'text-indigo-300'
+                                    : 'text-indigo-600'
+                                  : ''
+                              }`}
+                            >
+                              {rate !== null ? `${rate}%` : '—'}
+                            </dd>
+                          </div>
+                        </dl>
+                        {d.views > 0 && (
+                          <div
+                            className={`mt-3 h-1.5 overflow-hidden rounded-full ${
+                              isDarkMode ? 'bg-zinc-700' : 'bg-zinc-200'
+                            }`}
+                          >
+                            <div
+                              className="h-full rounded-full bg-indigo-500 transition-[width] duration-500 ease-out"
+                              style={{ width: `${Math.min(((d.clicks / d.views) * 100) * 4, 100)}%` }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {abTestData.A.views === 0 && abTestData.B.views === 0 && (
+                  <p className={`mt-4 text-sm ${muted}`}>
+                    No landing page data yet. Views and CTA clicks will appear here once visitors hit the page.
+                  </p>
+                )}
+              </section>
 
               <section className={`p-6 ${panel}`}>
                 <div className="mb-4 flex flex-wrap items-end justify-between gap-3">

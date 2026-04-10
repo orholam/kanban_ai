@@ -9,6 +9,7 @@ import type { Project } from './types';
 import { Toaster, toast } from 'sonner';
 import { loadGuestDraft, guestDraftHasMeaningfulData, clearGuestDraft } from './lib/guestDraft';
 import { migrateGuestDraft } from './lib/migrateGuestDraft';
+import { isLandingPreviewSearch } from './lib/landingAbTest';
 import { isWorkbenchPath } from './lib/siteMeta';
 import { applyWorkbenchDocumentMeta } from './lib/documentMeta';
 import { Analytics } from '@vercel/analytics/react';
@@ -371,8 +372,8 @@ function AppContent() {
                 <Route
                   path="/"
                   element={
-                    user ? (
-                      <Navigate to="/kanban" />
+                    user && !isLandingPreviewSearch(location.search) ? (
+                      <Navigate to="/kanban" replace />
                     ) : (
                       <Suspense fallback={<RouteFallback isDarkMode={isDarkMode} />}>
                         <LandingPage isDarkMode={isDarkMode} />
