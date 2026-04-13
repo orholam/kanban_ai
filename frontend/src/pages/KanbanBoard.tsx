@@ -63,12 +63,16 @@ export default function KanbanBoard({
       if (
         fresh.assignee_id === prev.assignee_id &&
         fresh.created_at === prev.created_at &&
-        fresh.updated_at === prev.updated_at
+        fresh.updated_at === prev.updated_at &&
+        fresh.status === prev.status &&
+        fresh.sprint === prev.sprint
       ) {
         return prev;
       }
       return {
         ...prev,
+        status: fresh.status,
+        sprint: fresh.sprint,
         assignee_id: fresh.assignee_id,
         created_at: fresh.created_at,
         updated_at: fresh.updated_at,
@@ -222,21 +226,35 @@ export default function KanbanBoard({
       return;
     }
 
+    const previous = tasksRef.current.find((t) => t.id === taskId);
+    if (!previous || previous.status === newStatus) return;
+
+    const touched = new Date().toISOString();
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId
+          ? { ...task, status: newStatus as Task['status'], updated_at: touched, isAnimated: true }
+          : task
+      )
+    );
+
     const { data, error } = await supabase
-    .from('tasks')
-    .update({ status: newStatus })
-    .eq('id', taskId)
-    .select()
+      .from('tasks')
+      .update({ status: newStatus })
+      .eq('id', taskId)
+      .select();
 
     if (error) {
       console.error('Error updating task status:', error);
+      setTasks((prevTasks) =>
+        prevTasks.map((task) => (task.id === taskId ? previous : task))
+      );
       toast.error(error.message || 'Could not save status');
       return;
     }
 
-    if (data) {
-      console.log(data[0]);
-      setTasks(prevTasks =>
+    if (data?.[0]) {
+      setTasks((prevTasks) =>
         prevTasks.map((task) =>
           task.id === data[0].id
             ? { ...mergeTaskWithDbRow(task, data[0], { bumpUpdatedAtFromClient: true }), isAnimated: true }

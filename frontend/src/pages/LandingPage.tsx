@@ -72,14 +72,24 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                 Get personalized guidance, automated task breakdowns, and intelligent progress tracking.
               </p>
               <div className="mt-10 flex flex-col items-center gap-2">
-                <Link
-                  to="/kanban"
-                  onClick={onCTAClick}
-                  className="inline-flex items-center rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                >
-                  Try now — no signup
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Link>
+                <div className="relative inline-flex rounded-md p-[2px]">
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 overflow-hidden rounded-md"
+                  >
+                    <div
+                      className="absolute left-1/2 top-1/2 h-[max(200%,12rem)] w-[max(200%,12rem)] min-h-[14rem] min-w-[14rem] bg-[conic-gradient(from_0deg,_transparent_0deg,_rgba(196,181,253,0.35)_32deg,_rgba(167,139,250,0.95)_56deg,_rgba(236,72,153,0.85)_82deg,_transparent_108deg,_transparent_360deg)] motion-reduce:animate-none animate-cta-border-sweep"
+                    />
+                  </div>
+                  <Link
+                    to="/kanban"
+                    onClick={onCTAClick}
+                    className="relative z-10 inline-flex items-center rounded-[4px] bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-white/10 transition-all duration-200 ease-out hover:-translate-y-px hover:bg-indigo-600 hover:shadow-[0_12px_36px_-8px_rgba(67,56,202,0.55),0_4px_14px_-4px_rgba(15,23,42,0.12)] hover:ring-white/25 hover:brightness-[1.05] active:translate-y-0 active:shadow-sm active:brightness-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    Start now — no signup
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Link>
+                </div>
               </div>
             </div>
 

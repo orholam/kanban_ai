@@ -296,7 +296,26 @@ export default function TaskModal({
     }
   };
 
+  /** Persist title/description immediately if the user closed before the debounced autosave ran. */
+  const flushPendingEdits = () => {
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+      debounceTimeout.current = null;
+    }
+    if (titleDebounceTimeout.current) {
+      clearTimeout(titleDebounceTimeout.current);
+      titleDebounceTimeout.current = null;
+    }
+    if (title !== task.title) {
+      onTitleChange(task.id, title);
+    }
+    if (description !== task.description) {
+      onDescriptionChange(task.id, description);
+    }
+  };
+
   const handleClose = () => {
+    flushPendingEdits();
     setIsClosing(true);
     // Wait for animation to complete before calling onClose
     setTimeout(() => {

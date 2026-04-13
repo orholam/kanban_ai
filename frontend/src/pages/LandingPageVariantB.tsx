@@ -78,7 +78,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick }: Props) {
                 className={`text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl ${isDarkMode ? 'text-white' : 'text-neutral-950'}`}
               >
                 <span className="block">
-                  <span className="text-indigo-500">Vibe coding </span>for project management.
+                  <span className="text-indigo-500">Lightning fast 🌩️</span> project management.
                 </span>
               </h1>
               <p
