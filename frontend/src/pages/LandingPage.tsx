@@ -82,11 +82,11 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                     />
                   </div>
                   <Link
-                    to="/kanban"
+                    to="/login"
                     onClick={onCTAClick}
                     className="relative z-10 inline-flex items-center rounded-[4px] bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-white/10 transition-all duration-200 ease-out hover:-translate-y-px hover:bg-indigo-600 hover:shadow-[0_12px_36px_-8px_rgba(67,56,202,0.55),0_4px_14px_-4px_rgba(15,23,42,0.12)] hover:ring-white/25 hover:brightness-[1.05] active:translate-y-0 active:shadow-sm active:brightness-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                   >
-                    Start now — no signup
+                    Get started
                     <ArrowRight className="ml-2 w-4 h-4" />
                   </Link>
                 </div>
@@ -262,7 +262,7 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                   </ul>
                 </div>
                 <Link
-                  to={tier.name === "Enterprise" ? "/contact" : "/kanban"}
+                  to={tier.name === "Enterprise" ? "/contact" : "/login"}
                   onClick={tier.name !== "Enterprise" ? onCTAClick : undefined}
                   className={`mt-8 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
                     ${tier.featured
@@ -272,7 +272,7 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                         : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
                     }`}
                 >
-                  {tier.name === "Enterprise" ? "Contact Sales" : "Try now"}
+                  {tier.name === "Enterprise" ? "Contact Sales" : "Get started"}
                 </Link>
               </div>
             ))}
@@ -290,11 +290,11 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
               </p>
               <div className="mt-8">
                 <Link
-                  to="/kanban"
+                  to="/login"
                   onClick={onCTAClick}
                   className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                 >
-                  Try now
+                  Get started
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </div>
