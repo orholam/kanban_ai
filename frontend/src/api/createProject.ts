@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { isLocalAppMode } from '../lib/localApp';
 
 interface ProjectData {
   id: string;
@@ -30,23 +31,14 @@ interface CollaboratorConnectionData {
 
 export async function createProject(projectData: ProjectData, collaboratorConnectionData: CollaboratorConnectionData) {
   try {
-    // First check if the user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      throw new Error('User must be authenticated to create a project');
-    }
-    
-    // Validate mandatory fields
     if (!projectData.title || projectData.title.trim() === '') {
       throw new Error('Project title is required');
     }
-    
+
     if (!projectData.description || projectData.description.trim() === '') {
       throw new Error('Project description is required');
     }
-    
-    // Ensure we only send fields that exist in the projects table
+
     const projectDataForInsert = {
       id: projectData.id,
       title: projectData.title.trim(),
@@ -54,7 +46,7 @@ export async function createProject(projectData: ProjectData, collaboratorConnec
       master_plan: projectData.master_plan,
       initial_prompt: projectData.initial_prompt,
       keywords: projectData.keywords,
-      projectType: projectData.projectType, // Add this field
+      projectType: projectData.projectType,
       num_sprints: projectData.num_sprints,
       current_sprint: projectData.current_sprint,
       due_date: projectData.due_date,
@@ -62,35 +54,65 @@ export async function createProject(projectData: ProjectData, collaboratorConnec
       complete: projectData.complete,
       created_at: projectData.created_at,
       user_id: projectData.user_id,
-      private: projectData.private ?? true, // Default to private if not specified
-      notes: projectData.notes // Add notes field
+      private: projectData.private ?? true,
+      notes: projectData.notes,
     };
-    
-    // Create the project without a specific owner field
+
+    if (isLocalAppMode()) {
+      if (!projectData.user_id.trim()) {
+        throw new Error('User must be authenticated to create a project');
+      }
+      const collaboratorPayload = {
+        ...collaboratorConnectionData,
+        project_id: projectData.id,
+        user_id: projectData.user_id,
+        role: collaboratorConnectionData.role || 'owner',
+        accepted: true,
+      };
+      const res = await fetch('/api/local/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project: projectDataForInsert,
+          collaborator: collaboratorPayload,
+        }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { project?: Record<string, unknown>; error?: string };
+      if (!res.ok) {
+        throw new Error(j.error || res.statusText || 'Failed to create project');
+      }
+      if (!j.project) throw new Error('Invalid response from local API');
+      return {
+        project: j.project,
+        collaboratorConnection: collaboratorPayload,
+      };
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error('User must be authenticated to create a project');
+    }
+
     console.log('Inserting project data:', projectDataForInsert);
     console.log('Project data keys:', Object.keys(projectDataForInsert));
-    const { data, error } = await supabase
-      .from('projects')
-      .insert([projectDataForInsert])
-      .select();
+    const { data, error } = await supabase.from('projects').insert([projectDataForInsert]).select();
 
     if (error) {
       console.error('Error creating project:', error);
       console.error('Full error details:', JSON.stringify(error, null, 2));
       throw error;
     }
-    
+
     console.log('Project created successfully:', data);
-    
-    // Set up the collaborator connection with the new project ID
-    // This will establish the user as an owner/collaborator
-    const projectId = data[0].id;
+
+    const projectId = data![0].id;
     const collaboratorData = {
       ...collaboratorConnectionData,
       project_id: projectId,
       user_id: user.id,
-      role: collaboratorConnectionData.role || 'owner', // Default to owner if not specified
-      accepted: true // The creator automatically accepts
+      role: collaboratorConnectionData.role || 'owner',
+      accepted: true,
     };
 
     const { data: collaboratorConnection, error: collaboratorConnectionError } = await supabase
@@ -102,13 +124,12 @@ export async function createProject(projectData: ProjectData, collaboratorConnec
       console.error('Error creating collaborator connection:', collaboratorConnectionError);
       throw collaboratorConnectionError;
     }
-    
+
     console.log('Collaborator connection created successfully:', collaboratorConnection);
 
-    return { project: data[0], collaboratorConnection: collaboratorConnection[0] };
+    return { project: data![0], collaboratorConnection: collaboratorConnection![0] };
   } catch (error) {
     console.error('Error in createProject:', error);
     throw error;
   }
 }
-

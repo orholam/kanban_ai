@@ -11,6 +11,7 @@ import { parseDbTimestamp, parseTaskDueDate } from '../lib/taskDb';
 import { useAuth } from '../contexts/AuthContext';
 import { getDisplayName, getUserInitials } from '../lib/userUtils';
 import { supabase } from '../lib/supabase';
+import { isLocalAppMode } from '../lib/localApp';
 import { fetchProfileDisplayName } from '../lib/profileDisplayName';
 import {
   listTaskComments,
@@ -178,7 +179,7 @@ export default function TaskModal({
   }, [guestMode, loadComments]);
 
   useEffect(() => {
-    if (guestMode) return;
+    if (guestMode || isLocalAppMode()) return;
     const channel = supabase
       .channel(`task_comments:${task.id}`)
       .on(

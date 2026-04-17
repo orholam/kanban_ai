@@ -4,7 +4,9 @@ import { BarChart3, CalendarRange, Eye, MousePointerClick, Sparkles, LogIn, User
 import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import { landingAbVersionFromMetadata, LANDING_AB_TEST_VERSION } from '../lib/landingAbTest';
+import { Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { isLocalAppMode } from '../lib/localApp';
 import type { AnalyticsEventRow, AnalyticsEventType } from '../types';
 
 const EVENT_LABELS: Record<AnalyticsEventType, string> = {
@@ -178,6 +180,12 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isLocalAppMode()) {
+      setEvents([]);
+      setNameByUserId({});
+      setLoading(false);
+      return;
+    }
     if (!user) {
       setEvents([]);
       setNameByUserId({});
@@ -413,6 +421,10 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
     ? 'rounded-2xl border border-zinc-800/80 bg-zinc-900/50'
     : 'rounded-2xl border border-zinc-200/90 bg-white';
   const muted = isDarkMode ? 'text-zinc-400' : 'text-zinc-600';
+
+  if (isLocalAppMode()) {
+    return <Navigate to="/kanban" replace />;
+  }
 
   return (
     <>

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "vite",
+    "dev:local": "concurrently -k -n api,vite -c blue,green \"node scripts/local-dev-server.mjs\" \"vite\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -32,6 +33,8 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "better-sqlite3": "^11.8.1",
+    "concurrently": "^9.1.2",
     "@eslint/js": "^9.9.1",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",

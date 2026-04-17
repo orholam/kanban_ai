@@ -16,7 +16,7 @@ export default function DocumentationBoard({ isDarkMode }: DocumentationBoardPro
     <>
       <SEO
         title="Documentation — Kanban AI boards, AI planning & developer setup"
-        description="Guides for guest mode, kanban workflow, AI task chat, account data, public sharing, and local development."
+        description="Guides for guest mode, boards, AI chat, account & sharing, and running the open-source app locally."
         keywords="Kanban AI docs, kanban documentation, AI task management help, Supabase kanban, developer setup"
         url={`https://kanbanai.dev${DOCUMENTATION_BOARD_BASE_PATH}`}
       />
@@ -26,8 +26,9 @@ export default function DocumentationBoard({ isDarkMode }: DocumentationBoardPro
             Introduction
           </h1>
           <p className={`mb-8 max-w-2xl text-base leading-relaxed sm:text-[17px] ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
-            Guides for using Kanban AI: guest and signed-in workflows, the board, the AI assistant, your account and
-            data, and how to run the app locally. Use the sidebar to jump to a topic, or start with{' '}
+            How the product works—guest try-first, signed-in sync, boards and AI—and how developers clone the repo and
+            run <strong className="font-semibold">npm run dev:local</strong> (no cloud account required). Use the sidebar,
+            or start with{' '}
             <Link
               to={documentationBoardArticlePath('overview')}
               className={`font-semibold underline decoration-2 underline-offset-[3px] transition-colors ${

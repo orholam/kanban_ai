@@ -4,8 +4,16 @@ import { useParams, Link } from 'react-router-dom';
 import { Plus, Eye, EyeOff, FileText, Link as LinkIcon } from 'lucide-react';
 import TaskCard from '../components/TaskCard';
 import type { Project, Task } from '../types';
-import { supabase } from '../lib/supabase';
-import { formatDueDateForDb, mergeTaskWithDbRow, taskInsertPayload } from '../lib/taskDb';
+import {
+  deleteTaskRow,
+  fetchProjectMetaFields,
+  fetchTasksForProject,
+  insertTaskRow,
+  updateProjectRow,
+  updateTaskRow,
+  updateTaskRowReturnArray,
+} from '../lib/boardDb';
+import { formatDueDateForDb } from '../lib/taskDb';
 import { toast } from 'sonner';
 import { loadGuestDraft, saveGuestDraft } from '../lib/guestDraft';
 
@@ -138,13 +146,8 @@ export default function KanbanBoard({
 
     let cancelled = false;
     void (async () => {
-      const { data, error } = await supabase
-        .from('projects')
-        .select('master_plan, initial_prompt, achievements, notes')
-        .eq('id', id)
-        .maybeSingle();
-
-      if (cancelled || error || !data) return;
+      const data = await fetchProjectMetaFields(id);
+      if (cancelled || !data) return;
       setCurrentProject((prev) => (prev?.id !== id ? prev : { ...prev, ...data }));
     })();
 
@@ -189,22 +192,16 @@ export default function KanbanBoard({
     let cancelled = false;
 
     void (async () => {
-      const { data: fetchedTasks, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('project_id', id)
-        .order('created_at', { ascending: true });
-
-      if (cancelled) return;
-
-      if (error) {
+      try {
+        const fetchedTasks = await fetchTasksForProject(id);
+        if (cancelled) return;
+        setTasks(fetchedTasks);
+      } catch (error) {
         console.error('Error fetching tasks:', error);
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
         return;
       }
-
-      setTasks(fetchedTasks ?? []);
-      setIsLoading(false);
+      if (!cancelled) setIsLoading(false);
     })();
 
     return () => {
@@ -238,29 +235,23 @@ export default function KanbanBoard({
       )
     );
 
-    const { data, error } = await supabase
-      .from('tasks')
-      .update({ status: newStatus })
-      .eq('id', taskId)
-      .select();
-
-    if (error) {
+    try {
+      const { merged, data0 } = await updateTaskRowReturnArray(
+        taskId,
+        { status: newStatus },
+        previous
+      );
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === data0.id ? { ...merged, isAnimated: true } : task
+        )
+      );
+    } catch (error) {
       console.error('Error updating task status:', error);
       setTasks((prevTasks) =>
         prevTasks.map((task) => (task.id === taskId ? previous : task))
       );
-      toast.error(error.message || 'Could not save status');
-      return;
-    }
-
-    if (data?.[0]) {
-      setTasks((prevTasks) =>
-        prevTasks.map((task) =>
-          task.id === data[0].id
-            ? { ...mergeTaskWithDbRow(task, data[0], { bumpUpdatedAtFromClient: true }), isAnimated: true }
-            : task
-        )
-      );
+      toast.error(error instanceof Error ? error.message : 'Could not save status');
     }
   };
 
@@ -274,21 +265,12 @@ export default function KanbanBoard({
       return;
     }
 
-    const { data, error } = await supabase
-    .from('projects')
-    .update({ notes: newNotes })
-    .eq('id', currentProject?.id)
-    .select()
-    .single();
-    
-    if (error) {
-      console.error('Error updating notes:', error);
-      return;
-    }
-    if (data) {
-      console.log(data[0]);
-      setCurrentProject(prevProject => prevProject ? { ...prevProject, notes: newNotes } : null);
+    try {
+      const data = await updateProjectRow(currentProject?.id ?? '', { notes: newNotes });
+      setCurrentProject((prevProject) => (prevProject ? { ...prevProject, ...data } : null));
       toast.success('Notes updated');
+    } catch (error) {
+      console.error('Error updating notes:', error);
     }
   };
 
@@ -305,27 +287,19 @@ export default function KanbanBoard({
       return;
     }
 
-    const { data, error } = await supabase
-    .from('tasks')
-    .update({ sprint: newSprint })
-    .eq('id', taskId)
-    .select()
-
-    if (error) {
-      console.error('Error updating sprint status:', error);
-      toast.error(error.message || 'Could not save sprint');
-      return;
-    }
-    if (data) {
-      console.log(data[0]);
-      setTasks(prevTasks =>
+    const prevTask = tasksRef.current.find((t) => t.id === taskId);
+    if (!prevTask) return;
+    try {
+      const { merged, data0 } = await updateTaskRowReturnArray(taskId, { sprint: newSprint }, prevTask);
+      setTasks((prevTasks) =>
         prevTasks.map((task) =>
-          task.id === data[0].id
-            ? { ...mergeTaskWithDbRow(task, data[0], { bumpUpdatedAtFromClient: true }), isAnimated: true }
-            : task
+          task.id === data0.id ? { ...merged, isAnimated: true } : task
         )
       );
       toast.success('Sprint updated');
+    } catch (error) {
+      console.error('Error updating sprint status:', error);
+      toast.error(error instanceof Error ? error.message : 'Could not save sprint');
     }
   };
 
@@ -336,12 +310,9 @@ export default function KanbanBoard({
       return;
     }
 
-    const { error } = await supabase
-    .from('tasks')
-    .delete()
-    .eq('id', taskId)
-
-    if (error) {
+    try {
+      await deleteTaskRow(taskId);
+    } catch (error) {
       console.error('Error deleting task:', error);
       return;
     }
@@ -360,21 +331,9 @@ export default function KanbanBoard({
     try {
       console.log("trying to create new task!");
       console.log(newTask);
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert([taskInsertPayload(newTask)])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        setTasks(prevTasks => [
-          ...prevTasks,
-          { ...mergeTaskWithDbRow(newTask, data), isAnimated: true },
-        ]);
-        toast.success('Task created');
-      }
+      const merged = await insertTaskRow(newTask);
+      setTasks((prevTasks) => [...prevTasks, { ...merged, isAnimated: true }]);
+      toast.success('Task created');
     } catch (error) {
       console.error('Error creating task:', error);
     }
@@ -388,19 +347,11 @@ export default function KanbanBoard({
       toast.success('Task created');
       return;
     }
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert([taskInsertPayload(newTask)])
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    if (data) {
-      const merged = mergeTaskWithDbRow(newTask, data);
-      const next = [...tasksRef.current, { ...merged, isAnimated: true, aiBrandish: true }];
-      tasksRef.current = next;
-      setTasks(next);
-      toast.success('Task created');
-    }
+    const merged = await insertTaskRow(newTask);
+    const next = [...tasksRef.current, { ...merged, isAnimated: true, aiBrandish: true }];
+    tasksRef.current = next;
+    setTasks(next);
+    toast.success('Task created');
   };
 
   const handleTaskUpdateFromChat = async (
@@ -422,27 +373,16 @@ export default function KanbanBoard({
       toast.success('Task updated');
       return;
     }
-    const { data, error } = await supabase
-      .from('tasks')
-      .update(patch)
-      .eq('id', taskId)
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    if (data) {
-      const next = tasksRef.current.map((t) =>
-        t.id === taskId
-          ? {
-              ...mergeTaskWithDbRow(t, data, { bumpUpdatedAtFromClient: true }),
-              isAnimated: true,
-              aiBrandish: true,
-            }
-          : t
-      );
-      tasksRef.current = next;
-      setTasks(next);
-      toast.success('Task updated');
-    }
+    const t = tasksRef.current.find((x) => x.id === taskId)!;
+    const merged = await updateTaskRow(taskId, patch, t);
+    const next = tasksRef.current.map((row) =>
+      row.id === taskId
+        ? { ...merged, isAnimated: true, aiBrandish: true }
+        : row
+    );
+    tasksRef.current = next;
+    setTasks(next);
+    toast.success('Task updated');
   };
 
   const handleDeleteTaskFromChat = async (taskId: string) => {
@@ -456,8 +396,7 @@ export default function KanbanBoard({
       toast.success('Task deleted');
       return;
     }
-    const { error } = await supabase.from('tasks').delete().eq('id', taskId);
-    if (error) throw new Error(error.message);
+    await deleteTaskRow(taskId);
     const next = tasksRef.current.filter((t) => t.id !== taskId);
     tasksRef.current = next;
     setTasks(next);
@@ -479,33 +418,22 @@ export default function KanbanBoard({
     }
 
     try {
-      const { data, error } = await supabase
-      .from('tasks')
-      .update({ description: newDescription })
-      .eq('id', taskId)
-      .select()
-
-      if (error) {
-        console.error('Error updating description:', error);
-        toast.error(error.message || 'Could not save description');
-        return;
-      }
-      if (data) {
-        console.log(data[0]);
-        setTasks(prevTasks =>
-          prevTasks.map((task) =>
-            task.id === data[0].id
-              ? {
-                  ...mergeTaskWithDbRow(task, data[0], { bumpUpdatedAtFromClient: true }),
-                  isAnimated: true,
-                }
-              : task
-          )
-        );
-        toast.success('Description updated');
-      }
+      const mergeBase = tasksRef.current.find((t) => t.id === taskId);
+      if (!mergeBase) return;
+      const { merged, data0 } = await updateTaskRowReturnArray(
+        taskId,
+        { description: newDescription },
+        mergeBase
+      );
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === data0.id ? { ...merged, isAnimated: true } : task
+        )
+      );
+      toast.success('Description updated');
     } catch (error) {
       console.error('Error updating description:', error);
+      toast.error(error instanceof Error ? error.message : 'Could not save description');
     }
   };
 
@@ -522,33 +450,18 @@ export default function KanbanBoard({
     }
 
     try {
-      const { data, error } = await supabase
-      .from('tasks')
-      .update({ title: newTitle })
-      .eq('id', taskId)
-      .select()
-
-      if (error) {
-        console.error('Error updating title:', error);
-        toast.error(error.message || 'Could not save title');
-        return;
-      }
-      if (data) {
-        console.log(data[0]);
-        setTasks(prevTasks =>
-          prevTasks.map((task) =>
-            task.id === data[0].id
-              ? {
-                  ...mergeTaskWithDbRow(task, data[0], { bumpUpdatedAtFromClient: true }),
-                  isAnimated: true,
-                }
-              : task
-          )
-        );
-        toast.success('Title updated');
-      }
+      const mergeBase = tasksRef.current.find((t) => t.id === taskId);
+      if (!mergeBase) return;
+      const { merged, data0 } = await updateTaskRowReturnArray(taskId, { title: newTitle }, mergeBase);
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === data0.id ? { ...merged, isAnimated: true } : task
+        )
+      );
+      toast.success('Title updated');
     } catch (error) {
       console.error('Error updating title:', error);
+      toast.error(error instanceof Error ? error.message : 'Could not save title');
     }
   };
 
@@ -566,33 +479,22 @@ export default function KanbanBoard({
     }
 
     try {
-      const { data, error } = await supabase
-      .from('tasks')
-      .update({ due_date: formatDueDateForDb(newDueDate) })
-      .eq('id', taskId)
-      .select()
-
-      if (error) {
-        console.error('Error updating due date:', error);
-        toast.error(error.message || 'Could not save due date');
-        return;
-      }
-      if (data) {
-        console.log(data[0]);
-        setTasks(prevTasks =>
-          prevTasks.map((task) =>
-            task.id === data[0].id
-              ? {
-                  ...mergeTaskWithDbRow(task, data[0], { bumpUpdatedAtFromClient: true }),
-                  isAnimated: true,
-                }
-              : task
-          )
-        );
-        toast.success('Due date updated');
-      }
+      const mergeBase = tasksRef.current.find((t) => t.id === taskId);
+      if (!mergeBase) return;
+      const { merged, data0 } = await updateTaskRowReturnArray(
+        taskId,
+        { due_date: formatDueDateForDb(newDueDate) },
+        mergeBase
+      );
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === data0.id ? { ...merged, isAnimated: true } : task
+        )
+      );
+      toast.success('Due date updated');
     } catch (error) {
       console.error('Error updating due date:', error);
+      toast.error(error instanceof Error ? error.message : 'Could not save due date');
     }
   };
 
@@ -607,28 +509,14 @@ export default function KanbanBoard({
 
     try {
       setIsSavingProjectMeta(true);
-      const { data, error } = await supabase
-        .from('projects')
-        .update(updates)
-        .eq('id', currentProject.id)
-        .select()
-        .single();
+      const data = await updateProjectRow(currentProject.id, updates);
 
-      if (error) {
-        console.error('Error updating project:', error);
-        toast.error('Could not save project');
-        setProjectTitleDraft(currentProject.title);
-        setProjectDescDraft(currentProject.description ?? '');
-        return;
+      setCurrentProject((prev) => (prev ? { ...prev, ...data } : null));
+      if (setProjects) {
+        const pid = String(data.id ?? currentProject.id);
+        setProjects(projects.map((p) => (p.id === pid ? { ...p, ...data } : p)));
       }
-
-      if (data) {
-        setCurrentProject((prev) => (prev ? { ...prev, ...data } : null));
-        if (setProjects) {
-          setProjects(projects.map((p) => (p.id === data.id ? { ...p, ...data } : p)));
-        }
-        toast.success('Project updated');
-      }
+      toast.success('Project updated');
     } catch (err) {
       console.error('Error updating project:', err);
       toast.error('Could not save project');
@@ -666,48 +554,28 @@ export default function KanbanBoard({
       setIsPrivacyUpdating(true);
       const newPrivacyStatus = !currentProject.private;
       
-      // Update the project in the database
-      const { data, error } = await supabase
-        .from('projects')
-        .update({ private: newPrivacyStatus })
-        .eq('id', currentProject.id)
-        .select()
-        .single();
+      await updateProjectRow(currentProject.id, { private: newPrivacyStatus });
 
-      if (error) {
-        console.error('Error updating project privacy:', error);
-        toast.error('Failed to update project privacy');
-        return;
+      setCurrentProject((prev) => (prev ? { ...prev, private: newPrivacyStatus } : null));
+
+      const updatedProjects = projects.map((project) =>
+        project.id === currentProject.id ? { ...project, private: newPrivacyStatus } : project
+      );
+
+      if (setProjects) {
+        setProjects(updatedProjects);
       }
 
-      if (data) {
-        // Update local state
-        setCurrentProject(prev => prev ? { ...prev, private: newPrivacyStatus } : null);
-        
-        // Update projects list
-        const updatedProjects = projects.map(project => 
-          project.id === currentProject.id 
-            ? { ...project, private: newPrivacyStatus }
-            : project
-        );
-        
-        // Update parent projects state if setProjects is available
-        if (setProjects) {
-          setProjects(updatedProjects);
+      if (!newPrivacyStatus) {
+        const projectUrl = `${window.location.origin}/public/project/${currentProject.id}`;
+        try {
+          await navigator.clipboard.writeText(projectUrl);
+          toast.success('Project made public! URL copied to clipboard');
+        } catch {
+          toast.success('Project made public!');
         }
-        
-        // If making public, copy URL and show success toast
-        if (!newPrivacyStatus) {
-          const projectUrl = `${window.location.origin}/public/project/${currentProject.id}`;
-          try {
-            await navigator.clipboard.writeText(projectUrl);
-            toast.success('Project made public! URL copied to clipboard');
-          } catch {
-            toast.success('Project made public!');
-          }
-        } else {
-          toast.success('Project made private');
-        }
+      } else {
+        toast.success('Project made private');
       }
     } catch (error) {
       console.error('Error updating project privacy:', error);

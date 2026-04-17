@@ -5,6 +5,7 @@ import { clearLocalSupabaseSession, supabase } from '../lib/supabase';
 import { fetchAccountProfile } from '../lib/accountProfile';
 import { recordAnalyticsEvent } from '../lib/analyticsEvents';
 import type { AccountProfileRow } from '../types';
+import { isLocalAppMode, LOCAL_DEV_EMAIL, LOCAL_DEV_USER_ID } from '../lib/localApp';
 
 interface AuthContextType {
   session: Session | null;
@@ -18,6 +19,29 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
+function syntheticLocalUser(): User {
+  return {
+    id: LOCAL_DEV_USER_ID,
+    email: LOCAL_DEV_EMAIL,
+    app_metadata: {},
+    user_metadata: {},
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+  } as User;
+}
+
+function syntheticLocalProfile(): AccountProfileRow {
+  return {
+    id: LOCAL_DEV_USER_ID,
+    full_name: 'Local developer',
+    display_name: 'Local developer',
+    name: null,
+    username: null,
+    account_role: 'owner',
+    subscription_plan: 'pro',
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
@@ -27,6 +51,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
+    if (isLocalAppMode()) {
+      setUser(syntheticLocalUser());
+      setSession(null);
+      setAccountProfile(syntheticLocalProfile());
+      setProfileLoading(false);
+      setLoading(false);
+      return;
+    }
+
     const hydratedRef = { current: false };
     const wasSignedOutRef = { current: true };
 
@@ -74,6 +107,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (isLocalAppMode()) {
+      return;
+    }
     if (!user) {
       setAccountProfile(null);
       setProfileLoading(false);
@@ -93,6 +129,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const signOut = async () => {
+    if (isLocalAppMode()) {
+      navigate('/kanban', { replace: true });
+      return { error: null };
+    }
     const { error } = await supabase.auth.signOut();
     if (error) {
       await clearLocalSupabaseSession();

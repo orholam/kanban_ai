@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bug, Inbox, Lightbulb, MessageCircle, SendHorizontal, Sparkles } from 'lucide-react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { toast } from 'sonner';
 import { createFeedback } from '../api/createFeedback';
 import SEO from '../components/SEO';
+import { isLocalAppMode } from '../lib/localApp';
 
 type FeedbackKind = 'bug' | 'idea' | 'general';
 
@@ -109,6 +111,35 @@ export default function Feedback({ isDarkMode }: { isDarkMode: boolean }) {
   };
 
   const hintClass = isDarkMode ? 'text-zinc-500' : 'text-zinc-500';
+
+  if (isLocalAppMode()) {
+    return (
+      <>
+        <SEO
+          title="Feedback — Kanban AI (local mode)"
+          description="Feedback is stored in Supabase in hosted mode."
+          url={`${typeof window !== 'undefined' ? window.location.origin : ''}/feedback`}
+          noindex
+        />
+        <div
+          className={`relative flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8 text-center ${pageShell}`}
+        >
+          {mesh}
+          <p className="relative z-[1] max-w-md text-sm leading-relaxed">
+            In-app feedback is sent to the hosted Supabase database. Use GitHub issues while running in local mode.
+          </p>
+          <Link
+            to="/kanban"
+            className={`relative z-[1] text-sm font-medium underline underline-offset-2 ${
+              isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
+            }`}
+          >
+            Back to boards
+          </Link>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

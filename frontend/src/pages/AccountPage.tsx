@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Check, Gift, Sparkles } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -14,6 +14,7 @@ import {
   upsertProfileDisplayFields,
 } from '../lib/accountProfile';
 import type { AccountProfileRow } from '../types';
+import { isLocalAppMode } from '../lib/localApp';
 
 /** Base = already in the free product; Pro = trial extras. Differentiation is icon + text color only. */
 const PLAN_FEATURES: { id: string; text: string; scope: 'base' | 'pro' }[] = [
@@ -33,7 +34,7 @@ export default function AccountPage({ isDarkMode }: { isDarkMode: boolean }) {
   const [accountProfile, setAccountProfile] = useState<AccountProfileRow | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || isLocalAppMode()) return;
     let cancelled = false;
     (async () => {
       const row = await fetchAccountProfile(user.id);
@@ -59,6 +60,35 @@ export default function AccountPage({ isDarkMode }: { isDarkMode: boolean }) {
 
   if (!user) {
     return <Navigate to="/login?next=/account" replace />;
+  }
+
+  if (isLocalAppMode()) {
+    return (
+      <>
+        <SEO
+          title="Account — Kanban AI (local mode)"
+          description="Account settings are available when using Supabase sign-in."
+          url={`${typeof window !== 'undefined' ? window.location.origin : ''}/account`}
+        />
+        <div
+          className={`flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8 text-center ${
+            isDarkMode ? 'bg-zinc-950 text-zinc-200' : 'bg-zinc-50 text-zinc-800'
+          }`}
+        >
+          <p className="max-w-md text-sm leading-relaxed">
+            Account and profile settings use Supabase Auth. In local dev mode there is no cloud account; your data
+            stays in the local SQLite file under <code className="rounded bg-black/10 px-1 py-0.5">.local/</code> in
+            the repo.
+          </p>
+          <Link
+            to="/kanban"
+            className={`text-sm font-medium underline underline-offset-2 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}
+          >
+            Back to boards
+          </Link>
+        </div>
+      </>
+    );
   }
 
   const handleSaveProfile = async (e: React.FormEvent) => {

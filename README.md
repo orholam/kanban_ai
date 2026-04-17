@@ -33,60 +33,45 @@ Kanban AI is your personal AI-powered project companion that helps you build, tr
 
 ##  **Getting Started**
 
-### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
-- Supabase account (for backend functionality)
+**Requirements:** Node.js 18+, npm, and an [OpenAI API key](https://platform.openai.com/api-keys) if you want AI features.
 
-### Installation
+### Run locally (recommended for contributors)
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/orholam/kanban_ai.git
-   cd kanban_ai
-   ```
+One SQLite database under `.local/` (gitignored), no Supabase account, no sign-in. The app talks to a small local API on port **3000**; Vite proxies `/api` there ([`frontend/vite.config.ts`](frontend/vite.config.ts)).
 
-2. **Navigate to frontend directory**
-   ```bash
-   cd frontend
-   ```
+```bash
+git clone https://github.com/orholam/kanban_ai.git
+cd kanban_ai/frontend
+npm install
+cp env.local.example .env.local
+```
 
-3. **Install dependencies**
-   ```bash
-   npm install
-   ```
+Edit `.env.local`: set **`OPENAI_API_KEY`** to your key. Leave **`VITE_LOCAL_MODE=true`** as in the example.
 
-4. **Set up environment variables**
-   Create a `.env` file in the frontend directory (only Supabase keys are exposed to the browser via `VITE_*`):
-   ```env
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
+```bash
+npm run dev:local
+```
 
-   LLM calls go through a Vercel serverless route at `/api/openai`, which uses a **server-only** `OPENAI_API_KEY` (never prefix it with `VITE_` — that would bundle the key into client JavaScript).
+Open **http://localhost:5173**.
 
-5. **Run the app locally (frontend + LLM API)**
+- Do **not** put `OPENAI_API_KEY` behind the `VITE_` prefix (that would ship it to the browser). The dev server reads it from `.env.local`.
+- First run applies [`frontend/scripts/local-schema.sql`](frontend/scripts/local-schema.sql). Account, hosted analytics, and in-app feedback are disabled in this mode (they need Supabase).
 
-   The Vite dev server proxies `/api` to a local Vercel dev process ([`frontend/vite.config.ts`](frontend/vite.config.ts)).
+### Supabase + Vercel-style API (production-like)
 
-   - In one terminal, from `frontend/`:
-     ```bash
-     npx vercel dev --listen 3000
-     ```
-     Ensure `OPENAI_API_KEY` is available there (e.g. `frontend/.env`, Vercel-linked project env, or `export OPENAI_API_KEY=...`).
+Use this when you need real auth and cloud data.
 
-   - In another terminal, from `frontend/`:
-     ```bash
-     npm start
-     ```
+1. In `frontend/.env.local` (or `.env`): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and **`VITE_LOCAL_MODE`** removed or not `true`.
+2. Same **`OPENAI_API_KEY`** as above for `/api/openai`.
+3. Two terminals from `frontend/`: `npx vercel dev --listen 3000` then `npm start`. UI: **http://localhost:5173**.
 
-   The UI will be at `http://localhost:5173`. Without `vercel dev` on port 3000, AI features that hit `/api/openai` will not work locally.
+---
 
-6. **Deploying on Vercel**
+### Deploying on Vercel
 
-   Add `OPENAI_API_KEY` in the Vercel project’s Environment Variables (Production and Preview as needed). The [`frontend/api/openai.ts`](frontend/api/openai.ts) handler reads it at runtime; no OpenAI key belongs in client env vars.
+Add `OPENAI_API_KEY` in the Vercel project’s Environment Variables (Production and Preview as needed). The [`frontend/api/openai.ts`](frontend/api/openai.ts) handler reads it at runtime; no OpenAI key belongs in client env vars.
 
-   The app uses code-splitting; [`frontend/vercel.json`](frontend/vercel.json) sets long-lived caching for hashed `/assets/*` files and revalidation for HTML responses so open tabs pick up a fresh `index.html` after deploys. Lazy routes also retry once with a reload if a chunk fails to load (stale shell).
+The app uses code-splitting; [`frontend/vercel.json`](frontend/vercel.json) sets long-lived caching for hashed `/assets/*` files and revalidation for HTML responses so open tabs pick up a fresh `index.html` after deploys. Lazy routes also retry once with a reload if a chunk fails to load (stale shell).
 
 ##  **Tech Stack**
 

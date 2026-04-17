@@ -4,7 +4,8 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import { supabase } from './lib/supabase';
+import { deleteProjectCascade, loadSidebarProjects } from './lib/boardDb';
+import { isLocalAppMode } from './lib/localApp';
 import type { Project } from './types';
 import { Toaster, toast } from 'sonner';
 import { loadGuestDraft, guestDraftHasMeaningfulData, clearGuestDraft } from './lib/guestDraft';
@@ -148,7 +149,10 @@ function AppContent() {
 
   const { user, accountProfile, profileLoading } = useAuth();
   const showAnalyticsLink =
-    Boolean(user) && !profileLoading && accountProfile?.account_role === 'owner';
+    !isLocalAppMode() &&
+    Boolean(user) &&
+    !profileLoading &&
+    accountProfile?.account_role === 'owner';
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -178,53 +182,8 @@ function AppContent() {
           }
         }
 
-        const { data: collaborations, error } = await supabase
-          .from('project_collaborators')
-          .select(`
-            project_id,
-            projects (
-              id,
-              title,
-              description,
-              keywords,
-              num_sprints,
-              current_sprint,
-              due_date,
-              complete,
-              created_at,
-              user_id,
-              private,
-              projectType
-            )
-          `)
-          .eq('user_id', user.id)
-          .eq('accepted', true);
-
-        if (error) {
-          console.error('Error fetching projects:', error);
-          return;
-        }
-
-        if (collaborations) {
-          const userProjects: Project[] = collaborations
-            .map((collaboration) => {
-              const project = collaboration.projects as unknown as Record<string, unknown> | null;
-              if (!project) return null;
-              return {
-                ...project,
-                master_plan: '',
-                initial_prompt: '',
-                achievements: '',
-                notes: '',
-                projectType: (project.projectType as string) || 'Manual',
-                private: (project.private as boolean | undefined) ?? true,
-                tasks: [],
-              } as Project;
-            })
-            .filter((project): project is Project => project !== null);
-
-          setProjects(userProjects);
-        }
+        const userProjects = await loadSidebarProjects(user.id);
+        setProjects(userProjects);
       } catch (err) {
         console.error('Failed to fetch projects:', err);
       } finally {
@@ -245,17 +204,7 @@ function AppContent() {
     }
 
     try {
-      const { error: tasksErr } = await supabase.from('tasks').delete().eq('project_id', projectId);
-      if (tasksErr) throw tasksErr;
-
-      const { error: collabErr } = await supabase
-        .from('project_collaborators')
-        .delete()
-        .eq('project_id', projectId);
-      if (collabErr) throw collabErr;
-
-      const { error: projectErr } = await supabase.from('projects').delete().eq('id', projectId);
-      if (projectErr) throw projectErr;
+      await deleteProjectCascade(projectId);
 
       const next = projects.filter((p) => p.id !== projectId);
       setProjects(next);

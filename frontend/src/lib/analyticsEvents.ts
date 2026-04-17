@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import type { AccountRole, AnalyticsEventType } from '../types';
+import { isLocalAppMode } from './localApp';
 
 /**
  * Single DB value for all guest analytics rows — we do not distinguish visitors.
@@ -16,6 +17,7 @@ export function recordAnalyticsEvent(
   metadata: Record<string, unknown> | undefined,
   subject: AnalyticsSubject
 ): void {
+  if (isLocalAppMode()) return;
   if (subject.kind === 'user') {
     if (!subject.userId.trim()) return;
     if (subject.accountRole === 'owner') return;

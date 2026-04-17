@@ -202,49 +202,59 @@ export const bodySharing = `Some deployments expose **read-only public links** f
 
 Public routes may be marked **noindex** at the platform level; do not rely on public links for SEO unless you confirm robots policy for that URL pattern.`;
 
-export const bodyLocalDev = `Developers run Kanban AI from the **Vite** frontend plus a small **Vercel-style API** route for model calls. This mirrors the README and adds operational notes.
+export const bodyLocalDev = `There are two ways to run the repo. **Start with local mode** unless you specifically need Supabase Auth and cloud data.
 
-## Prerequisites
+## Local mode (default for contributors)
 
-- Node.js **18+** (project may recommend newer—check \`package.json\` engines if present).
-- **npm** (or compatible package manager).
-- **Supabase** project for auth/data when testing signed-in flows.
-- An **OpenAI-compatible API key** for server routes (never prefix secrets with \`VITE_\`).
+No Supabase account. Boards live in a **SQLite file** under the repo’s \`.local/\` folder (gitignored). There is no sign-in—the app uses a fixed local user.
 
-## Environment variables
+1. **Clone and install**
+   \`\`\`bash
+   git clone https://github.com/orholam/kanban_ai.git
+   cd kanban_ai/frontend
+   npm install
+   \`\`\`
 
-Frontend (\`.env\` in \`frontend/\`):
+2. **Configure env** — copy the example file and add your OpenAI key:
+   \`\`\`bash
+   cp env.local.example .env.local
+   \`\`\`
+   In \`.env.local\`, set \`OPENAI_API_KEY=sk-...\`. Keep \`VITE_LOCAL_MODE=true\` as in the example.
 
-\`\`\`env
-VITE_SUPABASE_URL=...
-VITE_SUPABASE_ANON_KEY=...
-\`\`\`
+   Never prefix API keys with \`VITE_\`. That would bundle secrets into client JavaScript. Only \`VITE_SUPABASE_*\` belong in the browser when using Supabase below.
 
-Server / \`vercel dev\` environment:
+3. **Run one command**
+   \`\`\`bash
+   npm run dev:local
+   \`\`\`
+   Open **http://localhost:5173**. Vite proxies \`/api\` to a local process on port **3000** (SQLite + OpenAI proxy). The schema is applied on first run from \`frontend/scripts/local-schema.sql\`.
 
-\`\`\`env
-OPENAI_API_KEY=...
-\`\`\`
+Account settings, hosted **Analytics**, and **Feedback** are stubbed in local mode because they rely on Supabase.
 
-Browser-exposed keys must only be **anon** Supabase credentials intended for public clients.
+## Production-like dev (Supabase + Vercel API routes)
 
-## Running locally
+Use this when you need real login, RLS, and the same stack as production.
 
-1. From \`frontend/\`, start API host: \`npx vercel dev --listen 3000\` (or the port your \`vite.config\` proxies to).
-2. From \`frontend/\`, start UI: \`npm start\` (typically Vite on another port with \`/api\` proxied).
+| Where | What |
+|-------|------|
+| \`frontend/.env.local\` | \`VITE_SUPABASE_URL\`, \`VITE_SUPABASE_ANON_KEY\`, and **do not** set \`VITE_LOCAL_MODE\` to \`true\` |
+| Same file or shell | \`OPENAI_API_KEY\` for \`/api/openai\` |
 
-## Proxy reminder
+Then run **two** terminals from \`frontend/\`:
 
-\`vite.config.ts\` usually proxies \`/api/*\` to the local functions host so \`fetch('/api/openai')\` works during development.
+1. \`npx vercel dev --listen 3000\`
+2. \`npm start\`
+
+Open **http://localhost:5173**. Without something on port **3000**, AI features that call \`/api/openai\` will fail.
 
 ## Troubleshooting
 
 | Symptom | Likely cause |
 |---------|----------------|
 | 401 from Supabase | Wrong anon key or URL |
-| 500 on AI routes | Missing \`OPENAI_API_KEY\` on server process |
-| CORS errors | Hitting API origin directly without proxy |
-| Empty board after login | RLS policies or seed data mismatch |`;
+| 500 on \`/api/openai\` | Missing \`OPENAI_API_KEY\` for the process on port 3000 |
+| CORS / wrong host | Use the Vite URL; don’t call the API origin directly during dev |
+| Empty board after login | RLS or project data in Supabase |`;
 
 export const bodyAnalytics = `The **Analytics** page (when visible for your role) shows aggregate usage: events from signed-in users, guest buckets, task mutations, and AI sidebar usage, depending on configuration.
 
@@ -288,7 +298,7 @@ export const bodyFaq = `Short answers to frequent questions. For depth, open the
 
 ## Development
 
-**Why two processes?** Vite serves static/client bundles; \`vercel dev\` serves **serverless** API routes used for LLM calls.
+**Why one vs two processes?** \`npm run dev:local\` starts Vite and the local API together. The **Supabase** setup uses two terminals: Vite (\`npm start\`) plus \`vercel dev\` for the same API routes as production.
 
 ## Support path
 

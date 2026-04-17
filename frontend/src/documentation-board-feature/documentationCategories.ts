@@ -24,6 +24,6 @@ export const DOCUMENTATION_CATEGORIES: DocumentationCategoryMeta[] = [
   {
     id: 'developers',
     title: 'Developers',
-    description: 'Run the stack locally, env vars, and extension points.',
+    description: 'Clone the repo, env.local, and local vs Supabase-backed dev.',
   },
 ];

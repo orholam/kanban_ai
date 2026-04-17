@@ -5,7 +5,7 @@ import { TaskCommentAuthorAvatar } from '../components/TaskCommentAuthorAvatar';
 import { displayTaskCommentAuthorName } from '../lib/kanbanAiComment';
 import ReactMarkdown from 'react-markdown';
 import type { Project, Task, TaskComment } from '../types';
-import { supabase } from '../lib/supabase';
+import { fetchPublicProjectRow, fetchTasksForProject } from '../lib/boardDb';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { listTaskCommentsForTasks } from '../api/taskComments';
@@ -162,44 +162,19 @@ export default function PublicProject({ isDarkMode }: PublicProjectProps) {
       try {
         setIsLoading(true);
         
-        // Fetch the project
-        const { data: projectData, error: projectError } = await supabase
-          .from('projects')
-          .select('*')
-          .eq('id', projectId)
-          .eq('private', false) // Only fetch public projects
-          .single();
-
-        if (projectError) {
-          setTasks([]);
-          setTaskComments([]);
-          if (projectError.code === 'PGRST116') {
-            setError('Project not found or is private');
-          } else {
-            setError('Failed to load project');
-          }
-          return;
-        }
+        const projectData = await fetchPublicProjectRow(projectId);
 
         if (!projectData) {
           setTasks([]);
           setTaskComments([]);
-          setError('Project not found');
+          setError('Project not found or is private');
           return;
         }
 
-        setProject(projectData);
+        setProject(projectData as unknown as Project);
 
-        // Fetch tasks for this project
-        const { data: tasksData, error: tasksError } = await supabase
-          .from('tasks')
-          .select('*')
-          .eq('project_id', projectId);
-
-        if (tasksError) {
-          console.error('Error fetching tasks:', tasksError);
-          setTaskComments([]);
-        } else if (tasksData) {
+        try {
+          const tasksData = await fetchTasksForProject(projectId);
           setTasks(tasksData);
           try {
             const ids = tasksData.map((t) => t.id);
@@ -209,7 +184,9 @@ export default function PublicProject({ isDarkMode }: PublicProjectProps) {
             console.error('Error fetching task comments:', commentsErr);
             setTaskComments([]);
           }
-        } else {
+        } catch (tasksErr) {
+          console.error('Error fetching tasks:', tasksErr);
+          setTasks([]);
           setTaskComments([]);
         }
 

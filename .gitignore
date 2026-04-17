@@ -34,6 +34,9 @@ backend/dist/
 *.sln
 *.sw?
 
+# Local SQLite (npm run dev:local)
+.local/
+
 # Miscellaneous
 Thumbs.db
 desktop.ini
