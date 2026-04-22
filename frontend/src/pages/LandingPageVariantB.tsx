@@ -1,360 +1,491 @@
 /**
  * Landing page — Variant B.
  *
- * Experimental variant: professional, PM-focused positioning (Cursor + delivery).
- * Keep the `onCTAClick` prop wired to every CTA that leads to auth so conversions are tracked correctly.
+ * ClickUp-inspired marketing layout with Kanban AI brand, assets, and CTAs.
+ * Keep `onCTAClick` on every auth CTA so conversions stay tracked.
  */
-import { ArrowRight } from 'lucide-react'
-import { Link } from 'react-router-dom';
+import { useState } from 'react'
+import { ArrowRight, Check, ChevronDown, Moon, Sun } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import Logo from '../assets/kanban_ai_logo5.png'
 import promocard from '../assets/main_kanban.jpg'
 import sprintPlanning from '../assets/undraw_choose_card_n0x0.svg'
 import taskManagement from '../assets/undraw_join_re_w1lh.svg'
 import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
 import { TrustedBy } from '../components/TrustedBy'
 import { DOCUMENTATION_BOARD_BASE_PATH } from '../documentation-board-feature/integration'
+import { LANDING_HERO_VERSION_TAG } from '../lib/siteMeta'
+
+const FEATURE_PILLS = [
+  'Sprints',
+  'AI planning',
+  'Weekly board',
+  'Backlog',
+  'Docs',
+  'Roadmap',
+  'Time focus',
+  'Dashboards',
+  'Automations',
+  'Analytics',
+] as const
 
 interface Props {
-  isDarkMode: boolean;
-  onCTAClick: () => void;
+  isDarkMode: boolean
+  onCTAClick: () => void
+  toggleTheme: () => void
 }
 
-export default function LandingPageVariantB({ isDarkMode, onCTAClick }: Props) {
-  const blobOpacity = isDarkMode ? 'opacity-30' : 'opacity-[0.22]'
-  const surfaceMuted = isDarkMode ? 'bg-gray-800' : 'bg-neutral-100'
-  const surfaceCard = isDarkMode ? 'bg-gray-800' : 'bg-neutral-50'
-  const borderSubtle = isDarkMode ? 'border-gray-700' : 'border-neutral-200'
+function NavChevron() {
+  return <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50" aria-hidden />
+}
+
+/** ~72rem — tighter marketing column (ClickUp-like), not full-bleed wide */
+const SHELL = 'mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8'
+
+export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleTheme }: Props) {
+  const [activePill, setActivePill] = useState<string>('Sprints')
+
+  const pageBg = isDarkMode ? 'bg-zinc-950' : 'bg-white'
+  const text = isDarkMode ? 'text-zinc-50' : 'text-zinc-950'
+  const textMuted = isDarkMode ? 'text-zinc-400' : 'text-zinc-600'
+  const textSubtle = isDarkMode ? 'text-zinc-500' : 'text-zinc-500'
+  const border = isDarkMode ? 'border-zinc-800' : 'border-zinc-200'
+  const navBg = isDarkMode ? 'bg-zinc-950/90' : 'bg-white/90'
+  const promoBar = isDarkMode
+    ? 'bg-zinc-900 text-zinc-300 hover:bg-zinc-900/95'
+    : 'bg-[#f4f4f3] text-zinc-800 hover:bg-[#efefee]'
+  const checkAccent = 'text-indigo-500'
+
+  const navLink = isDarkMode
+    ? 'text-zinc-300 hover:text-white hover:bg-zinc-800/80'
+    : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+
+  const pillIdle = isDarkMode
+    ? 'border border-zinc-700 bg-zinc-900/80 text-zinc-300 hover:border-zinc-600'
+    : 'border border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300'
+
+  const pillActive = isDarkMode
+    ? 'border-2 border-sky-500 bg-zinc-900 text-zinc-50 shadow-sm'
+    : 'border-2 border-sky-500 bg-white text-zinc-900 shadow-sm'
 
   return (
-    <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-neutral-200'} h-full overflow-y-auto`}>
-      {/* Hero Section */}
-      <div className="relative isolate px-6 pt-14 lg:px-8">
-        <div className="mx-auto max-w-4xl py-8 sm:py-16 lg:py-24">
-          <TrustedBy
-            isDarkMode={isDarkMode}
-            trustLabel="Trusted by product and engineering teams"
-          />
+    <div className={`flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overflow-x-hidden ${pageBg}`}>
+      {/* Top promo strip */}
+      <Link
+        to={DOCUMENTATION_BOARD_BASE_PATH}
+        className={`flex w-full items-center justify-center gap-1 px-4 py-3 text-center text-xs font-medium sm:text-sm ${promoBar} transition-colors`}
+      >
+        <span className="truncate">
+          AI sprint planning: from goals to a board you can run this week
+        </span>
+        <ArrowRight className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
+      </Link>
 
-          <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
-            <div
-              className={`relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] sm:left-[calc(50%-30rem)] sm:w-[72.1875rem] ${blobOpacity}`}
-            />
+      {/* Primary nav — no divider under promo (reference is flush) */}
+      <header className={`sticky top-0 z-20 ${navBg} backdrop-blur-xl`}>
+        <div className={`flex flex-wrap items-center justify-between gap-3 py-3.5 ${SHELL}`}>
+          <Link to="/" className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3">
+            <img src={Logo} alt="Kanban AI" className="h-9 w-auto sm:h-10" width={160} height={40} />
+            <div className="min-w-0 leading-tight">
+              <span className={`block text-base font-bold tracking-tight sm:text-lg ${text}`}>Kanban AI</span>
+              <span className={`block max-w-[11rem] truncate text-[11px] font-medium sm:max-w-none sm:text-xs ${textMuted}`}>
+                Your AI-powered project companion
+              </span>
+            </div>
+          </Link>
+
+          <nav
+            className={`order-3 flex w-full flex-wrap items-center justify-center gap-0.5 text-sm font-medium lg:order-none lg:w-auto lg:justify-start ${textMuted}`}
+            aria-label="Marketing"
+          >
+            <a href="#features" className={`inline-flex items-center gap-0.5 rounded-full px-2.5 py-2 ${navLink}`}>
+              Product
+              <NavChevron />
+            </a>
+            <Link
+              to={DOCUMENTATION_BOARD_BASE_PATH}
+              className={`inline-flex items-center gap-0.5 rounded-full px-2.5 py-2 ${navLink}`}
+            >
+              Docs
+            </Link>
+            <Link to="/blog" className={`inline-flex items-center gap-0.5 rounded-full px-2.5 py-2 ${navLink}`}>
+              Learn
+              <NavChevron />
+            </Link>
+            <a href="#pricing" className={`rounded-full px-2.5 py-2 ${navLink}`}>
+              Pricing
+            </a>
+            <Link to="/feedback" className={`rounded-full px-2.5 py-2 ${navLink}`}>
+              Contact
+            </Link>
+          </nav>
+
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <Link
+              to="/feedback"
+              className={`hidden rounded-full px-3 py-2 text-sm font-semibold sm:inline ${textMuted} hover:underline`}
+            >
+              Get a demo
+            </Link>
+            <Link
+              to="/login"
+              className={`rounded-full border px-3 py-2 text-sm font-semibold transition-colors ${border} ${text} hover:bg-black/[0.03] dark:hover:bg-white/[0.06]`}
+            >
+              Login
+            </Link>
+            <Link
+              to="/login"
+              onClick={onCTAClick}
+              className="rounded-full bg-zinc-700 px-4 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-black/5 transition hover:bg-zinc-600 dark:bg-zinc-500 dark:text-white dark:ring-white/10 dark:hover:bg-zinc-400"
+            >
+              Sign up
+            </Link>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className={`rounded-full p-2 transition-colors ${navLink}`}
+              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
           </div>
-          {!isDarkMode && (
-            <div className="pointer-events-none absolute inset-x-0 top-0 -z-[5] h-96 bg-gradient-to-b from-neutral-300/25 to-transparent" />
-          )}
+        </div>
+      </header>
 
-          <div className="absolute inset-0 -z-10">
-            <svg className="absolute h-full w-full" aria-hidden="true">
-              <defs>
-                <pattern id="grid-pattern-b" width="24" height="24" patternUnits="userSpaceOnUse">
-                  <path
-                    d="M.5 24V.5H24"
-                    fill="none"
-                    stroke={isDarkMode ? 'white' : '#0a0a0a'}
-                    strokeOpacity={isDarkMode ? 0.05 : 0.07}
-                  />
-                </pattern>
-              </defs>
-              <rect
-                width="100%"
-                height="100%"
-                fill="url(#grid-pattern-b)"
-                style={{
-                  maskImage: 'radial-gradient(ellipse at center, black 20%, transparent 80%)',
-                  WebkitMaskImage: 'radial-gradient(ellipse at center, black 20%, transparent 80%)',
-                }}
-              />
-            </svg>
-          </div>
-
-          <div className="mx-auto max-w-4xl py-8 sm:py-4">
-            <div className="text-center">
-              <p
-                className={`mb-3 text-sm font-semibold uppercase tracking-[0.2em] ${isDarkMode ? 'text-indigo-400' : 'text-indigo-700'}`}
+      {/* Hero */}
+      <section className={`overflow-x-clip pb-16 pt-14 lg:overflow-visible lg:pb-24 lg:pt-20 ${SHELL}`}>
+        <div className="relative grid items-start gap-12 lg:grid-cols-2 lg:gap-x-10 lg:gap-y-12">
+          <div className="relative z-10 min-w-0">
+            <div className="relative mb-5 inline-flex rounded-full p-[2px]">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 overflow-hidden rounded-full"
               >
-                Kanban AI
-              </p>
-              <h1
-                className={`text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl ${isDarkMode ? 'text-white' : 'text-neutral-950'}`}
+                <div className="absolute left-1/2 top-1/2 h-[max(200%,10rem)] w-[max(200%,10rem)] min-h-[12rem] min-w-[12rem] bg-[conic-gradient(from_0deg,_transparent_0deg,_rgba(196,181,253,0.35)_32deg,_rgba(167,139,250,0.95)_56deg,_rgba(236,72,153,0.85)_82deg,_transparent_108deg,_transparent_360deg)] motion-reduce:animate-none animate-cta-border-sweep-slow" />
+              </div>
+              <Link
+                to="/blog"
+                className={`relative z-10 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
+                  isDarkMode ? 'bg-zinc-950 text-zinc-200' : 'bg-white text-zinc-800'
+                }`}
               >
-                <span className="block">
-                  <span className="text-indigo-500">Lightning fast 🌩️</span> project management.
+                <span className="inline-flex items-center gap-2">
+                  Sprints, backlog & AI—on one board
+                  <span
+                    className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums tracking-wide ${
+                      isDarkMode ? 'bg-zinc-800/90 text-zinc-200 ring-1 ring-zinc-700/80' : 'bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200/90'
+                    }`}
+                  >
+                    {LANDING_HERO_VERSION_TAG}
+                  </span>
                 </span>
-              </h1>
-              <p
-                className={`mt-5 max-w-xl mx-auto text-base leading-relaxed sm:text-lg ${isDarkMode ? 'text-neutral-400' : 'text-neutral-600'}`}
+                <ArrowRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              </Link>
+            </div>
+            <h1 className={`text-4xl font-bold tracking-tight sm:text-5xl lg:text-[2.75rem] lg:leading-[1.08] ${text}`}>
+              Your AI-powered project companion
+            </h1>
+            <ul className={`mt-8 space-y-3 text-[0.9375rem] leading-snug sm:text-base sm:leading-snug ${text}`}>
+              <li className="flex items-start gap-2.5">
+                <Check className={`mt-0.5 h-[1.1rem] w-[1.1rem] shrink-0 sm:h-[1.125rem] sm:w-[1.125rem] ${checkAccent}`} strokeWidth={2.25} aria-hidden />
+                <span className="min-w-0">
+                  <strong className="font-semibold">One rhythm.</strong>{' '}
+                  <span className={textMuted}>Backlog, this week’s focus, and what’s next—without another tool.</span>
+                </span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Check className={`mt-0.5 h-[1.1rem] w-[1.1rem] shrink-0 sm:h-[1.125rem] sm:w-[1.125rem] ${checkAccent}`} strokeWidth={2.25} aria-hidden />
+                <span className="min-w-0">
+                  <strong className="font-semibold">Clear commitments.</strong>{' '}
+                  <span className={textMuted}>What’s in flight for the week stays visible so scope doesn’t quietly drift.</span>
+                </span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Check className={`mt-0.5 h-[1.1rem] w-[1.1rem] shrink-0 sm:h-[1.125rem] sm:w-[1.125rem] ${checkAccent}`} strokeWidth={2.25} aria-hidden />
+                <span className="min-w-0">
+                  <strong className="font-semibold">AI for the boring parts.</strong>{' '}
+                  <span className={textMuted}>Draft and reshape work from context—then ship from the board.</span>
+                </span>
+              </li>
+            </ul>
+
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Link
+                to="/login"
+                onClick={onCTAClick}
+                className="inline-flex w-fit items-center justify-center rounded-full bg-zinc-700 px-8 py-3.5 text-base font-semibold text-white shadow-md transition hover:bg-zinc-600 dark:bg-zinc-500 dark:text-white dark:hover:bg-zinc-400"
               >
-                AI-planned sprints and weekly tasks on one board—so the work matches the vibe, and delivery stays legible
-                for the whole team.
-              </p>
-              <div className="mt-10 flex flex-col items-center gap-2">
-                <div className="relative inline-flex rounded-md p-[2px]">
-                  <div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 overflow-hidden rounded-md"
-                  >
-                    <div
-                      className="absolute left-1/2 top-1/2 h-[max(200%,12rem)] w-[max(200%,12rem)] min-h-[14rem] min-w-[14rem] bg-[conic-gradient(from_0deg,_transparent_0deg,_rgba(196,181,253,0.35)_32deg,_rgba(167,139,250,0.95)_56deg,_rgba(236,72,153,0.85)_82deg,_transparent_108deg,_transparent_360deg)] motion-reduce:animate-none animate-cta-border-sweep"
-                    />
-                  </div>
-                  <Link
-                    to="/login"
-                    onClick={onCTAClick}
-                    className="relative z-10 inline-flex items-center rounded-[4px] bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm ring-1 ring-white/10 transition-all duration-200 ease-out hover:-translate-y-px hover:bg-indigo-600 hover:shadow-[0_12px_36px_-8px_rgba(67,56,202,0.55),0_4px_14px_-4px_rgba(15,23,42,0.12)] hover:ring-white/25 hover:brightness-[1.05] active:translate-y-0 active:shadow-sm active:brightness-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  >
-                    Get started
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </Link>
-                </div>
+                Get started. It&apos;s FREE!
+              </Link>
+              <p className={`text-sm ${textSubtle}`}>Free forever. No credit card.</p>
+            </div>
+
+            <p className={`mt-12 text-[11px] font-semibold uppercase tracking-[0.16em] ${textSubtle}`}>
+              What people emphasize on the board
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {FEATURE_PILLS.map((label) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setActivePill(label)}
+                  className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${label === activePill ? pillActive : pillIdle}`}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    {label === activePill ? (
+                      <Check className="h-3.5 w-3.5 text-sky-500" strokeWidth={3} aria-hidden />
+                    ) : null}
+                    {label}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Wider than column so bleed is to the right only (left edge stays on the column gutter). */}
+          <div className="relative z-0 w-full min-w-0">
+            <div className="relative w-[108%] max-w-none sm:w-[114%] lg:w-[138%] xl:w-[152%]">
+              <div className="relative overflow-hidden rounded-2xl">
+                <img
+                  src={promocard}
+                  alt="Kanban AI board preview"
+                  className="relative z-0 block h-auto w-full max-w-none"
+                />
+                <div
+                  className="pointer-events-none absolute inset-0 z-[1]"
+                  style={{
+                    background: isDarkMode
+                      ? 'linear-gradient(to bottom, rgba(9,9,11,0) 0%, rgba(9,9,11,0) 48%, rgba(9,9,11,0.45) 78%, #09090b 100%), linear-gradient(to right, rgba(9,9,11,0) 0%, rgba(9,9,11,0) 38%, rgba(9,9,11,0.28) 52%, rgba(9,9,11,0.65) 66%, rgba(9,9,11,0.92) 80%, #09090b 93%, #09090b 100%)'
+                      : 'linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 46%, rgba(255,255,255,0.55) 76%, #ffffff 100%), linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 38%, rgba(255,255,255,0.32) 52%, rgba(255,255,255,0.78) 66%, rgba(255,255,255,0.98) 80%, #ffffff 93%, #ffffff 100%)',
+                  }}
+                  aria-hidden
+                />
               </div>
             </div>
-
-            <div className="mt-16 flex justify-center relative z-10 mx-2 sm:mx-8">
-              <img
-                src={promocard}
-                alt="Product preview"
-                className="rounded-xl shadow-2xl w-full max-w-[1600px] transition-shadow duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
-              />
-            </div>
-          </div>
-
-          {/* Decorative blob */}
-          <div className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
-            <div
-              className={`relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] sm:left-[calc(50%+36rem)] sm:w-[72.1875rem] ${blobOpacity}`}
-            />
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Features Section */}
-      <div
-        className={`py-24 sm:py-32 border-y ${borderSubtle} ${surfaceMuted}`}
-      >
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className={`text-base font-semibold leading-7 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-700'}`}>
-              Velocity without chaos
-            </h2>
-            <p className={`mt-2 text-3xl font-bold tracking-tight sm:text-4xl ${isDarkMode ? 'text-white' : 'text-neutral-950'}`}>
-              Project management that matches real engineering cadence
-            </p>
-          </div>
-
-          <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
-              {[
-                {
-                  title: "Sprint planning that stays honest",
-                  description:
-                    "Turn goals and constraints into a phased plan the team can execute. AI proposes milestones and scope so you spend less time estimating and more time delivering.",
-                  image: sprintPlanning
-                },
-                {
-                  title: "Weekly throughput you can steer",
-                  description:
-                    "See what landed, what slipped, and what to pull forward. AI adjusts the next week’s load so velocity stays realistic as priorities shift.",
-                  image: taskManagement
-                },
-                {
-                  title: "AI that unblocks execution",
-                  description:
-                    "Draft and refine work items with context, ask follow-ups in plain language, and clear ambiguity before it becomes a delay.",
-                  image: aiAssistant
-                }
-              ].map((feature) => (
-                <div key={feature.title} className="flex flex-col items-center text-center">
-                  <img
-                    src={feature.image}
-                    alt={feature.title}
-                    className="h-48 w-auto mb-8"
-                  />
-                  <dt className={`text-lg font-semibold leading-7 ${isDarkMode ? 'text-white' : 'text-neutral-950'}`}>
-                    {feature.title}
-                  </dt>
-                  <dd className={`mt-4 flex flex-auto flex-col text-base leading-7 ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'}`}>
-                    <p className="flex-auto">{feature.description}</p>
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
+      {/* Social proof */}
+      <section className={`border-y ${border} ${isDarkMode ? 'bg-zinc-900' : 'bg-[#f4f4f3]'}`}>
+        <div className={`flex flex-col items-start justify-between gap-6 py-10 sm:flex-row sm:items-center ${SHELL}`}>
+          <p className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${textSubtle}`}>Trusted by builders</p>
+          <TrustedBy isDarkMode={isDarkMode} trustLabel="Indie hackers, founders & small crews" />
         </div>
-      </div>
+      </section>
 
-      {/* Pricing Section */}
-      <div className={`py-24 sm:py-32 ${surfaceCard}`}>
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      {/* Features */}
+      <section id="features" className={`scroll-mt-24 border-b ${border} py-20 sm:py-24 ${pageBg}`}>
+        <div className={SHELL}>
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className={`text-base font-semibold leading-7 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-700'}`}>
-              Pricing
-            </h2>
-            <p className={`mt-2 text-3xl font-bold tracking-tight sm:text-4xl ${isDarkMode ? 'text-white' : 'text-neutral-950'}`}>
-              Plans that scale with your delivery cadence
+            <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${textSubtle}`}>
+              Product · How it works
             </p>
+            <h2 className={`mt-2 text-2xl font-bold tracking-tight sm:text-3xl lg:text-[2rem] lg:leading-snug ${text}`}>
+              From a messy backlog to a week you can commit to
+            </h2>
           </div>
 
-          <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 gap-8 lg:max-w-none lg:grid-cols-3">
+          <dl className="mx-auto mt-14 grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 sm:mt-16 lg:mt-20 lg:max-w-none lg:grid-cols-3 lg:gap-y-20">
             {[
               {
-                name: "Starter",
-                price: "Free",
-                description: "One initiative, full workflow to evaluate",
-                features: [
-                  "1 active project",
-                  "Basic AI task creation",
-                  "Weekly sprint planning",
-                ]
+                title: 'Sprint planning that fits reality',
+                description:
+                  'Start from goals and constraints, not blank columns. AI suggests milestones and scope so you end up with a plan you can defend—solo or with collaborators.',
+                image: sprintPlanning,
               },
               {
-                name: "Pro",
-                price: "$6/month",
-                description: "For leads and teams shipping every week",
+                title: 'A weekly board you can steer',
+                description:
+                  'See what shipped, what slipped, and what deserves air next week. When priorities change, the board reflects it without you starting from scratch.',
+                image: taskManagement,
+              },
+              {
+                title: 'AI that speeds up the next step',
+                description:
+                  'Turn rough notes into cards, tighten wording, and ask follow-ups in plain language—so “what’s the next move?” is obvious before it blocks the sprint.',
+                image: aiAssistant,
+              },
+            ].map((feature) => (
+              <div key={feature.title} className="flex flex-col items-center text-center">
+                <img src={feature.image} alt="" className="mb-8 h-44 w-auto sm:h-48" />
+                <dt className={`text-lg font-semibold leading-7 ${text}`}>{feature.title}</dt>
+                <dd className={`mt-3 max-w-sm text-base leading-7 ${textMuted}`}>
+                  <p>{feature.description}</p>
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className={`scroll-mt-24 border-b ${border} py-20 sm:py-24 ${pageBg}`}>
+        <div className={SHELL}>
+          <div className="mx-auto max-w-2xl text-center">
+            <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${textSubtle}`}>Pricing</p>
+            <h2 className={`mt-2 text-2xl font-bold tracking-tight sm:text-3xl lg:text-[2rem] lg:leading-snug ${text}`}>
+              Pricing that stays out of the way
+            </h2>
+          </div>
+
+          <div className="mt-12 grid max-w-lg grid-cols-1 gap-6 sm:mt-14 lg:mt-16 lg:max-w-none lg:grid-cols-3 lg:gap-8">
+            {[
+              {
+                name: 'Starter',
+                price: 'Free',
+                description: 'One initiative, full workflow to evaluate',
+                features: ['1 active project', 'Basic AI task creation', 'Weekly sprint planning'],
+              },
+              {
+                name: 'Pro',
+                price: '$6/month',
+                description: 'When you’re shipping every week and outgrew ad-hoc lists',
                 features: [
-                  "Unlimited projects",
-                  "AI task creation",
-                  "Weekly sprint planning",
-                  "Sprint retrospectives & delivery summaries",
-                  "Advanced AI assistance",
-                  "Priority support",
+                  'Unlimited projects',
+                  'AI task creation',
+                  'Weekly sprint planning',
+                  'Sprint retrospectives & delivery summaries',
+                  'Advanced AI assistance',
+                  'Priority support',
                 ],
-                featured: true
+                featured: true,
               },
               {
-                name: "Enterprise",
-                price: "Contact Us",
-                description: "Security, governance, and support at org scale",
+                name: 'Enterprise',
+                price: 'Contact us',
+                description: 'Security, governance, and support at org scale',
                 features: [
-                  "Custom solutions tailored to your organization's scale",
-                  "Enhanced security and compliance capabilities",
-                  "Dedicated enterprise support channels",
-                  "Flexible deployment and integration options"
-                ]
-              }
+                  'Custom solutions tailored to your organization’s scale',
+                  'Enhanced security and compliance capabilities',
+                  'Dedicated enterprise support channels',
+                  'Flexible deployment and integration options',
+                ],
+              },
             ].map((tier) => (
               <div
                 key={tier.name}
-                className={`flex flex-col justify-between rounded-3xl p-8 ring-1
-                  ${isDarkMode
-                    ? tier.featured
-                      ? 'bg-gray-950 ring-indigo-500'
-                      : 'bg-gray-800 ring-gray-700'
-                    : tier.featured
-                      ? 'bg-neutral-100 ring-indigo-600'
-                      : 'bg-white ring-neutral-300'
-                  }
-                  ${tier.featured ? 'ring-2 shadow-lg' : ''}
-                `}
+                className={`flex flex-col justify-between rounded-2xl border p-6 sm:p-8 ${
+                  tier.featured
+                    ? isDarkMode
+                      ? 'border border-sky-500/50 bg-zinc-900 shadow-lg shadow-black/25 ring-1 ring-sky-500/25'
+                      : 'border border-sky-200 bg-white shadow-md shadow-sky-500/10 ring-1 ring-sky-500/20'
+                    : isDarkMode
+                      ? `border ${border} bg-zinc-950/40`
+                      : `border ${border} bg-zinc-50/70`
+                }`}
               >
                 <div>
-                  <h3
-                    className={`text-lg font-semibold leading-8
-                      ${isDarkMode ? 'text-white' : 'text-neutral-950'}`}
-                  >
-                    {tier.name}
-                  </h3>
-                  <p className={`mt-4 text-sm leading-6 ${isDarkMode ? 'text-neutral-300' : 'text-neutral-600'}`}>
-                    {tier.description}
-                  </p>
-                  <p className="mt-6 flex items-baseline gap-x-1">
-                    <span
-                      className={`text-4xl font-bold tracking-tight
-                        ${isDarkMode ? 'text-white' : 'text-neutral-950'}`}
-                    >
-                      {tier.name === "Pro" ? (
-                        <>
-                          <span className="line-through text-gray-400">$6/month</span>
-                          <span className="block text-lg text-indigo-600 mt-1">Free this month!</span>
-                        </>
-                      ) : tier.price}
-                    </span>
-                  </p>
-                  <ul
-                    role="list"
-                    className={`mt-8 space-y-3 text-sm leading-6
-                      ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'}`}
-                  >
-                    {tier.features.map((feature) => (
-                      <li key={feature} className="flex gap-x-3">
-                        <svg className="h-6 w-5 flex-none text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
-                        </svg>
-                        {feature}
+                  <div className="flex items-baseline justify-between gap-2">
+                    <h3 className={`text-sm font-semibold uppercase tracking-[0.12em] ${textSubtle}`}>{tier.name}</h3>
+                    {tier.featured ? (
+                      <span className="rounded-full bg-sky-500/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+                        Popular
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className={`mt-4 text-sm leading-relaxed ${textMuted}`}>{tier.description}</p>
+                  <div className="mt-6 border-t border-zinc-200/80 pt-6 dark:border-zinc-700/80">
+                    {tier.name === 'Pro' ? (
+                      <div>
+                        <p className={`text-3xl font-bold tracking-tight sm:text-4xl ${text}`}>
+                          <span className="text-zinc-400 line-through decoration-zinc-400/80">$6</span>
+                          <span className="ml-1.5 text-zinc-400 line-through decoration-zinc-400/80">/mo</span>
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-sky-600 dark:text-sky-400">Free this month</p>
+                      </div>
+                    ) : (
+                      <p className={`text-3xl font-bold tracking-tight sm:text-4xl ${text}`}>{tier.price}</p>
+                    )}
+                  </div>
+                  <ul className={`mt-6 space-y-3 text-sm leading-snug ${textMuted}`} role="list">
+                    {tier.features.map((f) => (
+                      <li key={f} className="flex gap-x-2.5">
+                        <Check
+                          className={`mt-0.5 h-4 w-4 shrink-0 ${
+                            tier.featured ? 'text-sky-600 dark:text-sky-400' : 'text-zinc-400 dark:text-zinc-500'
+                          }`}
+                          strokeWidth={2.5}
+                          aria-hidden
+                        />
+                        {f}
                       </li>
                     ))}
                   </ul>
                 </div>
                 <Link
-                  to={tier.name === "Enterprise" ? "/contact" : "/login"}
-                  onClick={tier.name !== "Enterprise" ? onCTAClick : undefined}
-                  className={`mt-8 block rounded-md px-3 py-2 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
-                    ${tier.featured
-                      ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-indigo-600'
+                  to={tier.name === 'Enterprise' ? '/feedback' : '/login'}
+                  onClick={tier.name !== 'Enterprise' ? onCTAClick : undefined}
+                  className={`mt-8 block rounded-lg px-4 py-2.5 text-center text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                    tier.featured
+                      ? 'bg-sky-600 text-white shadow-sm hover:bg-sky-500 focus-visible:outline-sky-600 dark:bg-sky-500 dark:hover:bg-sky-400 dark:focus-visible:outline-sky-500'
                       : isDarkMode
-                        ? 'bg-white text-neutral-950 hover:bg-neutral-200'
-                        : 'bg-neutral-900 text-white hover:bg-neutral-800'
-                    }`}
+                        ? 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700 focus-visible:outline-zinc-600'
+                        : 'bg-zinc-900 text-white hover:bg-zinc-800 focus-visible:outline-zinc-700'
+                  }`}
                 >
-                  {tier.name === "Enterprise" ? "Contact Sales" : "Get started"}
+                  {tier.name === 'Enterprise' ? 'Contact us' : 'Get started'}
                 </Link>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Footer Section */}
-      <div className={`border-t ${isDarkMode ? 'border-gray-700 bg-gray-900' : 'border-neutral-300 bg-neutral-100'}`}>
-        <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8 lg:py-16">
-          <div className="lg:grid lg:grid-cols-2 lg:gap-8">
+      {/* Footer */}
+      <footer className={`border-t ${border} ${isDarkMode ? 'bg-zinc-900' : 'bg-[#f4f4f3]'}`}>
+        <div className={`py-12 sm:py-14 ${SHELL}`}>
+          <div className="lg:grid lg:grid-cols-2 lg:gap-12">
             <div className="max-w-xl">
-              <p className={`text-lg leading-relaxed ${isDarkMode ? 'text-neutral-300' : 'text-neutral-700'}`}>
-                Execution lives in the editor; planning and reporting need a home. Kanban AI ties Cursor-speed iteration to
-                your board—scope, owners, and weekly delivery in one place for product and engineering leads.
+              <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${textSubtle}`}>Kanban AI</p>
+              <p className={`mt-3 text-base leading-relaxed sm:text-lg ${textMuted}`}>
+                Code and copy still live in your editor. Kanban AI is where the week gets named: what’s in the sprint,
+                what you’re committing to, and what “done” looks like—whether you’re heads-down solo or coordinating a few
+                people—without living in status threads.
               </p>
-              <div className="mt-8">
+              <div className="mt-7">
                 <Link
                   to="/login"
                   onClick={onCTAClick}
-                  className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                  className="inline-flex items-center rounded-full bg-zinc-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zinc-600 dark:bg-zinc-500 dark:hover:bg-zinc-400"
                 >
                   Get started
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
                 </Link>
               </div>
             </div>
 
-            <div className="mt-12 grid grid-cols-2 gap-8 lg:mt-0">
+            <div className="mt-10 grid grid-cols-2 gap-8 sm:gap-10 lg:mt-0">
               <div>
-                <h3 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-neutral-950'}`}>Resources</h3>
-                <ul className="mt-4 space-y-4">
+                <h3 className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${textSubtle}`}>Resources</h3>
+                <ul className="mt-4 space-y-2.5">
                   <li>
                     <Link
                       to={DOCUMENTATION_BOARD_BASE_PATH}
-                      className={`text-base ${isDarkMode ? 'text-neutral-300 hover:text-white' : 'text-neutral-700 hover:text-neutral-950'}`}
+                      className={`text-sm font-medium ${textMuted} transition hover:text-zinc-900 dark:hover:text-zinc-100`}
                     >
                       Documentation
                     </Link>
                   </li>
                   <li>
-                    <Link to="/blog" className={`text-base ${isDarkMode ? 'text-neutral-300 hover:text-white' : 'text-neutral-700 hover:text-neutral-950'}`}>
+                    <Link to="/blog" className={`text-sm font-medium ${textMuted} transition hover:text-zinc-900 dark:hover:text-zinc-100`}>
                       Blog
                     </Link>
                   </li>
                   <li>
-                    <Link to="/login" className={`text-base ${isDarkMode ? 'text-neutral-300 hover:text-white' : 'text-neutral-700 hover:text-neutral-950'}`}>
+                    <Link to="/login" className={`text-sm font-medium ${textMuted} transition hover:text-zinc-900 dark:hover:text-zinc-100`}>
                       Sign in
                     </Link>
                   </li>
                 </ul>
               </div>
               <div>
-                <h3 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-neutral-950'}`}>About</h3>
-                <ul className="mt-4 space-y-4">
+                <h3 className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${textSubtle}`}>Legal</h3>
+                <ul className="mt-4 space-y-2.5">
                   <li>
                     <Link
                       to="/terms-of-service"
-                      className={`text-base ${isDarkMode ? 'text-neutral-300 hover:text-white' : 'text-neutral-700 hover:text-neutral-950'}`}
+                      className={`text-sm font-medium ${textMuted} transition hover:text-zinc-900 dark:hover:text-zinc-100`}
                     >
                       Terms of Service
                     </Link>
@@ -362,14 +493,19 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick }: Props) {
                   <li>
                     <Link
                       to="/privacy-policy"
-                      className={`text-base ${isDarkMode ? 'text-neutral-300 hover:text-white' : 'text-neutral-700 hover:text-neutral-950'}`}
+                      className={`text-sm font-medium ${textMuted} transition hover:text-zinc-900 dark:hover:text-zinc-100`}
                     >
                       Privacy Policy
                     </Link>
                   </li>
                   <li>
-                    <a href="https://x.com/JonWentel" target="_blank" className={`text-base ${isDarkMode ? 'text-neutral-300 hover:text-white' : 'text-neutral-700 hover:text-neutral-950'}`}>
-                      Kanban AI · <span className="text-indigo-500">@jonwentel</span>
+                    <a
+                      href="https://x.com/JonWentel"
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`text-sm font-medium ${textMuted} transition hover:text-zinc-900 dark:hover:text-zinc-100`}
+                    >
+                      Kanban AI · <span className="text-sky-600 dark:text-sky-400">@jonwentel</span>
                     </a>
                   </li>
                 </ul>
@@ -377,7 +513,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick }: Props) {
             </div>
           </div>
         </div>
-      </div>
+      </footer>
     </div>
-  );
+  )
 }

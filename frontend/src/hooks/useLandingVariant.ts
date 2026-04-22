@@ -1,31 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { isLandingPreviewSearch, LANDING_AB_TEST_VERSION } from '../lib/landingAbTest';
+import {
+  getLandingVariant,
+  isLandingPreviewSearch,
+  LANDING_AB_TEST_VERSION,
+  type LandingVariant,
+} from '../lib/landingAbTest';
 import { recordAnalyticsEvent } from '../lib/analyticsEvents';
 
-export type LandingVariant = 'A' | 'B';
-
-const STORAGE_KEY_VARIANT = 'lp_variant';
-const STORAGE_KEY_VERSION = 'lp_ab_version';
-
-function getOrAssignVariant(): LandingVariant {
-  try {
-    const storedVersion = localStorage.getItem(STORAGE_KEY_VERSION);
-    const stored = localStorage.getItem(STORAGE_KEY_VARIANT);
-    if (
-      storedVersion === LANDING_AB_TEST_VERSION &&
-      (stored === 'A' || stored === 'B')
-    ) {
-      return stored;
-    }
-    const variant: LandingVariant = Math.random() < 0.5 ? 'A' : 'B';
-    localStorage.setItem(STORAGE_KEY_VARIANT, variant);
-    localStorage.setItem(STORAGE_KEY_VERSION, LANDING_AB_TEST_VERSION);
-    return variant;
-  } catch {
-    // localStorage unavailable (private browsing edge cases)
-    return 'A';
-  }
-}
+export type { LandingVariant };
 
 /**
  * Returns the variant and whether this is a preview session.
@@ -38,11 +20,10 @@ function getOrAssignVariant(): LandingVariant {
  */
 function resolveVariant(): { variant: LandingVariant; isPreview: boolean } {
   const search = window.location.search;
-  if (isLandingPreviewSearch(search)) {
-    const param = new URLSearchParams(search).get('variant') as LandingVariant;
-    return { variant: param, isPreview: true };
-  }
-  return { variant: getOrAssignVariant(), isPreview: false };
+  return {
+    variant: getLandingVariant(search),
+    isPreview: isLandingPreviewSearch(search),
+  };
 }
 
 /**

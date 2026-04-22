@@ -10,7 +10,7 @@ import type { Project } from './types';
 import { Toaster, toast } from 'sonner';
 import { loadGuestDraft, guestDraftHasMeaningfulData, clearGuestDraft } from './lib/guestDraft';
 import { migrateGuestDraft } from './lib/migrateGuestDraft';
-import { isLandingPreviewSearch } from './lib/landingAbTest';
+import { getLandingVariant, isLandingPreviewSearch } from './lib/landingAbTest';
 import { isWorkbenchPath } from './lib/siteMeta';
 import { applyWorkbenchDocumentMeta } from './lib/documentMeta';
 import { Analytics } from '@vercel/analytics/react';
@@ -220,6 +220,11 @@ function AppContent() {
     }
   };
 
+  const guestVariantBLandingChrome =
+    !user &&
+    location.pathname === '/' &&
+    getLandingVariant(location.search) === 'B';
+
   return (
     <Routes>
       <Route
@@ -305,7 +310,9 @@ function AppContent() {
 
       <Route path="*" element={
         <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-          <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+          {!guestVariantBLandingChrome && (
+            <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+          )}
           <div className="flex flex-1 overflow-hidden">
             {user && (
               <Sidebar
@@ -325,7 +332,7 @@ function AppContent() {
                       <Navigate to="/kanban" replace />
                     ) : (
                       <Suspense fallback={<RouteFallback isDarkMode={isDarkMode} />}>
-                        <LandingPage isDarkMode={isDarkMode} />
+                        <LandingPage isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
                       </Suspense>
                     )
                   }

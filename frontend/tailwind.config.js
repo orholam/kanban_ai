@@ -27,7 +27,7 @@ export default {
             transform: 'translateX(125%) skewX(-12deg)',
           },
         },
-        /** Rotating sweep for CTA border “pulse” (Landing variant B hero). */
+        /** Rotating sweep for conic-gradient borders (landing CTAs + variant B intro pill). */
         'cta-border-sweep': {
           '0%': { transform: 'translate(-50%, -50%) rotate(0deg)' },
           '100%': { transform: 'translate(-50%, -50%) rotate(360deg)' },
@@ -36,6 +36,8 @@ export default {
       animation: {
         'ai-brandish-sweep': 'ai-brandish-sweep 1.05s cubic-bezier(0.33, 1, 0.68, 1) forwards',
         'cta-border-sweep': 'cta-border-sweep 2.8s linear infinite',
+        /** Same rotation, slower — landing variant B intro pill. */
+        'cta-border-sweep-slow': 'cta-border-sweep 7s linear infinite',
       },
     },
   },

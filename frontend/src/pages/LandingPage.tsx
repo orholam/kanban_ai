@@ -359,7 +359,13 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
 }
 
 /** Entry point used by App.tsx. Assigns A/B variant and renders the correct page. */
-export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
+export default function LandingPage({
+  isDarkMode,
+  toggleTheme,
+}: {
+  isDarkMode: boolean
+  toggleTheme: () => void
+}) {
   const { user } = useAuth()
   const { variant, isPreview, trackCTAClick } = useLandingVariant()
 
@@ -379,7 +385,11 @@ export default function LandingPage({ isDarkMode }: { isDarkMode: boolean }) {
       />
       {variant === 'B' ? (
         <Suspense fallback={null}>
-          <LandingPageVariantB isDarkMode={isDarkMode} onCTAClick={trackCTAClick} />
+          <LandingPageVariantB
+            isDarkMode={isDarkMode}
+            onCTAClick={trackCTAClick}
+            toggleTheme={toggleTheme}
+          />
         </Suspense>
       ) : (
         <LandingPageVariantA isDarkMode={isDarkMode} onCTAClick={trackCTAClick} />

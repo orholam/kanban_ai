@@ -3,6 +3,9 @@ export const SITE_ORIGIN = 'https://kanbanai.dev';
 
 export const SITE_NAME = 'Kanban AI';
 
+/** Shown on landing variant B “Introducing …” pill (marketing label, not package semver). */
+export const LANDING_HERO_VERSION_TAG = 'v0.1';
+
 export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/og-image.png`;
 
 /** Default document title — lead with brand + target query. */

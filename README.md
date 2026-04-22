@@ -88,6 +88,8 @@ The app uses code-splitting; [`frontend/vercel.json`](frontend/vercel.json) sets
 
 The owner-only `/analytics` view includes landing page A/B results. Bump **`LANDING_AB_TEST_VERSION`** in [`frontend/src/lib/landingAbTest.ts`](frontend/src/lib/landingAbTest.ts) whenever you materially change variant A or B so new traffic is tagged separately and the dashboard does not blend runs.
 
+For **variant B**, logged-out visitors on `/` use a self-contained marketing header (the global app header is hidden so the layout can match the ClickUp-style hero). Variant A still uses the shared header.
+
 ##  **Project Structure**
 
 ```
