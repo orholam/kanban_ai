@@ -87,20 +87,16 @@ Kanban AI exposes a **remote MCP server** at `/api/mcp` on your Vercel deploymen
 | `MCP_API_SECRET` | Shared secret clients must send in `X-MCP-API-Key` |
 | `OPENAI_API_KEY` | Already required for in-app AI (optional for MCP CRUD tools) |
 
+**End-user setup:** sign in and open **Connect AI** (`/connect`). The app generates a ready-to-paste MCP config (token + API secret filled in server-side). Copy once, paste into Cursor or Claude Desktop, restart.
+
+**Operator setup:** set `MCP_API_SECRET` on Vercel. Authenticated users fetch full config from `GET /api/mcp/setup` with their session bearer token.
+
 **Client auth:** each MCP request must include:
 
-1. `X-MCP-API-Key: <MCP_API_SECRET>`
+1. `X-MCP-API-Key: <MCP_API_SECRET>` (when configured on the deployment)
 2. `Authorization: Bearer <supabase_access_token>` — the signed-in user's Supabase session access token
 
-To grab a token while logged into the app, run this in the browser console:
-
-```js
-const { data } = await window.supabase?.auth.getSession?.() ?? {};
-// or from the app's Supabase client after sign-in:
-// (await supabase.auth.getSession()).data.session.access_token
-```
-
-**Cursor / Claude Desktop config** (Streamable HTTP):
+**Cursor / Claude Desktop** — use the JSON from `/connect` instead of hand-editing placeholders:
 
 ```json
 {
@@ -108,15 +104,15 @@ const { data } = await window.supabase?.auth.getSession?.() ?? {};
     "kanban-ai": {
       "url": "https://your-deployment.vercel.app/api/mcp",
       "headers": {
-        "X-MCP-API-Key": "your-mcp-api-secret",
-        "Authorization": "Bearer your-supabase-access-token"
+        "X-MCP-API-Key": "...",
+        "Authorization": "Bearer ..."
       }
     }
   }
 }
 ```
 
-For stdio-only clients, proxy with `mcp-remote`:
+For stdio-only clients, the Connect page provides a Claude Desktop JSON block using `mcp-remote`:
 
 ```json
 {

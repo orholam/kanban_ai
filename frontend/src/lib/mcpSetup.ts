@@ -68,4 +68,69 @@ export function buildMcpRemoteCommand(input: {
   return parts.join(' ');
 }
 
+export function buildClaudeDesktopMcpConfig(input: {
+  accessToken: string;
+  mcpApiSecret?: string;
+  endpointUrl?: string;
+}): string {
+  const url = input.endpointUrl ?? getMcpEndpointUrl();
+  const args = ['-y', 'mcp-remote', url];
+  if (input.mcpApiSecret?.trim()) {
+    args.push('--header', `X-MCP-API-Key:${input.mcpApiSecret.trim()}`);
+  }
+  args.push('--header', `Authorization:Bearer ${input.accessToken}`);
+  return JSON.stringify(
+    {
+      mcpServers: {
+        'kanban-ai': {
+          command: 'npx',
+          args,
+        },
+      },
+    },
+    null,
+    2
+  );
+}
+
+export type McpClientSetup = {
+  endpoint: string;
+  cursorConfig: string;
+  claudeConfig: string;
+  tokenExpiresAt: number | null;
+};
+
+export function buildMcpClientSetup(input: {
+  accessToken: string;
+  mcpApiSecret?: string;
+  endpointUrl: string;
+  tokenExpiresAt?: number | null;
+}): McpClientSetup {
+  const { accessToken, mcpApiSecret, endpointUrl, tokenExpiresAt = null } = input;
+  return {
+    endpoint: endpointUrl,
+    cursorConfig: buildCursorMcpConfig({ accessToken, mcpApiSecret, endpointUrl }),
+    claudeConfig: buildClaudeDesktopMcpConfig({ accessToken, mcpApiSecret, endpointUrl }),
+    tokenExpiresAt,
+  };
+}
+
 export const MCP_DOCS_SLUG = 'connect-mcp-claude-cursor';
+
+export type McpSetupResponse = {
+  endpoint: string;
+  cursorConfig: string;
+  claudeConfig: string;
+};
+
+/** Load ready-to-paste MCP config from the server (includes API secret when configured). */
+export async function fetchMcpSetup(accessToken: string): Promise<McpSetupResponse> {
+  const res = await fetch('/api/mcp/setup', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? `Setup failed (${res.status})`);
+  }
+  return res.json() as Promise<McpSetupResponse>;
+}
