@@ -47,11 +47,11 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
           : 'border-zinc-200/70 bg-white/80'
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-[1920px] items-center justify-between gap-3 px-4 sm:gap-4 sm:px-6">
-        <Link to="/" className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-4">
-          <img src={Logo} alt="Kanban AI Logo" className="h-9 w-auto sm:h-10" />
+      <div className="mx-auto flex h-14 max-w-[1920px] items-center justify-between gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6">
+        <Link to="/" className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-2.5">
+          <img src={Logo} alt="Kanban AI Logo" className="h-8 w-auto sm:h-10" />
           <span
-            className={`truncate text-lg font-bold tracking-tight sm:text-xl ${
+            className={`truncate text-base font-bold tracking-tight sm:text-xl ${
               isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
             }`}
           >
@@ -60,16 +60,16 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
         </Link>
 
         <nav
-          className={`flex min-w-0 items-center gap-0.5 sm:gap-1 ${
+          className={`flex min-w-0 items-center gap-0 sm:gap-0.5 sm:gap-1 ${
             isDarkMode ? 'divide-x divide-zinc-800/80' : 'divide-x divide-zinc-200/80'
           }`}
           aria-label="Main"
         >
-          <div className="flex items-center gap-0.5 pr-1.5 sm:gap-1 sm:pr-2">
+          <div className="flex items-center gap-0 pr-1 sm:gap-1 sm:pr-2">
             {/* DOCUMENTATION_BOARD */}
             <Link
               to={DOCUMENTATION_BOARD_BASE_PATH}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              className={`rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
                 isDarkMode
                   ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-100'
                   : 'text-zinc-600 hover:bg-zinc-100/90 hover:text-zinc-900'
@@ -79,7 +79,7 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
             </Link>
             <Link
               to="/blog"
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              className={`hidden min-[420px]:inline-flex rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
                 isDarkMode
                   ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-100'
                   : 'text-zinc-600 hover:bg-zinc-100/90 hover:text-zinc-900'
@@ -88,11 +88,11 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
               Blog
             </Link>
           </div>
-          <div className="flex items-center gap-1 pl-1.5 sm:gap-2 sm:pl-2">
+          <div className="flex items-center gap-0.5 pl-1 sm:gap-2 sm:pl-2">
             {!user && (
               <Link
                 to="/login"
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-3 sm:text-sm ${
                   isDarkMode
                     ? 'text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-100'
                     : 'text-zinc-600 hover:bg-zinc-100/90 hover:text-zinc-900'
