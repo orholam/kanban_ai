@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { authenticateSupabaseAccessToken } from './_lib/mcp/auth.js';
 import { createServiceRoleClient } from './_lib/supabaseService.js';
 import { vercelRequestToWebRequest } from './_lib/mcp/vercelBridge.js';
@@ -7,6 +8,26 @@ type InviteBody = {
   projectId?: string;
   email?: string;
 };
+
+/**
+ * supabase-js v2 has no admin "get user by email"; page through listUsers and
+ * match case-insensitively. `email` is expected already lowercased.
+ */
+async function findUserByEmail(
+  service: SupabaseClient,
+  email: string
+): Promise<User | null> {
+  const perPage = 200;
+  const maxPages = 50;
+  for (let page = 1; page <= maxPages; page++) {
+    const { data, error } = await service.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    const match = data.users.find((u) => (u.email ?? '').toLowerCase() === email);
+    if (match) return match;
+    if (data.users.length < perPage) break;
+  }
+  return null;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method === 'OPTIONS') {
@@ -69,14 +90,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  const { data: lookedUp, error: lookupError } = await service.auth.admin.getUserByEmail(email);
-  if (lookupError) {
-    console.error('invite-collaborator getUserByEmail:', lookupError.message);
+  let invitee: Awaited<ReturnType<typeof findUserByEmail>>;
+  try {
+    invitee = await findUserByEmail(service, email);
+  } catch (lookupError) {
+    console.error(
+      'invite-collaborator listUsers:',
+      lookupError instanceof Error ? lookupError.message : lookupError
+    );
     res.status(500).json({ error: 'Failed to look up user' });
     return;
   }
 
-  const invitee = lookedUp.user;
   if (!invitee) {
     res.status(404).json({ error: 'No account found with that email' });
     return;
