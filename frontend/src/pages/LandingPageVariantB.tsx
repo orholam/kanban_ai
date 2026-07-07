@@ -11,10 +11,12 @@ import {
   Check,
   ChevronDown,
   Clipboard,
+  Menu,
   Moon,
   Plug,
   Sun,
   Terminal,
+  X,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Logo from '../assets/kanban_ai_logo5.png'
@@ -163,7 +165,7 @@ function GradientCtaButton({
 }) {
   return (
     <div
-      className={`inline-flex rounded-xl p-[1.5px] shadow-[0_4px_32px_-8px_rgba(56,189,248,0.35),0_8px_24px_-12px_rgba(251,146,60,0.25)] ${
+      className={`flex w-full max-w-sm sm:inline-flex sm:w-auto sm:max-w-none rounded-xl p-[1.5px] shadow-[0_4px_32px_-8px_rgba(56,189,248,0.35),0_8px_24px_-12px_rgba(251,146,60,0.25)] ${
         isDarkMode
           ? 'bg-gradient-to-r from-sky-400/70 via-violet-400/60 to-amber-300/50'
           : 'bg-gradient-to-r from-sky-300 via-pink-300 via-40% to-amber-200'
@@ -172,7 +174,7 @@ function GradientCtaButton({
       <Link
         to={to}
         onClick={onClick}
-        className={`group inline-flex items-center rounded-[10px] px-7 py-3.5 text-[15px] font-semibold transition ${
+        className={`group inline-flex w-full items-center justify-center rounded-[10px] px-6 py-3.5 text-[15px] font-semibold transition sm:w-auto sm:px-7 ${
           isDarkMode
             ? 'bg-zinc-950 text-white hover:bg-zinc-900'
             : 'bg-zinc-950 text-white hover:bg-zinc-800'
@@ -190,6 +192,7 @@ function GradientCtaButton({
 
 export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleTheme }: Props) {
   const [activePill, setActivePill] = useState<string>('Sprints')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const text = isDarkMode ? 'text-zinc-50' : 'text-zinc-950'
   const textMuted = isDarkMode ? 'text-zinc-400' : 'text-zinc-600'
@@ -212,22 +215,26 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
 
   const checkAccent = 'text-sky-500'
 
+  const closeMobileMenu = () => setMobileMenuOpen(false)
+
+  const mobileNavLink = `block rounded-xl px-4 py-3 text-base font-medium ${navLink}`
+
   return (
     <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overflow-x-hidden">
       <HeroAtmosphere isDarkMode={isDarkMode} />
 
       {/* Floating pill nav — Fonla-style */}
-      <header className="sticky top-0 z-30 flex justify-center px-4 pb-2 pt-5 sm:pt-6">
+      <header className="sticky top-0 z-30 flex flex-col items-center px-3 pb-2 pt-3 sm:px-4 sm:pt-5 sm:pb-2">
         <div
-          className={`flex w-full max-w-3xl items-center justify-between gap-4 rounded-full border px-4 py-2 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.08)] backdrop-blur-xl sm:px-5 ${
+          className={`flex w-full max-w-3xl items-center justify-between gap-2 rounded-full border px-3 py-2 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.08)] backdrop-blur-xl sm:gap-4 sm:px-5 ${
             isDarkMode
               ? 'border-zinc-700/50 bg-zinc-900/70'
               : 'border-white/80 bg-white/65'
           }`}
         >
-          <Link to="/" className="flex shrink-0 items-center gap-2">
-            <img src={Logo} alt="Kanban AI" className="h-7 w-auto" width={128} height={32} />
-            <span className={`text-sm font-bold tracking-tight ${text}`}>Kanban AI</span>
+          <Link to="/" className="flex min-w-0 shrink items-center gap-1.5 sm:gap-2">
+            <img src={Logo} alt="Kanban AI" className="h-6 w-auto sm:h-7" width={128} height={32} />
+            <span className={`hidden min-[400px]:inline text-sm font-bold tracking-tight ${text}`}>Kanban AI</span>
           </Link>
 
           <nav
@@ -249,7 +256,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
             </a>
           </nav>
 
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
             <button
               type="button"
               onClick={toggleTheme}
@@ -261,27 +268,72 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
             <Link
               to="/login"
               onClick={onCTAClick}
-              className="rounded-full bg-zinc-950 px-3.5 py-1.5 text-[13px] font-semibold text-white transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950"
+              className="hidden rounded-full bg-zinc-950 px-3.5 py-1.5 text-[13px] font-semibold text-white transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 sm:inline-flex"
             >
               Sign up
             </Link>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              className={`rounded-full p-1.5 transition-colors sm:hidden ${navLink}`}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="landing-mobile-menu"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+
+        {mobileMenuOpen ? (
+          <nav
+            id="landing-mobile-menu"
+            className={`mt-2 w-full max-w-3xl rounded-2xl border p-2 shadow-lg backdrop-blur-xl sm:hidden ${
+              isDarkMode
+                ? 'border-zinc-700/50 bg-zinc-900/95'
+                : 'border-white/80 bg-white/90'
+            }`}
+            aria-label="Mobile marketing"
+          >
+            <a href="#features" onClick={closeMobileMenu} className={mobileNavLink}>
+              Features
+            </a>
+            <a href="#features" onClick={closeMobileMenu} className={mobileNavLink}>
+              Product
+            </a>
+            <Link to={DOCUMENTATION_BOARD_BASE_PATH} onClick={closeMobileMenu} className={mobileNavLink}>
+              Docs
+            </Link>
+            <a href="#pricing" onClick={closeMobileMenu} className={mobileNavLink}>
+              Pricing
+            </a>
+            <Link
+              to="/login"
+              onClick={() => {
+                closeMobileMenu()
+                onCTAClick()
+              }}
+              className="mt-1 block rounded-xl bg-zinc-950 px-4 py-3 text-center text-base font-semibold text-white dark:bg-zinc-100 dark:text-zinc-950"
+            >
+              Sign up free
+            </Link>
+          </nav>
+        ) : null}
       </header>
 
       {/* Hero — minimal centered stack like Fonla */}
-      <section className={`relative z-10 pb-4 pt-10 sm:pb-6 sm:pt-14 lg:pt-16 ${SHELL}`}>
+      <section className={`relative z-10 pb-4 pt-6 sm:pb-6 sm:pt-14 lg:pt-16 ${SHELL}`}>
         <div className="mx-auto max-w-3xl text-center">
           <h1
-            className={`text-[2rem] font-bold leading-[1.08] tracking-tight sm:text-[2.75rem] sm:leading-[1.06] lg:text-[3.5rem] ${text}`}
+            className={`text-balance text-[1.65rem] font-bold leading-[1.1] tracking-tight sm:text-[2.75rem] sm:leading-[1.06] lg:text-[3.5rem] ${text}`}
           >
             Enterprise-grade sprint planning powered by AI
           </h1>
-          <p className={`mx-auto mt-4 max-w-lg text-base leading-relaxed sm:mt-5 sm:text-lg ${textMuted}`}>
+          <p className={`mx-auto mt-3 max-w-lg text-[15px] leading-relaxed sm:mt-5 sm:text-lg ${textMuted}`}>
             Kanban AI is an AI-powered project platform that turns messy backlogs into weekly boards you can commit to.
           </p>
 
-          <div className="mt-7 sm:mt-8">
+          <div className="mt-6 flex justify-center sm:mt-8">
             <GradientCtaButton to="/login" onClick={onCTAClick} isDarkMode={isDarkMode}>
               Get started free
             </GradientCtaButton>
@@ -289,9 +341,9 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
         </div>
 
         {/* Product mockup — large, floating over the glow */}
-        <div className="relative mx-auto mt-8 max-w-6xl sm:mt-10 lg:mt-12">
+        <div className="relative mx-auto mt-6 max-w-6xl sm:mt-10 lg:mt-12">
           <div
-            className={`overflow-hidden rounded-2xl border p-1 shadow-[0_32px_100px_-24px_rgba(0,0,0,0.22),0_12px_40px_-16px_rgba(0,0,0,0.1)] sm:rounded-[1.25rem] sm:p-1.5 ${
+            className={`overflow-hidden rounded-xl border p-0.5 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.2),0_8px_32px_-12px_rgba(0,0,0,0.1)] sm:rounded-[1.25rem] sm:p-1.5 sm:shadow-[0_32px_100px_-24px_rgba(0,0,0,0.22),0_12px_40px_-16px_rgba(0,0,0,0.1)] ${
               isDarkMode
                 ? 'border-zinc-700/50 bg-zinc-900/95'
                 : 'border-white bg-white/90 backdrop-blur-sm'
@@ -300,26 +352,28 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
             <img
               src={isDarkMode ? promocardDark : promocardLight}
               alt="Kanban AI board preview"
-              className="block h-auto w-full rounded-xl sm:rounded-2xl"
+              className="block h-auto w-full rounded-[10px] sm:rounded-2xl"
+              loading="eager"
+              decoding="async"
             />
           </div>
         </div>
 
-        <div className="mx-auto mt-10 max-w-3xl text-center sm:mt-12">
+        <div className="mx-auto mt-8 max-w-3xl text-center sm:mt-12">
           <McpHeroInline isDarkMode={isDarkMode} />
         </div>
 
-        <div className="mx-auto mt-8 max-w-3xl text-center sm:mt-10">
+        <div className="mx-auto mt-6 max-w-3xl text-center sm:mt-10">
           <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${textSubtle}`}>
             What people emphasize on the board
           </p>
-          <div className="mt-3 flex flex-wrap justify-center gap-2">
+          <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
             {FEATURE_PILLS.map((label) => (
               <button
                 key={label}
                 type="button"
                 onClick={() => setActivePill(label)}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${label === activePill ? pillActive : pillIdle}`}
+                className={`shrink-0 snap-start rounded-full px-3 py-1.5 text-xs font-medium transition sm:px-3.5 sm:text-sm ${label === activePill ? pillActive : pillIdle}`}
               >
                 <span className="inline-flex items-center gap-1.5">
                   {label === activePill ? (
@@ -339,7 +393,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
           isDarkMode ? 'bg-zinc-900/90' : 'bg-white/70'
         }`}
       >
-        <div className={`flex flex-col items-center justify-between gap-6 py-10 sm:flex-row sm:items-center ${SHELL}`}>
+        <div className={`flex flex-col items-center justify-center gap-4 px-2 py-8 text-center sm:flex-row sm:justify-between sm:gap-6 sm:py-10 sm:text-left ${SHELL}`}>
           <p className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${textSubtle}`}>Trusted by builders</p>
           <TrustedBy isDarkMode={isDarkMode} trustLabel="Indie hackers, founders & small crews" />
         </div>
@@ -347,7 +401,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
 
       {/* MCP deep-dive */}
       <section
-        className={`relative z-10 scroll-mt-24 py-16 sm:py-20 ${sectionMuted} backdrop-blur-sm`}
+        className={`relative z-10 scroll-mt-24 py-12 sm:py-20 ${sectionMuted} backdrop-blur-sm`}
       >
         <div className={`${SHELL} mx-auto max-w-5xl`}>
           <div className="text-center">
@@ -383,18 +437,18 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
             ))}
           </div>
 
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div className="mt-8 flex w-full flex-col items-stretch gap-3 sm:mt-10 sm:flex-row sm:items-center sm:justify-center">
             <Link
               to="/login"
               onClick={onCTAClick}
-              className="inline-flex items-center rounded-xl bg-zinc-950 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_16px_-4px_rgba(56,189,248,0.3)] hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950"
+              className="inline-flex w-full items-center justify-center rounded-xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_2px_16px_-4px_rgba(56,189,248,0.3)] hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 sm:w-auto sm:py-2.5"
             >
               Sign in to connect
               <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
             </Link>
             <Link
               to={documentationBoardArticlePath(MCP_DOCS_SLUG)}
-              className={`inline-flex items-center rounded-xl px-5 py-2.5 text-sm font-semibold ${
+              className={`inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold sm:w-auto sm:py-2.5 ${
                 isDarkMode
                   ? 'bg-zinc-800 text-zinc-200 ring-1 ring-zinc-700 hover:bg-zinc-700'
                   : 'bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50'
@@ -421,7 +475,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
       {/* Features */}
       <section
         id="features"
-        className={`relative z-10 scroll-mt-24 border-b py-20 sm:py-24 ${border} ${sectionBg}`}
+        className={`relative z-10 scroll-mt-24 border-b py-14 sm:py-24 ${border} ${sectionBg}`}
       >
         <div className={SHELL}>
           <div className="mx-auto max-w-2xl text-center">
@@ -433,7 +487,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
             </h2>
           </div>
 
-          <dl className="mx-auto mt-14 grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 sm:mt-16 sm:grid-cols-2 lg:mt-20 lg:max-w-none lg:grid-cols-4 lg:gap-y-20">
+          <dl className="mx-auto mt-10 grid max-w-xl grid-cols-1 gap-x-8 gap-y-12 sm:mt-16 sm:grid-cols-2 sm:gap-y-16 lg:mt-20 lg:max-w-none lg:grid-cols-3 lg:gap-y-20">
             {[
               {
                 title: 'Sprint planning that fits reality',
@@ -467,9 +521,9 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
               },
             ].map((feature) => (
               <div key={feature.title} className="flex flex-col items-center text-center">
-                <img src={feature.image} alt="" className="mb-8 h-44 w-auto sm:h-48" />
-                <dt className={`text-lg font-semibold leading-7 ${text}`}>{feature.title}</dt>
-                <dd className={`mt-3 max-w-sm text-base leading-7 ${textMuted}`}>
+                <img src={feature.image} alt="" className="mb-6 h-36 w-auto sm:mb-8 sm:h-44 lg:h-48" />
+                <dt className={`text-base font-semibold leading-7 sm:text-lg ${text}`}>{feature.title}</dt>
+                <dd className={`mt-2 max-w-sm text-sm leading-7 sm:mt-3 sm:text-base ${textMuted}`}>
                   <p>{feature.description}</p>
                 </dd>
               </div>
@@ -479,7 +533,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className={`relative z-10 scroll-mt-24 border-b py-20 sm:py-24 ${border} ${sectionBg}`}>
+      <section id="pricing" className={`relative z-10 scroll-mt-24 border-b py-14 sm:py-24 ${border} ${sectionBg}`}>
         <div className={SHELL}>
           <div className="mx-auto max-w-2xl text-center">
             <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${textSubtle}`}>Pricing</p>
@@ -598,20 +652,20 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
           isDarkMode ? 'bg-zinc-900/90' : 'bg-white/80'
         }`}
       >
-        <div className={`py-12 sm:py-14 ${SHELL}`}>
+        <div className={`py-10 sm:py-14 ${SHELL}`}>
           <div className="lg:grid lg:grid-cols-2 lg:gap-12">
             <div className="max-w-xl">
               <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${textSubtle}`}>Kanban AI</p>
-              <p className={`mt-3 text-base leading-relaxed sm:text-lg ${textMuted}`}>
+              <p className={`mt-3 text-[15px] leading-relaxed sm:text-lg ${textMuted}`}>
                 Code and copy still live in your editor. Kanban AI is where the week gets named: what’s in the sprint,
                 what you’re committing to, and what “done” looks like—whether you’re heads-down solo or coordinating a few
                 people—without living in status threads.
               </p>
-              <div className="mt-7">
+              <div className="mt-6 sm:mt-7">
                 <Link
                   to="/login"
                   onClick={onCTAClick}
-                  className="inline-flex items-center rounded-xl bg-zinc-950 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_16px_-4px_rgba(251,146,60,0.3)] hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950"
+                  className="inline-flex w-full items-center justify-center rounded-xl bg-zinc-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_2px_16px_-4px_rgba(251,146,60,0.3)] hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 sm:w-auto sm:py-2.5"
                 >
                   Get started
                   <ArrowUpRight className="ml-2 h-4 w-4" aria-hidden />

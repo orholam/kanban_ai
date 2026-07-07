@@ -17,8 +17,8 @@ export function TrustedBy({ isDarkMode, trustLabel }: TrustedByProps) {
   const label = trustLabel ?? 'Trusted by 104+ indie founders';
 
   return (
-    <div className="flex items-center justify-center gap-x-2">
-      <div className="flex -space-x-2">
+    <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-x-3">
+      <div className="flex -space-x-2 shrink-0">
         {avatars.map((avatar, index) => (
           <div
             key={index}
@@ -35,7 +35,7 @@ export function TrustedBy({ isDarkMode, trustLabel }: TrustedByProps) {
           <span className="text-xs font-medium text-white">100+</span>
         </div>
       </div>
-      <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+      <span className={`text-center text-sm font-medium leading-snug sm:text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
         {label}
       </span>
     </div>
