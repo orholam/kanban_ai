@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { BookOpen, ChevronRight, FileText } from 'lucide-react';
 import { DOCUMENTATION_BOARD_BASE_PATH, documentationBoardArticlePath } from './integration';
 import { getDocumentationCategories, getDocumentationArticlesByCategory } from './documentationUtils';
+import { DocumentationSearchInput, DocumentationSearchResults } from './DocumentationSearch';
 
 interface DocumentationShellProps {
   isDarkMode: boolean;
@@ -30,7 +32,9 @@ export default function DocumentationShell({
   children,
   layout = 'article',
 }: DocumentationShellProps) {
+  const [searchQuery, setSearchQuery] = useState('');
   const categories = getDocumentationCategories();
+  const isSearching = searchQuery.trim().length > 0;
 
   const mainMax =
     layout === 'hub'
@@ -68,6 +72,12 @@ export default function DocumentationShell({
                 </span>
               </div>
             </div>
+
+            <DocumentationSearchInput
+              isDarkMode={isDarkMode}
+              query={searchQuery}
+              onQueryChange={setSearchQuery}
+            />
 
             <nav className="space-y-0.5">
               <NavLink
@@ -136,7 +146,17 @@ export default function DocumentationShell({
           className={`min-w-0 flex-1 ${isDarkMode ? 'bg-zinc-950' : 'bg-zinc-50'}`}
         >
           <div className="flex w-full justify-center px-4 py-7 sm:px-6 sm:py-8 lg:px-8 lg:py-9 xl:px-10 xl:py-10">
-            <div className={`w-full ${mainMax}`}>{children}</div>
+            <div className={`w-full ${mainMax}`}>
+              {isSearching ? (
+                <DocumentationSearchResults
+                  isDarkMode={isDarkMode}
+                  query={searchQuery}
+                  onNavigate={() => setSearchQuery('')}
+                />
+              ) : (
+                children
+              )}
+            </div>
           </div>
         </div>
       </div>
