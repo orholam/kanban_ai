@@ -83,6 +83,7 @@ Kanban AI exposes a **remote MCP server** at `/api/mcp` on your Vercel deploymen
 |---|---|
 | `SUPABASE_URL` | Your Supabase project URL (same value as `VITE_SUPABASE_URL`) |
 | `SUPABASE_ANON_KEY` | Supabase anon key (same value as `VITE_SUPABASE_ANON_KEY`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key for persisting MCP analytics events (owner `/analytics` dashboard) |
 | `MCP_API_SECRET` | Shared secret clients must send in `X-MCP-API-Key` |
 | `OPENAI_API_KEY` | Already required for in-app AI (optional for MCP CRUD tools) |
 

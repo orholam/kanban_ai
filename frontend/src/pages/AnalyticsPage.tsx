@@ -1,15 +1,32 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { eachDayOfInterval, eachHourOfInterval, format, startOfHour, subDays, subHours } from 'date-fns';
-import { BarChart3, CalendarRange, Eye, MousePointerClick, Sparkles, LogIn, UserPlus, ListTodo } from 'lucide-react';
+import { BarChart3, CalendarRange, Eye, MousePointerClick, Sparkles, LogIn, UserPlus, ListTodo, Plug, ShieldAlert, Activity } from 'lucide-react';
 import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import { landingAbVersionFromMetadata, LANDING_AB_TEST_VERSION } from '../lib/landingAbTest';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { isLocalAppMode } from '../lib/localApp';
-import type { AnalyticsEventRow, AnalyticsEventType } from '../types';
+import type { AnalyticsEventRow, AnalyticsEventType, McpAnalyticsEventType } from '../types';
+import { MCP_ANALYTICS_EVENT_TYPES } from '../types';
 
-const EVENT_LABELS: Record<AnalyticsEventType, string> = {
+const MCP_EVENT_LABELS: Record<McpAnalyticsEventType, string> = {
+  mcp_tool_call: 'Tool calls',
+  mcp_auth_failure: 'Auth failures',
+  mcp_session: 'Sessions',
+};
+
+const MCP_EVENT_COLORS: Record<McpAnalyticsEventType, { fill: string; soft: string }> = {
+  mcp_tool_call: { fill: 'rgb(20 184 166)', soft: 'rgba(20, 184, 166, 0.2)' },
+  mcp_auth_failure: { fill: 'rgb(239 68 68)', soft: 'rgba(239, 68, 68, 0.2)' },
+  mcp_session: { fill: 'rgb(14 165 233)', soft: 'rgba(14, 165, 233, 0.2)' },
+};
+
+function isMcpEventType(value: string): value is McpAnalyticsEventType {
+  return (MCP_ANALYTICS_EVENT_TYPES as readonly string[]).includes(value);
+}
+
+const EVENT_LABELS: Record<Exclude<AnalyticsEventType, McpAnalyticsEventType>, string> = {
   sign_up: 'Sign-ups',
   sign_in: 'Sign-ins',
   ai_interaction: 'AI interactions',
@@ -19,14 +36,14 @@ const EVENT_LABELS: Record<AnalyticsEventType, string> = {
 };
 
 /** Only product events are shown in the KPI tiles and charts. */
-const EVENT_ORDER: AnalyticsEventType[] = [
+const EVENT_ORDER: Exclude<AnalyticsEventType, McpAnalyticsEventType>[] = [
   'sign_up',
   'sign_in',
   'ai_interaction',
   'task_write',
 ];
 
-const EVENT_ICONS: Record<AnalyticsEventType, React.ElementType> = {
+const EVENT_ICONS: Record<Exclude<AnalyticsEventType, McpAnalyticsEventType>, React.ElementType> = {
   sign_up: UserPlus,
   sign_in: LogIn,
   ai_interaction: Sparkles,
@@ -36,7 +53,7 @@ const EVENT_ICONS: Record<AnalyticsEventType, React.ElementType> = {
 };
 
 /** Distinct bar colors per event type (Tailwind-ish, inline for SVG/CSS). */
-const EVENT_COLORS: Record<AnalyticsEventType, { fill: string; soft: string }> = {
+const EVENT_COLORS: Record<Exclude<AnalyticsEventType, McpAnalyticsEventType>, { fill: string; soft: string }> = {
   sign_up: { fill: 'rgb(34 197 94)', soft: 'rgba(34, 197, 94, 0.2)' },
   sign_in: { fill: 'rgb(59 130 246)', soft: 'rgba(59, 130, 246, 0.2)' },
   ai_interaction: { fill: 'rgb(139 92 246)', soft: 'rgba(139, 92, 246, 0.2)' },
@@ -282,9 +299,20 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
     };
   }, [user, profileLoading, accountProfile?.account_role, range]);
 
-  /** Raw product events only — LP A/B test events are handled separately. */
+  /** Raw product events only — LP A/B and MCP events are handled separately. */
   const productEvents = useMemo(
-    () => events.filter((e) => e.event_type !== 'lp_view' && e.event_type !== 'lp_cta_click'),
+    () =>
+      events.filter(
+        (e) =>
+          e.event_type !== 'lp_view' &&
+          e.event_type !== 'lp_cta_click' &&
+          !isMcpEventType(e.event_type),
+      ),
+    [events],
+  );
+
+  const mcpEvents = useMemo(
+    () => events.filter((e) => isMcpEventType(e.event_type)),
     [events],
   );
 
@@ -415,6 +443,95 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
     cumulative += s.pct;
     return { ...s, start, end: cumulative };
   });
+
+  const mcpToolCalls = useMemo(
+    () => mcpEvents.filter((e) => e.event_type === 'mcp_tool_call'),
+    [mcpEvents],
+  );
+
+  const mcpCountsByType = useMemo(() => {
+    const m: Partial<Record<McpAnalyticsEventType, number>> = {};
+    for (const e of mcpEvents) {
+      if (!isMcpEventType(e.event_type)) continue;
+      m[e.event_type] = (m[e.event_type] ?? 0) + 1;
+    }
+    return m;
+  }, [mcpEvents]);
+
+  const mcpToolSuccessCount = useMemo(
+    () => mcpToolCalls.filter((e) => e.metadata?.success === true).length,
+    [mcpToolCalls],
+  );
+
+  const mcpToolErrorCount = useMemo(
+    () => mcpToolCalls.filter((e) => e.metadata?.success === false).length,
+    [mcpToolCalls],
+  );
+
+  const mcpToolSuccessRate = useMemo(() => {
+    if (mcpToolCalls.length === 0) return null;
+    return ((mcpToolSuccessCount / mcpToolCalls.length) * 100).toFixed(1);
+  }, [mcpToolCalls.length, mcpToolSuccessCount]);
+
+  const mcpToolCounts = useMemo(() => {
+    const m: Record<string, { total: number; success: number; error: number }> = {};
+    for (const e of mcpToolCalls) {
+      const name = typeof e.metadata?.tool_name === 'string' ? e.metadata.tool_name : 'unknown';
+      if (!m[name]) m[name] = { total: 0, success: 0, error: 0 };
+      m[name].total++;
+      if (e.metadata?.success === true) m[name].success++;
+      else if (e.metadata?.success === false) m[name].error++;
+    }
+    return Object.entries(m)
+      .map(([toolName, stats]) => ({ toolName, ...stats }))
+      .sort((a, b) => b.total - a.total);
+  }, [mcpToolCalls]);
+
+  const mcpToolMax = useMemo(
+    () => Math.max(...mcpToolCounts.map((t) => t.total), 1),
+    [mcpToolCounts],
+  );
+
+  const recentMcpEvents = useMemo(() => mcpEvents.slice(0, 20), [mcpEvents]);
+
+  const mcpDailySeries = useMemo(() => {
+    const byBucket: Record<string, number> = {};
+    if (range === '24h') {
+      const end = startOfHour(new Date());
+      const start = subHours(end, 23);
+      const hours = eachHourOfInterval({ start, end });
+      for (const e of mcpToolCalls) {
+        const ts = new Date(e.created_at);
+        ts.setMinutes(0, 0, 0);
+        const key = format(ts, "yyyy-MM-dd'T'HH:00");
+        byBucket[key] = (byBucket[key] ?? 0) + 1;
+      }
+      return hours.map((h) => {
+        const key = format(h, "yyyy-MM-dd'T'HH:00");
+        return { day: key, label: format(h, 'ha'), count: byBucket[key] ?? 0 };
+      });
+    }
+
+    const end = new Date();
+    end.setHours(0, 0, 0, 0);
+    const inferredStart =
+      range === 'all'
+        ? mcpToolCalls.length
+          ? new Date(dayKey(mcpToolCalls[mcpToolCalls.length - 1].created_at))
+          : end
+        : range === '7d'
+          ? subDays(end, 6)
+          : subDays(end, 29);
+    const days = eachDayOfInterval({ start: inferredStart, end });
+    for (const e of mcpToolCalls) {
+      const k = dayKey(e.created_at);
+      byBucket[k] = (byBucket[k] ?? 0) + 1;
+    }
+    return days.map((d) => {
+      const day = format(d, 'yyyy-MM-dd');
+      return { day, label: format(d, 'MMM d'), count: byBucket[day] ?? 0 };
+    });
+  }, [mcpToolCalls, range]);
 
   const shell = isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-50 text-zinc-900';
   const panel = isDarkMode
@@ -670,6 +787,175 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                     No landing page data yet. Views and CTA clicks will appear here once visitors hit the page.
                   </p>
                 )}
+              </section>
+
+              <section className={`p-6 ${panel}`}>
+                <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Plug className={`h-4 w-4 ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`} aria-hidden />
+                      <h2 className="text-sm font-semibold uppercase tracking-wide">MCP server</h2>
+                    </div>
+                    <p className={`mt-1 text-xs ${muted}`}>
+                      Remote MCP usage at <code className={`rounded px-1 py-0.5 font-mono text-[11px] ${isDarkMode ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-800'}`}>/api/mcp</code>.
+                      Tool calls, auth failures, and sessions are logged server-side.
+                    </p>
+                  </div>
+                  <p className={`text-xs tabular-nums ${muted}`}>{mcpEvents.length} MCP events in range</p>
+                </div>
+
+                <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {(
+                    [
+                      { key: 'mcp_tool_call' as const, icon: Plug, value: mcpCountsByType.mcp_tool_call ?? 0 },
+                      { key: 'mcp_session' as const, icon: Activity, value: mcpCountsByType.mcp_session ?? 0 },
+                      { key: 'mcp_auth_failure' as const, icon: ShieldAlert, value: mcpCountsByType.mcp_auth_failure ?? 0 },
+                    ] as const
+                  ).map(({ key, icon: Icon, value }) => {
+                    const colors = MCP_EVENT_COLORS[key];
+                    return (
+                      <div
+                        key={key}
+                        className={`rounded-xl border p-4 ${
+                          isDarkMode ? 'border-zinc-800/80 bg-zinc-900/60' : 'border-zinc-200/90 bg-zinc-50'
+                        }`}
+                      >
+                        <div
+                          className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg"
+                          style={{ backgroundColor: colors.soft }}
+                        >
+                          <Icon className="h-4 w-4" style={{ color: colors.fill }} aria-hidden />
+                        </div>
+                        <p className="text-xl font-semibold tabular-nums">{value}</p>
+                        <p className={`mt-0.5 text-[10px] font-medium uppercase tracking-wide ${muted}`}>
+                          {MCP_EVENT_LABELS[key]}
+                        </p>
+                      </div>
+                    );
+                  })}
+                  <div
+                    className={`rounded-xl border p-4 ${
+                      isDarkMode ? 'border-zinc-800/80 bg-zinc-900/60' : 'border-zinc-200/90 bg-zinc-50'
+                    }`}
+                  >
+                    <p className={`text-[10px] font-medium uppercase tracking-wide ${muted}`}>Tool success rate</p>
+                    <p
+                      className={`mt-2 text-xl font-semibold tabular-nums ${
+                        mcpToolSuccessRate !== null
+                          ? isDarkMode
+                            ? 'text-teal-300'
+                            : 'text-teal-700'
+                          : ''
+                      }`}
+                    >
+                      {mcpToolSuccessRate !== null ? `${mcpToolSuccessRate}%` : '—'}
+                    </p>
+                    <p className={`mt-1 text-xs tabular-nums ${muted}`}>
+                      {mcpToolSuccessCount} ok · {mcpToolErrorCount} err
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <div>
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide">Tool calls by name</h3>
+                    {mcpToolCounts.length === 0 ? (
+                      <p className={`text-sm ${muted}`}>No MCP tool calls in this window.</p>
+                    ) : (
+                      <ul className="space-y-3">
+                        {mcpToolCounts.map(({ toolName, total, success, error }) => (
+                          <li key={toolName}>
+                            <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
+                              <span className="truncate font-mono text-xs">{toolName}</span>
+                              <span className="shrink-0 tabular-nums font-semibold">{total}</span>
+                            </div>
+                            <div
+                              className={`h-1.5 overflow-hidden rounded-full ${
+                                isDarkMode ? 'bg-zinc-800' : 'bg-zinc-100'
+                              }`}
+                            >
+                              <div
+                                className="h-full rounded-full bg-teal-500"
+                                style={{ width: `${(total / mcpToolMax) * 100}%` }}
+                              />
+                            </div>
+                            <p className={`mt-1 text-[10px] tabular-nums ${muted}`}>
+                              {success} success · {error} error
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide">MCP tool volume</h3>
+                    <DailyVolumeChart series={mcpDailySeries} isDarkMode={isDarkMode} />
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide">Recent MCP events</h3>
+                  {recentMcpEvents.length === 0 ? (
+                    <p className={`text-sm ${muted}`}>No MCP activity yet.</p>
+                  ) : (
+                    <div className={`overflow-x-auto rounded-xl border ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                      <table className="min-w-full text-left text-xs">
+                        <thead className={isDarkMode ? 'bg-zinc-900/80 text-zinc-400' : 'bg-zinc-50 text-zinc-600'}>
+                          <tr>
+                            <th className="px-3 py-2 font-medium">Time</th>
+                            <th className="px-3 py-2 font-medium">Type</th>
+                            <th className="px-3 py-2 font-medium">User</th>
+                            <th className="px-3 py-2 font-medium">Details</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {recentMcpEvents.map((e) => {
+                            const toolName =
+                              typeof e.metadata?.tool_name === 'string' ? e.metadata.tool_name : null;
+                            const reason =
+                              typeof e.metadata?.reason === 'string' ? e.metadata.reason : null;
+                            const durationMs =
+                              typeof e.metadata?.duration_ms === 'number' ? e.metadata.duration_ms : null;
+                            const success = e.metadata?.success;
+                            return (
+                              <tr
+                                key={e.id}
+                                className={isDarkMode ? 'border-t border-zinc-800/80' : 'border-t border-zinc-100'}
+                              >
+                                <td className="whitespace-nowrap px-3 py-2 tabular-nums">
+                                  {format(new Date(e.created_at), 'MMM d HH:mm')}
+                                </td>
+                                <td className="px-3 py-2">
+                                  {isMcpEventType(e.event_type) ? MCP_EVENT_LABELS[e.event_type] : e.event_type}
+                                </td>
+                                <td className="px-3 py-2 font-mono">
+                                  {e.user_id ? nameByUserId[e.user_id] ?? e.user_id.slice(0, 8) : '—'}
+                                </td>
+                                <td className={`px-3 py-2 ${muted}`}>
+                                  {toolName ? (
+                                    <>
+                                      <span className="font-mono">{toolName}</span>
+                                      {success === true ? ' · ok' : success === false ? ' · error' : ''}
+                                      {durationMs !== null ? ` · ${durationMs}ms` : ''}
+                                      {typeof e.metadata?.error === 'string' ? ` · ${e.metadata.error}` : ''}
+                                    </>
+                                  ) : reason ? (
+                                    <>reason: {reason}</>
+                                  ) : typeof e.metadata?.method === 'string' ? (
+                                    <>method: {e.metadata.method}</>
+                                  ) : (
+                                    '—'
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </section>
 
               <section className={`p-6 ${panel}`}>

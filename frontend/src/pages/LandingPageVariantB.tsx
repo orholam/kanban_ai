@@ -19,6 +19,7 @@ import { LANDING_HERO_VERSION_TAG } from '../lib/siteMeta'
 const FEATURE_PILLS = [
   'Sprints',
   'AI planning',
+  'MCP',
   'Weekly board',
   'Backlog',
   'Docs',
@@ -207,6 +208,15 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
                   <span className={textMuted}>Draft and reshape work from context—then ship from the board.</span>
                 </span>
               </li>
+              <li className="flex items-start gap-2.5">
+                <Check className={`mt-0.5 h-[1.1rem] w-[1.1rem] shrink-0 sm:h-[1.125rem] sm:w-[1.125rem] ${checkAccent}`} strokeWidth={2.25} aria-hidden />
+                <span className="min-w-0">
+                  <strong className="font-semibold">MCP-ready.</strong>{' '}
+                  <span className={textMuted}>
+                    Connect Claude, Cursor, and other AI clients to list projects, manage tasks, and read board context from your editor.
+                  </span>
+                </span>
+              </li>
             </ul>
 
             <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -266,6 +276,29 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
         </div>
       </section>
 
+      {/* MCP */}
+      <section className={`border-b ${border} py-12 sm:py-14 ${isDarkMode ? 'bg-zinc-900/50' : 'bg-sky-50/60'}`}>
+        <div className={`${SHELL} mx-auto max-w-3xl text-center`}>
+          <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${textSubtle}`}>
+            Model Context Protocol
+          </p>
+          <h2 className={`mt-2 text-xl font-bold tracking-tight sm:text-2xl ${text}`}>
+            Claude, Cursor, and your AI stack—on your boards
+          </h2>
+          <p className={`mt-3 text-sm leading-relaxed sm:text-base ${textMuted}`}>
+            Kanban AI ships a remote MCP server so compatible clients can list projects, create and update tasks,
+            and pull sprint context without leaving where you code.
+          </p>
+          <Link
+            to={DOCUMENTATION_BOARD_BASE_PATH}
+            className="mt-5 inline-flex items-center text-sm font-semibold text-sky-600 transition hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300"
+          >
+            MCP setup in docs
+            <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden />
+          </Link>
+        </div>
+      </section>
+
       {/* Social proof */}
       <section className={`border-y ${border} ${isDarkMode ? 'bg-zinc-900' : 'bg-[#f4f4f3]'}`}>
         <div className={`flex flex-col items-start justify-between gap-6 py-10 sm:flex-row sm:items-center ${SHELL}`}>
@@ -286,7 +319,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
             </h2>
           </div>
 
-          <dl className="mx-auto mt-14 grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 sm:mt-16 lg:mt-20 lg:max-w-none lg:grid-cols-3 lg:gap-y-20">
+          <dl className="mx-auto mt-14 grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 sm:mt-16 sm:grid-cols-2 lg:mt-20 lg:max-w-none lg:grid-cols-4 lg:gap-y-20">
             {[
               {
                 title: 'Sprint planning that fits reality',
@@ -305,6 +338,12 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
                 description:
                   'Turn rough notes into cards, tighten wording, and ask follow-ups in plain language—so “what’s the next move?” is obvious before it blocks the sprint.',
                 image: aiAssistant,
+              },
+              {
+                title: 'MCP for Claude, Cursor, and more',
+                description:
+                  'Wire Kanban AI into MCP-compatible clients—list projects, manage tasks, and read board context from your editor or agent workflow.',
+                image: taskManagement,
               },
             ].map((feature) => (
               <div key={feature.title} className="flex flex-col items-center text-center">
@@ -347,6 +386,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
                   'Weekly sprint planning',
                   'Sprint retrospectives & delivery summaries',
                   'Advanced AI assistance',
+                  'MCP server access',
                   'Priority support',
                 ],
                 featured: true,

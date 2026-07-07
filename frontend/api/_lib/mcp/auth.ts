@@ -6,6 +6,10 @@ export type McpAuthContext = {
   userEmail?: string;
 };
 
+export type McpAuthResult =
+  | { ok: true; context: McpAuthContext }
+  | { ok: false; reason: string };
+
 function readSupabaseConfig(): { url: string; anonKey: string } {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
@@ -28,21 +32,28 @@ function extractMcpApiKey(request: Request): string | undefined {
   return request.headers.get('x-mcp-api-key')?.trim();
 }
 
-export async function authenticateMcpRequest(request: Request): Promise<McpAuthContext | null> {
+export async function authenticateMcpRequest(request: Request): Promise<McpAuthResult> {
   const requiredSecret = process.env.MCP_API_SECRET?.trim();
   if (requiredSecret) {
     const provided = extractMcpApiKey(request);
     if (!provided || provided !== requiredSecret) {
-      return null;
+      return { ok: false, reason: 'invalid_mcp_api_key' };
     }
   }
 
   const accessToken = extractBearerToken(request);
   if (!accessToken) {
-    return null;
+    return { ok: false, reason: 'missing_access_token' };
   }
 
-  const { url, anonKey } = readSupabaseConfig();
+  let url: string;
+  let anonKey: string;
+  try {
+    ({ url, anonKey } = readSupabaseConfig());
+  } catch {
+    return { ok: false, reason: 'supabase_not_configured' };
+  }
+
   const supabase = createClient(url, anonKey, {
     global: {
       headers: {
@@ -62,12 +73,15 @@ export async function authenticateMcpRequest(request: Request): Promise<McpAuthC
   } = await supabase.auth.getUser(accessToken);
 
   if (error || !user) {
-    return null;
+    return { ok: false, reason: 'invalid_access_token' };
   }
 
   return {
-    supabase,
-    userId: user.id,
-    userEmail: user.email,
+    ok: true,
+    context: {
+      supabase,
+      userId: user.id,
+      userEmail: user.email,
+    },
   };
 }

@@ -1,15 +1,64 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import * as board from './boardService';
+import { recordMcpToolCall } from './analytics';
+import { getMcpContext } from './requestContext';
 
-function textResult(data: unknown) {
+type ToolResult = {
+  content: Array<{ type: 'text'; text: string }>;
+};
+
+function textResult(data: unknown): ToolResult {
   return {
-    content: [{ type: 'text' as const, text: typeof data === 'string' ? data : JSON.stringify(data, null, 2) }],
+    content: [{ type: 'text', text: typeof data === 'string' ? data : JSON.stringify(data, null, 2) }],
   };
 }
 
-function toolError(message: string) {
+function toolError(message: string): ToolResult {
   return textResult({ error: message });
+}
+
+function extractProjectId(args: Record<string, unknown>): string | undefined {
+  const id = args.project_id;
+  return typeof id === 'string' ? id : undefined;
+}
+
+async function runTool<T extends Record<string, unknown>>(
+  toolName: string,
+  args: T,
+  fn: () => Promise<ToolResult>
+): Promise<ToolResult> {
+  const started = Date.now();
+  const { userId } = getMcpContext();
+  let success = false;
+  let errorMessage: string | undefined;
+
+  try {
+    const result = await fn();
+    const text = result.content[0]?.text ?? '';
+    success = !text.includes('"error"');
+    if (!success) {
+      try {
+        const parsed = JSON.parse(text) as { error?: string };
+        errorMessage = parsed.error;
+      } catch {
+        errorMessage = 'tool returned error';
+      }
+    }
+    return result;
+  } catch (err) {
+    errorMessage = err instanceof Error ? err.message : 'tool failed';
+    return toolError(errorMessage);
+  } finally {
+    void recordMcpToolCall({
+      toolName,
+      userId,
+      success,
+      durationMs: Date.now() - started,
+      error: errorMessage,
+      projectId: extractProjectId(args),
+    });
+  }
 }
 
 export function registerKanbanMcpTools(server: McpServer): void {
@@ -20,14 +69,11 @@ export function registerKanbanMcpTools(server: McpServer): void {
       description: 'List all Kanban AI projects the signed-in user can access.',
       inputSchema: {},
     },
-    async () => {
-      try {
+    async () =>
+      runTool('list_projects', {}, async () => {
         const projects = await board.listProjects();
         return textResult({ projects });
-      } catch (err) {
-        return toolError(err instanceof Error ? err.message : 'Failed to list projects');
-      }
-    }
+      })
   );
 
   server.registerTool(
@@ -39,14 +85,11 @@ export function registerKanbanMcpTools(server: McpServer): void {
         project_id: z.string().uuid().describe('Project UUID'),
       },
     },
-    async ({ project_id }) => {
-      try {
+    async ({ project_id }) =>
+      runTool('get_board', { project_id }, async () => {
         const json = await board.getBoardContextJson(project_id);
         return textResult(json);
-      } catch (err) {
-        return toolError(err instanceof Error ? err.message : 'Failed to load board');
-      }
-    }
+      })
   );
 
   server.registerTool(
@@ -66,14 +109,11 @@ export function registerKanbanMcpTools(server: McpServer): void {
         notes: z.string().optional(),
       },
     },
-    async (input) => {
-      try {
+    async (input) =>
+      runTool('create_project', input, async () => {
         const project = await board.createProject(input);
         return textResult({ success: true, project });
-      } catch (err) {
-        return toolError(err instanceof Error ? err.message : 'Failed to create project');
-      }
-    }
+      })
   );
 
   server.registerTool(
@@ -98,17 +138,14 @@ export function registerKanbanMcpTools(server: McpServer): void {
         notes: z.string().optional(),
       },
     },
-    async ({ project_id, ...updates }) => {
-      try {
+    async ({ project_id, ...updates }) =>
+      runTool('update_project', { project_id, ...updates }, async () => {
         const patch = Object.fromEntries(
           Object.entries(updates).filter(([, value]) => value !== undefined)
         );
         const project = await board.updateProject(project_id, patch);
         return textResult({ success: true, project });
-      } catch (err) {
-        return toolError(err instanceof Error ? err.message : 'Failed to update project');
-      }
-    }
+      })
   );
 
   server.registerTool(
@@ -120,14 +157,11 @@ export function registerKanbanMcpTools(server: McpServer): void {
         project_id: z.string().uuid(),
       },
     },
-    async ({ project_id }) => {
-      try {
+    async ({ project_id }) =>
+      runTool('delete_project', { project_id }, async () => {
         await board.deleteProject(project_id);
         return textResult({ success: true, project_id });
-      } catch (err) {
-        return toolError(err instanceof Error ? err.message : 'Failed to delete project');
-      }
-    }
+      })
   );
 
   server.registerTool(
@@ -146,14 +180,11 @@ export function registerKanbanMcpTools(server: McpServer): void {
         due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
       },
     },
-    async (input) => {
-      try {
+    async (input) =>
+      runTool('create_task', input, async () => {
         const task = await board.createTask(input);
         return textResult({ success: true, task });
-      } catch (err) {
-        return toolError(err instanceof Error ? err.message : 'Failed to create task');
-      }
-    }
+      })
   );
 
   server.registerTool(
@@ -172,15 +203,12 @@ export function registerKanbanMcpTools(server: McpServer): void {
         due_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
       },
     },
-    async ({ task_id, ...patch }) => {
-      try {
+    async ({ task_id, ...patch }) =>
+      runTool('update_task', { task_id, ...patch }, async () => {
         const updates = Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
         const task = await board.updateTask(task_id, updates);
         return textResult({ success: true, task });
-      } catch (err) {
-        return toolError(err instanceof Error ? err.message : 'Failed to update task');
-      }
-    }
+      })
   );
 
   server.registerTool(
@@ -192,14 +220,11 @@ export function registerKanbanMcpTools(server: McpServer): void {
         task_id: z.string().uuid(),
       },
     },
-    async ({ task_id }) => {
-      try {
+    async ({ task_id }) =>
+      runTool('delete_task', { task_id }, async () => {
         await board.deleteTask(task_id);
         return textResult({ success: true, task_id });
-      } catch (err) {
-        return toolError(err instanceof Error ? err.message : 'Failed to delete task');
-      }
-    }
+      })
   );
 
   server.registerTool(
@@ -211,14 +236,11 @@ export function registerKanbanMcpTools(server: McpServer): void {
         task_id: z.string().uuid(),
       },
     },
-    async ({ task_id }) => {
-      try {
+    async ({ task_id }) =>
+      runTool('list_task_comments', { task_id }, async () => {
         const comments = await board.listTaskComments(task_id);
         return textResult({ comments });
-      } catch (err) {
-        return toolError(err instanceof Error ? err.message : 'Failed to list comments');
-      }
-    }
+      })
   );
 
   server.registerTool(
@@ -232,14 +254,11 @@ export function registerKanbanMcpTools(server: McpServer): void {
         author_display_name: z.string().optional(),
       },
     },
-    async (input) => {
-      try {
+    async (input) =>
+      runTool('add_task_comment', input, async () => {
         const comment = await board.addTaskComment(input);
         return textResult({ success: true, comment });
-      } catch (err) {
-        return toolError(err instanceof Error ? err.message : 'Failed to add comment');
-      }
-    }
+      })
   );
 
   server.registerTool(
@@ -251,13 +270,10 @@ export function registerKanbanMcpTools(server: McpServer): void {
         comment_id: z.string().uuid(),
       },
     },
-    async ({ comment_id }) => {
-      try {
+    async ({ comment_id }) =>
+      runTool('delete_task_comment', { comment_id }, async () => {
         await board.deleteTaskComment(comment_id);
         return textResult({ success: true, comment_id });
-      } catch (err) {
-        return toolError(err instanceof Error ? err.message : 'Failed to delete comment');
-      }
-    }
+      })
   );
 }

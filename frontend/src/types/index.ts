@@ -76,7 +76,19 @@ export type AnalyticsEventType =
   | 'ai_interaction'
   | 'task_write'
   | 'lp_view'
-  | 'lp_cta_click';
+  | 'lp_cta_click'
+  | 'mcp_tool_call'
+  | 'mcp_auth_failure'
+  | 'mcp_session';
+
+/** MCP observability events (stored server-side; owner dashboard only). */
+export type McpAnalyticsEventType = 'mcp_tool_call' | 'mcp_auth_failure' | 'mcp_session';
+
+export const MCP_ANALYTICS_EVENT_TYPES: McpAnalyticsEventType[] = [
+  'mcp_tool_call',
+  'mcp_auth_failure',
+  'mcp_session',
+];
 
 export interface AnalyticsEventRow {
   id: string;
