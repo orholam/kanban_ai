@@ -44,6 +44,84 @@ function NavChevron() {
 /** ~72rem — tighter marketing column (ClickUp-like), not full-bleed wide */
 const SHELL = 'mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8'
 
+function McpHeroCallout({ isDarkMode, onCTAClick }: Pick<Props, 'isDarkMode' | 'onCTAClick'>) {
+  const text = isDarkMode ? 'text-zinc-50' : 'text-zinc-950'
+  const textMuted = isDarkMode ? 'text-zinc-400' : 'text-zinc-600'
+
+  return (
+    <div className="mt-8">
+      <div className="rounded-2xl bg-gradient-to-r from-teal-500 via-sky-500 to-indigo-500 p-[1.5px] shadow-md shadow-sky-500/10">
+        <div
+          className={`rounded-[calc(1rem-1.5px)] p-4 sm:p-5 ${
+            isDarkMode ? 'bg-zinc-950/95 backdrop-blur-sm' : 'bg-white'
+          }`}
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+            <div
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                isDarkMode ? 'bg-teal-500/15 text-teal-400' : 'bg-teal-50 text-teal-600'
+              }`}
+            >
+              <Plug className="h-5 w-5" aria-hidden />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-700 dark:text-sky-300">
+                  New
+                </span>
+                <span className={`text-xs font-medium ${textMuted}`}>Claude · Cursor · MCP</span>
+              </div>
+              <p className={`mt-1.5 text-sm font-semibold sm:text-base ${text}`}>Your editor can run this board</p>
+              <p className={`mt-1 text-sm leading-snug ${textMuted}`}>
+                List projects, move tasks, and pull sprint context—without tab-switching.
+              </p>
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                {[
+                  { icon: Terminal, label: '11 tools' },
+                  { icon: Clipboard, label: 'One-click config' },
+                  { icon: Plug, label: 'Editor-native' },
+                ].map(({ icon: Icon, label }) => (
+                  <span
+                    key={label}
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                      isDarkMode
+                        ? 'bg-zinc-800/80 text-zinc-300 ring-1 ring-zinc-700/80'
+                        : 'bg-zinc-50 text-zinc-700 ring-1 ring-zinc-200'
+                    }`}
+                  >
+                    <Icon className="h-3 w-3 text-teal-500" aria-hidden />
+                    {label}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  to="/login?next=/connect"
+                  onClick={onCTAClick}
+                  className="inline-flex items-center rounded-lg bg-teal-600 px-3.5 py-1.5 text-sm font-semibold text-white transition hover:bg-teal-500"
+                >
+                  Connect AI
+                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden />
+                </Link>
+                <Link
+                  to={documentationBoardArticlePath(MCP_DOCS_SLUG)}
+                  className={`inline-flex items-center rounded-lg px-3.5 py-1.5 text-sm font-semibold transition ${
+                    isDarkMode
+                      ? 'bg-zinc-800 text-zinc-200 ring-1 ring-zinc-700 hover:bg-zinc-700'
+                      : 'bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50'
+                  }`}
+                >
+                  Setup guide
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleTheme }: Props) {
   const [activePill, setActivePill] = useState<string>('Sprints')
 
@@ -209,16 +287,9 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
                   <span className={textMuted}>Draft and reshape work from context—then ship from the board.</span>
                 </span>
               </li>
-              <li className="flex items-start gap-2.5">
-                <Check className={`mt-0.5 h-[1.1rem] w-[1.1rem] shrink-0 sm:h-[1.125rem] sm:w-[1.125rem] ${checkAccent}`} strokeWidth={2.25} aria-hidden />
-                <span className="min-w-0">
-                  <strong className="font-semibold">MCP-ready.</strong>{' '}
-                  <span className={textMuted}>
-                    Connect Claude, Cursor, and other AI clients to list projects, manage tasks, and read board context from your editor.
-                  </span>
-                </span>
-              </li>
             </ul>
+
+            <McpHeroCallout isDarkMode={isDarkMode} onCTAClick={onCTAClick} />
 
             <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
@@ -288,8 +359,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
               Your editor can manage this board
             </h2>
             <p className={`mx-auto mt-3 max-w-2xl text-sm leading-relaxed sm:text-base ${textMuted}`}>
-              Wire Claude, Cursor, or any MCP client to list projects, move tasks, and read sprint context—without
-              leaving where you code.
+              Copy your token and config from Connect AI—then ship from chat.
             </p>
           </div>
 

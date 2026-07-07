@@ -21,6 +21,89 @@ interface VariantProps {
   onCTAClick: () => void;
 }
 
+function McpHeroCallout({ isDarkMode, onCTAClick }: VariantProps) {
+  return (
+    <div className="mx-auto mt-8 max-w-2xl text-left">
+      <div className="rounded-2xl bg-gradient-to-r from-teal-500 via-indigo-500 to-teal-400 p-[1.5px] shadow-lg shadow-indigo-500/10">
+        <div
+          className={`rounded-[calc(1rem-1.5px)] p-5 sm:p-6 ${
+            isDarkMode ? 'bg-gray-900/95 backdrop-blur-sm' : 'bg-white'
+          }`}
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <div
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                isDarkMode ? 'bg-teal-500/15 text-teal-400' : 'bg-teal-50 text-teal-600'
+              }`}
+            >
+              <Plug className="h-5 w-5" aria-hidden />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                    isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-100 text-indigo-700'
+                  }`}
+                >
+                  New
+                </span>
+                <span className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                  Claude · Cursor · MCP clients
+                </span>
+              </div>
+              <p className={`mt-2 text-base font-semibold sm:text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Connect AI to your board
+              </p>
+              <p className={`mt-1 text-sm leading-relaxed ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Model Context Protocol — list projects, manage tasks, and read sprint context without leaving your editor.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {[
+                  { icon: Terminal, label: '11 board tools' },
+                  { icon: Clipboard, label: 'Copy-paste config' },
+                  { icon: Plug, label: 'Editor-native' },
+                ].map(({ icon: Icon, label }) => (
+                  <span
+                    key={label}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+                      isDarkMode
+                        ? 'bg-zinc-800/80 text-zinc-300 ring-1 ring-zinc-700/80'
+                        : 'bg-zinc-50 text-zinc-700 ring-1 ring-zinc-200'
+                    }`}
+                  >
+                    <Icon className="h-3 w-3 text-teal-500" aria-hidden />
+                    {label}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2.5">
+                <Link
+                  to="/login?next=/connect"
+                  onClick={onCTAClick}
+                  className="inline-flex items-center rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-500"
+                >
+                  Connect AI
+                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden />
+                </Link>
+                <Link
+                  to={documentationBoardArticlePath(MCP_DOCS_SLUG)}
+                  className={`inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                    isDarkMode
+                      ? 'bg-zinc-800 text-zinc-200 ring-1 ring-zinc-700 hover:bg-zinc-700'
+                      : 'bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50'
+                  }`}
+                >
+                  Setup guide
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /** Control variant — the original landing page. */
 function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
   return (
@@ -72,13 +155,7 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                 Transform your side projects from ideas to reality with AI-assisted project management.
                 Get personalized guidance, automated task breakdowns, and intelligent progress tracking.
               </p>
-              <p className={`mt-4 text-base leading-7 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Now with{' '}
-                <span className={`font-semibold ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`}>
-                  MCP (Model Context Protocol)
-                </span>
-                {' '}— connect Claude, Cursor, and other AI tools to list projects, manage tasks, and read board context from your editor.
-              </p>
+              <McpHeroCallout isDarkMode={isDarkMode} onCTAClick={onCTAClick} />
               <div className="mt-10 flex flex-col items-center gap-2">
                 <div className="relative inline-flex rounded-md p-[2px]">
                   <div
@@ -128,8 +205,7 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
               Claude & Cursor can run your board
             </h3>
             <p className={`mx-auto mt-4 max-w-2xl text-base leading-7 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              Kanban AI exposes an MCP server so your editor can list projects, create tasks, and pull sprint
-              context—without tab-switching.
+              Three steps to wire your editor—then ask in chat instead of switching tabs.
             </p>
           </div>
 
