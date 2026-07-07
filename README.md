@@ -89,7 +89,7 @@ Kanban AI exposes a **remote MCP server** at `/api/mcp` on your Vercel deploymen
 
 **End-user setup:** sign in and open **Connect AI** (`/connect`). The app generates a ready-to-paste MCP config (token + API secret filled in server-side). Copy once, paste into Cursor or Claude Desktop, restart.
 
-**Operator setup:** set `MCP_API_SECRET` on Vercel. Authenticated users fetch full config from `GET /api/mcp/setup` with their session bearer token.
+**Operator setup:** set `MCP_API_SECRET` on Vercel. Authenticated users fetch full config from `GET /api/mcp-setup` with their session bearer token.
 
 **Client auth:** each MCP request must include:
 
