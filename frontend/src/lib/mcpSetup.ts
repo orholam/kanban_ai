@@ -125,12 +125,26 @@ export type McpSetupResponse = {
 
 /** Load ready-to-paste MCP config from the server (includes API secret when configured). */
 export async function fetchMcpSetup(accessToken: string): Promise<McpSetupResponse> {
-  const res = await fetch('/api/mcp/setup', {
+  const res = await fetch('/api/mcp-setup', {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) {
-    const body = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(body.error ?? `Setup failed (${res.status})`);
+    const body = (await res.json().catch(() => ({}))) as { error?: string; reason?: string };
+    const detail = body.reason ?? body.error ?? `Setup failed (${res.status})`;
+    throw new Error(detail);
   }
   return res.json() as Promise<McpSetupResponse>;
+}
+
+function isLocalDevHost(): boolean {
+  if (typeof window === 'undefined') return false;
+  const host = window.location.hostname;
+  return host === 'localhost' || host === '127.0.0.1';
+}
+
+export function mcpSetupFallbackMessage(): string {
+  if (isLocalDevHost()) {
+    return 'Running locally without the API. Use kanbanai.dev/connect, or run vercel dev alongside npm start.';
+  }
+  return 'Server config is temporarily unavailable. Your token is included below — click Regenerate config to retry.';
 }

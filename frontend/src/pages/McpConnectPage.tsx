@@ -21,6 +21,7 @@ import {
   buildMcpClientSetup,
   fetchMcpSetup,
   getMcpEndpointUrl,
+  mcpSetupFallbackMessage,
   type McpSetupResponse,
 } from '../lib/mcpSetup';
 import { documentationBoardArticlePath } from '../documentation-board-feature/integration';
@@ -51,17 +52,15 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
     try {
       const remote = await fetchMcpSetup(token);
       setSetup(remote);
-    } catch {
-      // Fallback when /api/mcp/setup is unavailable (e.g. Vite-only local dev).
+    } catch (err) {
       setSetup(
         buildMcpClientSetup({
           accessToken: token,
           endpointUrl: getMcpEndpointUrl(),
         })
       );
-      setLoadError(
-        'Using a basic config without server credentials. If connection fails, use the hosted app at kanbanai.dev.'
-      );
+      const detail = err instanceof Error ? err.message : 'Unknown error';
+      setLoadError(`${mcpSetupFallbackMessage()} (${detail})`);
     }
     setLoading(false);
   }, []);
