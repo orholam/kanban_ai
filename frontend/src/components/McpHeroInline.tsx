@@ -33,10 +33,9 @@ export function McpHeroInline({ isDarkMode, align = 'center' }: McpHeroInlinePro
               isDarkMode ? 'bg-indigo-500/25 text-indigo-300' : 'bg-indigo-100 text-indigo-700'
             }`}
           >
-            MCP
+            New
           </span>
-          <span className="hidden whitespace-nowrap font-medium sm:inline">Claude · Cursor</span>
-          <span className={`hidden sm:inline ${isDarkMode ? 'text-zinc-600' : 'text-zinc-300'}`}>·</span>
+          <span className="whitespace-nowrap font-medium">MCP · Claude · Cursor</span>
           <span className={`truncate ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
             Run your board from chat
           </span>

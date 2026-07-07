@@ -22,6 +22,7 @@ import promocard from '../assets/main_kanban.jpg'
 import sprintPlanning from '../assets/undraw_choose_card_n0x0.svg'
 import taskManagement from '../assets/undraw_join_re_w1lh.svg'
 import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
+import { McpHeroInline } from '../components/McpHeroInline'
 import { TrustedBy } from '../components/TrustedBy'
 import { DOCUMENTATION_BOARD_BASE_PATH, documentationBoardArticlePath } from '../documentation-board-feature/integration'
 import { MCP_DOCS_SLUG } from '../lib/mcpSetup'
@@ -124,88 +125,6 @@ function HeroAtmosphere({ isDarkMode }: Pick<Props, 'isDarkMode'>) {
         }}
       />
     </>
-  )
-}
-
-function McpHeroCallout({ isDarkMode, onCTAClick }: Pick<Props, 'isDarkMode' | 'onCTAClick'>) {
-  const text = isDarkMode ? 'text-zinc-50' : 'text-zinc-950'
-  const textMuted = isDarkMode ? 'text-zinc-400' : 'text-zinc-600'
-
-  return (
-    <div className="mx-auto mt-10 max-w-2xl">
-      <div className="rounded-2xl bg-gradient-to-r from-violet-400 via-sky-400 to-emerald-400 p-[1.5px] shadow-[0_8px_40px_-12px_rgba(56,189,248,0.45),0_0_0_1px_rgba(255,255,255,0.5)_inset]">
-        <div
-          className={`rounded-[calc(1rem-1.5px)] p-5 sm:p-6 ${
-            isDarkMode
-              ? 'bg-zinc-950/95 backdrop-blur-md'
-              : 'bg-white/95 shadow-inner shadow-white/80 backdrop-blur-md'
-          }`}
-        >
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                isDarkMode
-                  ? 'bg-gradient-to-br from-sky-500/20 to-violet-500/20 text-sky-400'
-                  : 'bg-gradient-to-br from-sky-50 to-violet-50 text-sky-600'
-              }`}
-            >
-              <Plug className="h-5 w-5" aria-hidden />
-            </div>
-            <div className="min-w-0 flex-1 text-left">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-gradient-to-r from-violet-500/15 to-sky-500/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-violet-700 dark:text-violet-300">
-                  New
-                </span>
-                <span className={`text-xs font-medium ${textMuted}`}>Claude · Cursor · MCP</span>
-              </div>
-              <p className={`mt-2 text-base font-semibold sm:text-lg ${text}`}>Your editor can run this board</p>
-              <p className={`mt-1 text-sm leading-relaxed ${textMuted}`}>
-                List projects, move tasks, and pull sprint context—without tab-switching.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {[
-                  { icon: Terminal, label: '11 tools' },
-                  { icon: Clipboard, label: 'One-click config' },
-                  { icon: Plug, label: 'Editor-native' },
-                ].map(({ icon: Icon, label }) => (
-                  <span
-                    key={label}
-                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
-                      isDarkMode
-                        ? 'bg-zinc-800/80 text-zinc-300 ring-1 ring-zinc-700/80'
-                        : 'bg-zinc-50 text-zinc-700 ring-1 ring-zinc-200/90'
-                    }`}
-                  >
-                    <Icon className="h-3 w-3 text-sky-500" aria-hidden />
-                    {label}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2.5">
-                <Link
-                  to="/login?next=/connect"
-                  onClick={onCTAClick}
-                  className="inline-flex items-center rounded-xl bg-zinc-950 px-4 py-2 text-sm font-semibold text-white shadow-[0_2px_16px_-4px_rgba(251,146,60,0.4)] transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950 dark:hover:bg-white"
-                >
-                  Connect AI
-                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden />
-                </Link>
-                <Link
-                  to={documentationBoardArticlePath(MCP_DOCS_SLUG)}
-                  className={`inline-flex items-center rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                    isDarkMode
-                      ? 'bg-zinc-800 text-zinc-200 ring-1 ring-zinc-700 hover:bg-zinc-700'
-                      : 'bg-white text-zinc-800 ring-1 ring-zinc-200/90 hover:bg-zinc-50'
-                  }`}
-                >
-                  Setup guide
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   )
 }
 
@@ -349,7 +268,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
             <p className={`text-sm ${textSubtle}`}>Free forever · No credit card</p>
           </div>
 
-          <McpHeroCallout isDarkMode={isDarkMode} onCTAClick={onCTAClick} />
+          <McpHeroInline isDarkMode={isDarkMode} />
         </div>
 
         {/* Floating product mockup */}
