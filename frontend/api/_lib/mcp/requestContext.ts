@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import type { McpAuthContext } from './auth';
+import type { McpAuthContext } from './auth.js';
 
 export const mcpRequestContext = new AsyncLocalStorage<McpAuthContext>();
 

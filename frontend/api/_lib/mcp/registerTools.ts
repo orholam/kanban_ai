@@ -1,8 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import * as board from './boardService';
-import { recordMcpToolCall } from './analytics';
-import { getMcpContext } from './requestContext';
+import * as board from './boardService.js';
+import { recordMcpToolCall } from './analytics.js';
+import { getMcpContext } from './requestContext.js';
 
 type ToolResult = {
   content: Array<{ type: 'text'; text: string }>;

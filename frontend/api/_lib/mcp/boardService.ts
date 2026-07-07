@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { getMcpContext } from './requestContext';
+import { getMcpContext } from './requestContext.js';
 
 export type BoardTask = {
   id: string;
