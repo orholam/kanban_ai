@@ -368,3 +368,55 @@ Set \`MCP_API_SECRET\` on Vercel. The Connect page injects it server-side into g
 ## Privacy & scope
 
 MCP acts **as you**—same projects and tasks your account can access in the web app. Do not share generated configs in public chats or screenshots.`;
+
+export const bodyInviteMembers = `Share a **private project** with other Kanban AI users—not the same as making a board public.
+
+## Members vs public link
+
+| | **Members** | **Public link** |
+|---|-------------|-----------------|
+| Who | Signed-in users you invite by email | Anyone with the URL |
+| Access | Edit tasks, post comments | Read-only view |
+| Where | **Members** button on the board header | Privacy toggle → copy link |
+
+## Invite someone (project owner)
+
+1. Open your project board.
+2. Click **Members** in the header (beside the privacy control).
+3. Enter their **Kanban AI account email** and invite.
+4. They must already have an account—v1 does not email a signup link.
+5. The project appears in their sidebar after invite.
+
+Editors can change tasks and comment. Only the **owner** can invite or remove members.
+
+## Local development
+
+With \`npm run dev:local\`, invite \`collaborator@dev.invalid\` (seeded in the local schema) from the Members panel.
+
+## Hosted setup
+
+Apply the \`project_collaborators\` RLS migration and set \`SUPABASE_SERVICE_ROLE_KEY\` on Vercel so \`/api/invite-collaborator\` can resolve email → user id.`;
+
+export const bodyLandingAbTest = `Kanban AI runs an **A/B test** on the marketing landing page (\`/\`). Visitors are assigned variant **A** (classic layout) or **B** (alternate layout) and stay on that variant for the experiment.
+
+## Preview either variant
+
+Append to the home URL (logged-in preview bypasses the dashboard redirect):
+
+- \`/?variant=A\`
+- \`/?variant=B\`
+
+## Measuring results
+
+1. Sign in as a site **owner** (admin account).
+2. Open **Analytics** → **Landing page A/B test**.
+3. Metrics are scoped to the current experiment version (\`ab_version\` in event metadata).
+
+When you materially change copy or layout on either variant, bump \`LANDING_AB_TEST_VERSION\` in \`frontend/src/lib/landingAbTest.ts\` so new data does not mix with old runs.
+
+## Events tracked
+
+- Variant assignment (first visit)
+- CTA clicks (per variant)
+
+Use the dashboard to compare views and conversion before picking a winner.`;

@@ -252,7 +252,6 @@ export async function createTask(input: {
     sprint: input.sprint ?? 1,
     due_date: due,
     assignee_id: userId,
-    created_at: now.slice(0, 10),
   };
 
   const { data, error } = await supabase.from('tasks').insert([row]).select().single();

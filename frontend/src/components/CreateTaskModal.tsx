@@ -15,14 +15,22 @@ interface CreateTaskModalProps {
   onClose: () => void;
   onCreateTask: (task: Task) => void;
   projectId: string;
+  numSprints?: number;
+  defaultSprint?: number;
 }
 
-export default function CreateTaskModal({ onClose, onCreateTask, projectId }: CreateTaskModalProps) {
+export default function CreateTaskModal({
+  onClose,
+  onCreateTask,
+  projectId,
+  numSprints = 10,
+  defaultSprint = 1,
+}: CreateTaskModalProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState('todo');
-  const [sprint, setSprint] = useState(1);
+  const [sprint, setSprint] = useState(defaultSprint);
   const [dueDate, setDueDate] = useState(new Date());
   const [showCalendar, setShowCalendar] = useState(false);
   const [type, setType] = useState('feature');
@@ -34,6 +42,10 @@ export default function CreateTaskModal({ onClose, onCreateTask, projectId }: Cr
     const timer = setTimeout(() => setIsVisible(true), 10);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    setSprint(defaultSprint);
+  }, [defaultSprint]);
 
   const handleClose = () => {
     setIsClosing(true);
@@ -150,7 +162,7 @@ export default function CreateTaskModal({ onClose, onCreateTask, projectId }: Cr
                     onChange={(e) => setSprint(parseInt(e.target.value, 10))}
                     className={fieldSelectClass}
                   >
-                    {Array.from({ length: 10 }, (_, i) => i + 1).map((s) => (
+                    {Array.from({ length: numSprints }, (_, i) => i + 1).map((s) => (
                       <option key={s} value={s}>
                         Sprint {s}
                       </option>

@@ -4,12 +4,9 @@ import { taskInsertPayload } from '../lib/taskDb';
 import { isLocalAppMode } from '../lib/localApp';
 
 export async function createTask(taskData: Task) {
-  try {
-    const payload = {
-      ...taskInsertPayload(taskData),
-      updated_at: taskData.updated_at || new Date().toISOString(),
-    };
+  const payload = taskInsertPayload(taskData);
 
+  try {
     if (isLocalAppMode()) {
       const res = await fetch('/api/local/tasks', {
         method: 'POST',
@@ -24,7 +21,7 @@ export async function createTask(taskData: Task) {
       return;
     }
 
-    const { data, error } = await supabase.from('tasks').insert([taskInsertPayload(taskData)]).select();
+    const { data, error } = await supabase.from('tasks').insert([payload]).select();
 
     if (error) {
       throw error;

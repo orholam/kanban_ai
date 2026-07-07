@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Eye, EyeOff, Users, Clock, CheckCircle } from 'lucide-react';
 import { TaskCommentAuthorAvatar } from '../components/TaskCommentAuthorAvatar';
+import { TaskCommentBody } from '../components/TaskCommentBody';
 import { displayTaskCommentAuthorName } from '../lib/kanbanAiComment';
 import ReactMarkdown from 'react-markdown';
 import type { Project, Task, TaskComment } from '../types';
@@ -100,13 +101,7 @@ function PublicTaskCard({ task, comments, isDarkMode }: PublicTaskCardProps) {
                         {commentAt ? formatDistanceToNow(commentAt, { addSuffix: true }) : '—'}
                       </span>
                     </div>
-                    <p
-                      className={`mt-0.5 text-xs whitespace-pre-wrap break-words ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}
-                    >
-                      {c.body}
-                    </p>
+                    <TaskCommentBody body={c.body} variant="public" />
                   </div>
                 </li>
               );

@@ -454,6 +454,12 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
                 image: aiAssistant,
               },
               {
+                title: 'Invite teammates',
+                description:
+                  'Project owners add editors by email—shared boards show up in their sidebar with full edit access. Public view links stay read-only.',
+                image: taskManagement,
+              },
+              {
                 title: 'MCP for Claude, Cursor, and more',
                 description:
                   'Wire Kanban AI into MCP-compatible clients—list projects, manage tasks, and read board context from your editor or agent workflow.',

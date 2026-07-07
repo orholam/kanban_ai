@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react';
 import { lazyWithRetry } from '../lib/lazyWithRetry';
 import { useParams, Link } from 'react-router-dom';
-import { Plus, Eye, EyeOff, FileText, Link as LinkIcon, Plug, X } from 'lucide-react';
+import { Plus, Minus, Eye, EyeOff, Link as LinkIcon, Plug, Users, X } from 'lucide-react';
 import TaskCard from '../components/TaskCard';
 import type { Project, Task } from '../types';
 import {
@@ -17,12 +17,13 @@ import { formatDueDateForDb } from '../lib/taskDb';
 import { toast } from 'sonner';
 import { loadGuestDraft, saveGuestDraft } from '../lib/guestDraft';
 import { isLocalAppMode } from '../lib/localApp';
+import { useAuth } from '../contexts/AuthContext';
+import ProjectMembersPanel from '../components/ProjectMembersPanel';
 
 const MCP_CONNECT_BANNER_KEY = 'kanban_mcp_connect_banner_dismissed_v1';
 
 const TaskModal = lazyWithRetry(() => import('../components/TaskModal'));
 const CreateTaskModal = lazyWithRetry(() => import('../components/CreateTaskModal'));
-const NotesEditor = lazyWithRetry(() => import('../components/NotesEditor'));
 const ProjectTaskChat = lazyWithRetry(() => import('../components/ProjectTaskChat'));
 
 const STAGGER_DELAY_MS = 100; // Delay between each card animation
@@ -39,6 +40,7 @@ interface KanbanBoardProps {
   searchQuery: string;
   setProjects?: (projects: Project[]) => void;
   guestMode?: boolean;
+  onRefreshProjects?: () => void | Promise<void>;
 }
 
 export default function KanbanBoard({
@@ -47,7 +49,9 @@ export default function KanbanBoard({
   searchQuery,
   setProjects,
   guestMode = false,
+  onRefreshProjects,
 }: KanbanBoardProps) {
+  const { user } = useAuth();
   const { projectId } = useParams();
   const [tasks, setTasks] = useState<Task[]>([]); // Add explicit Task[] type
   const tasksRef = useRef<Task[]>(tasks);
@@ -118,12 +122,13 @@ export default function KanbanBoard({
   const [isLoading, setIsLoading] = useState(true);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [isCondensed, setIsCondensed] = useState(() => {
     const saved = localStorage.getItem('kanban-condensed-mode');
     return saved ? JSON.parse(saved) : false;
   });
   const [isPrivacyUpdating, setIsPrivacyUpdating] = useState(false);
+  const [isMembersPanelOpen, setIsMembersPanelOpen] = useState(false);
+  const [isSprintUpdating, setIsSprintUpdating] = useState(false);
   const [projectTitleDraft, setProjectTitleDraft] = useState('');
   const [projectDescDraft, setProjectDescDraft] = useState('');
   const [isSavingProjectMeta, setIsSavingProjectMeta] = useState(false);
@@ -187,6 +192,11 @@ export default function KanbanBoard({
     setProjectTitleDraft(currentProject.title);
     setProjectDescDraft(currentProject.description ?? '');
   }, [currentProject?.id]); // eslint-disable-line react-hooks/exhaustive-deps -- drafts follow project id only
+
+  useEffect(() => {
+    if (!currentProject) return;
+    setActiveSprint(currentProject.current_sprint ?? 1);
+  }, [currentProject?.id, currentProject?.current_sprint]); // eslint-disable-line react-hooks/exhaustive-deps -- sync when project or stored sprint changes
 
   useEffect(() => {
     if (!guestMode) return;
@@ -278,25 +288,6 @@ export default function KanbanBoard({
         prevTasks.map((task) => (task.id === taskId ? previous : task))
       );
       toast.error(error instanceof Error ? error.message : 'Could not save status');
-    }
-  };
-
-  {/* handle notes change */}
-  const handleNotesChange = async (newNotes: string) => {
-    if (guestMode) {
-      setCurrentProject(prevProject =>
-        prevProject ? { ...prevProject, notes: newNotes } : null
-      );
-      toast.success('Notes updated');
-      return;
-    }
-
-    try {
-      const data = await updateProjectRow(currentProject?.id ?? '', { notes: newNotes });
-      setCurrentProject((prevProject) => (prevProject ? { ...prevProject, ...data } : null));
-      toast.success('Notes updated');
-    } catch (error) {
-      console.error('Error updating notes:', error);
     }
   };
 
@@ -572,6 +563,126 @@ export default function KanbanBoard({
     await persistProjectMeta({ description: next });
   };
 
+  const handleSprintSelect = async (sprint: number) => {
+    if (!currentProject || isSprintUpdating) return;
+    if (activeSprint === sprint) return;
+
+    const prevSprint = activeSprint;
+    setActiveSprint(sprint);
+
+    if (guestMode) {
+      setCurrentProject((prev) => (prev ? { ...prev, current_sprint: sprint } : null));
+      return;
+    }
+
+    try {
+      setIsSprintUpdating(true);
+      await updateProjectRow(currentProject.id, { current_sprint: sprint });
+
+      setCurrentProject((prev) => (prev ? { ...prev, current_sprint: sprint } : null));
+      if (setProjects) {
+        setProjects(
+          projects.map((p) => (p.id === currentProject.id ? { ...p, current_sprint: sprint } : p))
+        );
+      }
+    } catch (error) {
+      console.error('Error updating current sprint:', error);
+      setActiveSprint(prevSprint);
+      toast.error('Failed to update sprint');
+    } finally {
+      setIsSprintUpdating(false);
+    }
+  };
+
+  const handleAddSprint = async () => {
+    if (!currentProject || isSprintUpdating) return;
+
+    const next = currentProject.num_sprints + 1;
+
+    if (guestMode) {
+      setCurrentProject((prev) => (prev ? { ...prev, num_sprints: next } : null));
+      return;
+    }
+
+    try {
+      setIsSprintUpdating(true);
+      const data = await updateProjectRow(currentProject.id, { num_sprints: next });
+      const updatedNumSprints = Number(data.num_sprints ?? next);
+
+      setCurrentProject((prev) => (prev ? { ...prev, num_sprints: updatedNumSprints } : null));
+      if (setProjects) {
+        setProjects(
+          projects.map((p) =>
+            p.id === currentProject.id ? { ...p, num_sprints: updatedNumSprints } : p
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error adding sprint:', error);
+      toast.error('Failed to add sprint');
+    } finally {
+      setIsSprintUpdating(false);
+    }
+  };
+
+  const canRemoveLastSprint = useMemo(() => {
+    if (!currentProject || currentProject.num_sprints <= 1) return false;
+    const last = currentProject.num_sprints;
+    return !tasks.some((t) => t.sprint === last);
+  }, [currentProject, tasks]);
+
+  const handleRemoveSprint = async () => {
+    if (!currentProject || isSprintUpdating || !canRemoveLastSprint) return;
+
+    const prevCount = currentProject.num_sprints;
+    const next = prevCount - 1;
+    const nextActive = activeSprint > next ? next : activeSprint;
+
+    if (guestMode) {
+      setCurrentProject((prev) =>
+        prev ? { ...prev, num_sprints: next, current_sprint: nextActive } : null
+      );
+      setActiveSprint(nextActive);
+      return;
+    }
+
+    try {
+      setIsSprintUpdating(true);
+      const patch: Partial<Project> = { num_sprints: next };
+      if (activeSprint !== nextActive) {
+        patch.current_sprint = nextActive;
+      }
+      const data = await updateProjectRow(currentProject.id, patch);
+      const updatedNumSprints = Number(data.num_sprints ?? next);
+      const updatedCurrentSprint = Number(data.current_sprint ?? nextActive);
+
+      setActiveSprint(updatedCurrentSprint);
+      setCurrentProject((prev) =>
+        prev
+          ? {
+              ...prev,
+              num_sprints: updatedNumSprints,
+              current_sprint: updatedCurrentSprint,
+            }
+          : null
+      );
+      if (setProjects) {
+        setProjects(
+          projects.map((p) =>
+            p.id === currentProject.id
+              ? { ...p, num_sprints: updatedNumSprints, current_sprint: updatedCurrentSprint }
+              : p
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error removing sprint:', error);
+      toast.error('Failed to remove sprint');
+    } finally {
+      setIsSprintUpdating(false);
+    }
+  };
+
   const handlePrivacyToggle = async () => {
     if (guestMode) return;
     if (!currentProject || isPrivacyUpdating) return;
@@ -735,6 +846,19 @@ export default function KanbanBoard({
                 <span className="flex shrink-0 flex-wrap items-center gap-1.5">
                   <button
                     type="button"
+                    onClick={() => setIsMembersPanelOpen(true)}
+                    aria-label="Manage project members"
+                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
+                      isDarkMode
+                        ? 'border-zinc-700/80 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600 hover:bg-zinc-800/80 hover:text-zinc-200'
+                        : 'border-zinc-200 bg-zinc-100/80 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-100'
+                    }`}
+                  >
+                    <Users className="h-3 w-3 shrink-0" />
+                    Members
+                  </button>
+                  <button
+                    type="button"
                     onClick={handlePrivacyToggle}
                     disabled={isPrivacyUpdating}
                     aria-label={`Make project ${currentProject.private === false ? 'private' : 'public'}`}
@@ -835,8 +959,9 @@ export default function KanbanBoard({
                         key={sprint}
                         type="button"
                         aria-pressed={active}
-                        onClick={() => setActiveSprint(sprint)}
-                        className={`min-h-[1.625rem] min-w-[1.625rem] rounded-md px-2 text-xs font-semibold tabular-nums transition-colors ${
+                        disabled={isSprintUpdating}
+                        onClick={() => void handleSprintSelect(sprint)}
+                        className={`min-h-[1.625rem] min-w-[1.625rem] rounded-md px-2 text-xs font-semibold tabular-nums transition-colors disabled:opacity-60 ${
                           active
                             ? isDarkMode
                               ? 'bg-zinc-800 text-indigo-300'
@@ -851,6 +976,37 @@ export default function KanbanBoard({
                     );
                   })}
                 </div>
+                <button
+                  type="button"
+                  disabled={isSprintUpdating}
+                  onClick={() => void handleAddSprint()}
+                  className={`inline-flex min-h-[1.625rem] items-center gap-1 rounded-md px-2 text-xs font-semibold transition-colors disabled:opacity-60 ${
+                    isDarkMode
+                      ? 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'
+                      : 'text-zinc-600 hover:bg-zinc-200/80 hover:text-zinc-900'
+                  }`}
+                  aria-label="Add sprint"
+                >
+                  <Plus className="h-3 w-3" aria-hidden />
+                  Sprint
+                </button>
+                {canRemoveLastSprint ? (
+                  <button
+                    type="button"
+                    disabled={isSprintUpdating}
+                    onClick={() => void handleRemoveSprint()}
+                    className={`inline-flex min-h-[1.625rem] items-center gap-1 rounded-md px-2 text-xs font-semibold transition-colors disabled:opacity-60 ${
+                      isDarkMode
+                        ? 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'
+                        : 'text-zinc-600 hover:bg-zinc-200/80 hover:text-zinc-900'
+                    }`}
+                    aria-label="Remove last empty sprint"
+                    title="Remove last sprint (only when empty)"
+                  >
+                    <Minus className="h-3 w-3" aria-hidden />
+                    Sprint
+                  </button>
+                ) : null}
               </div>
 
               <span
@@ -880,24 +1036,6 @@ export default function KanbanBoard({
               />
             </button>
           </div>
-
-          <span
-            className={`hidden h-5 w-px shrink-0 sm:block ${isDarkMode ? 'bg-zinc-700/80' : 'bg-zinc-300/70'}`}
-            aria-hidden
-          />
-
-          <button
-            type="button"
-            onClick={() => setIsNotesOpen(!isNotesOpen)}
-            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
-              isDarkMode
-                ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-200'
-                : 'text-zinc-600 hover:bg-white/60 hover:text-zinc-900'
-            }`}
-          >
-            <FileText className="h-3.5 w-3.5 shrink-0 opacity-80" />
-            Notes
-          </button>
 
           <button
             type="button"
@@ -1012,6 +1150,7 @@ export default function KanbanBoard({
         <Suspense fallback={null}>
           <TaskModal
             task={selectedTask}
+            numSprints={currentProject?.num_sprints ?? 10}
             guestMode={guestMode}
             onClose={() => setSelectedTask(null)}
             onStatusChange={handleStatusChange}
@@ -1029,20 +1168,23 @@ export default function KanbanBoard({
             onClose={() => setIsCreateModalOpen(false)}
             onCreateTask={handleCreateTask}
             projectId={currentProject?.id || ''}
+            numSprints={currentProject?.num_sprints ?? 10}
+            defaultSprint={activeSprint}
           />
         </Suspense>
       )}
 
-      {isNotesOpen && (
-        <Suspense fallback={null}>
-          <NotesEditor
-            isOpen
-            onToggle={() => setIsNotesOpen(false)}
-            initialNotes={currentProject?.notes}
-            onNotesChange={handleNotesChange}
-          />
-        </Suspense>
-      )}
+      {currentProject && user && !guestMode ? (
+        <ProjectMembersPanel
+          isOpen={isMembersPanelOpen}
+          onClose={() => setIsMembersPanelOpen(false)}
+          projectId={currentProject.id}
+          projectOwnerId={currentProject.user_id}
+          currentUserId={user.id}
+          isDarkMode={isDarkMode}
+          onMembersChanged={onRefreshProjects}
+        />
+      ) : null}
     </div>
     
   );

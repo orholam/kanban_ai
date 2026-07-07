@@ -290,7 +290,8 @@ export async function generateKanbanTaskCommentReply(params: {
 
   const system = `You are KanbanAI, a concise assistant inside a task card's comment thread.
 Use the task details and comment history. If something is unknown, say so.
-Reply in plain text (no markdown headings). Keep answers focused and actionable unless the user asks for depth.`;
+Reply in GitHub-flavored markdown when helpful (bullet lists, **bold**, short ## headings).
+Keep answers focused and actionable unless the user asks for depth.`;
 
   const userContent = `TASK:\n${taskBlock}\n\nCOMMENT THREAD (oldest to newest):\n${threadText}\n\nUSER MESSAGE (they tagged @kanban):\n${userAsk}`;
 
@@ -301,7 +302,7 @@ Reply in plain text (no markdown headings). Keep answers focused and actionable 
       { role: 'user', content: userContent },
     ],
     temperature: 0.35,
-    max_tokens: 900,
+    max_tokens: 2500,
   };
 
   const response = await postViaOpenAiProxy(requestBody);

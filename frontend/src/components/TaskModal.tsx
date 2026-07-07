@@ -24,6 +24,7 @@ import {
   displayTaskCommentAuthorName,
 } from '../lib/kanbanAiComment';
 import { TaskCommentAuthorAvatar } from './TaskCommentAuthorAvatar';
+import { TaskCommentBody } from './TaskCommentBody';
 import { toast } from 'sonner';
 
 const KANBAN_MENTION_TOKEN = 'kanban';
@@ -106,6 +107,7 @@ function tryTabCompleteKanbanMention(
 
 interface TaskModalProps {
   task: Task;
+  numSprints?: number;
   guestMode?: boolean;
   onClose: () => void;
   onStatusChange: (taskId: string, newStatus: string) => void;
@@ -117,6 +119,7 @@ interface TaskModalProps {
 
 export default function TaskModal({
   task,
+  numSprints = 10,
   guestMode = false,
   onClose,
   onStatusChange,
@@ -515,7 +518,7 @@ export default function TaskModal({
                     onChange={handleSprintChange}
                     className={fieldSelectClass}
                   >
-                    {Array.from({ length: 10 }, (_, i) => i + 1).map((s) => (
+                    {Array.from({ length: numSprints }, (_, i) => i + 1).map((s) => (
                       <option key={s} value={s}>
                         Sprint {s}
                       </option>
@@ -602,7 +605,7 @@ export default function TaskModal({
             </div>
           </div>
 
-          <aside className="flex min-h-0 min-w-0 flex-col border-gray-200 bg-zinc-50 dark:border-gray-800 dark:bg-gray-950 max-lg:min-h-[14rem] max-lg:max-h-[50vh] lg:w-[min(100%,28rem)] lg:shrink-0 lg:border-l">
+          <aside className="flex min-h-0 min-w-0 flex-col border-gray-200 bg-zinc-50 dark:border-gray-800 dark:bg-gray-950 max-lg:min-h-[14rem] max-lg:max-h-[55vh] lg:w-[min(100%,32rem)] lg:shrink-0 lg:border-l">
             <div className="shrink-0 border-b border-gray-200 px-4 py-3 dark:border-gray-800 lg:px-5">
               <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Comments</h3>
             </div>
@@ -664,9 +667,7 @@ export default function TaskModal({
                                 </button>
                               )}
                             </div>
-                            <p className="mt-1 whitespace-pre-wrap break-words text-sm text-gray-700 dark:text-gray-300">
-                              {c.body}
-                            </p>
+                            <TaskCommentBody body={c.body} variant="modal" />
                           </div>
                         </div>
                       );
@@ -685,7 +686,7 @@ export default function TaskModal({
                     }`}
                   >
                     <div className="flex min-h-[3rem] flex-1 items-end gap-1.5 px-2.5 pb-1 pt-2">
-                      <div className="relative max-h-[9rem] min-h-[2.75rem] min-w-0 flex-1">
+                      <div className="relative min-h-[2.75rem] min-w-0 flex-1">
                         <div
                           ref={commentMirrorRef}
                           className="pointer-events-none absolute inset-0 overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words py-1 text-[13px] leading-snug text-zinc-900 [scrollbar-width:none] dark:text-zinc-100 [&::-webkit-scrollbar]:hidden"
@@ -697,7 +698,7 @@ export default function TaskModal({
                           ) : null}
                           <span>{commentDraft.slice(commentSelection.start)}</span>
                         </div>
-                        <textarea
+                        <TextareaAutosize
                           ref={commentTextareaRef}
                           value={commentDraft}
                           onChange={(e) => {
@@ -722,13 +723,14 @@ export default function TaskModal({
                             }
                           }}
                           onKeyDown={handleCommentKeyDown}
-                          placeholder="Add a comment…"
+                          placeholder="Add a comment… (Markdown supported)"
                           disabled={commentSubmitting}
-                          rows={2}
+                          minRows={3}
+                          maxRows={16}
                           spellCheck={false}
                           aria-label="Task comment"
                           aria-describedby="task-comment-mention-footer"
-                          className="relative z-10 max-h-[9rem] min-h-[2.75rem] w-full resize-none overflow-y-auto overflow-x-hidden bg-transparent py-1 text-[13px] leading-snug text-transparent caret-zinc-900 placeholder:text-zinc-400 focus:outline-none selection:bg-indigo-200/50 disabled:cursor-not-allowed dark:caret-zinc-100 dark:placeholder:text-zinc-500 dark:selection:bg-indigo-500/30"
+                          className="relative z-10 max-h-[20rem] min-h-[2.75rem] w-full resize-none overflow-y-auto overflow-x-hidden bg-transparent py-1 text-[13px] leading-snug text-transparent caret-zinc-900 placeholder:text-zinc-400 focus:outline-none selection:bg-indigo-200/50 disabled:cursor-not-allowed dark:caret-zinc-100 dark:placeholder:text-zinc-500 dark:selection:bg-indigo-500/30"
                         />
                       </div>
                       <button
