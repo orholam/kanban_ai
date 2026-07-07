@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { Check, Gift, Sparkles } from 'lucide-react';
+import { Check, Gift, Plug, Sparkles, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
@@ -15,6 +15,8 @@ import {
 } from '../lib/accountProfile';
 import type { AccountProfileRow } from '../types';
 import { isLocalAppMode } from '../lib/localApp';
+import { documentationBoardArticlePath } from '../documentation-board-feature/integration';
+import { MCP_DOCS_SLUG } from '../lib/mcpSetup';
 
 /** Base = already in the free product; Pro = trial extras. Differentiation is icon + text color only. */
 const PLAN_FEATURES: { id: string; text: string; scope: 'base' | 'pro' }[] = [
@@ -25,6 +27,7 @@ const PLAN_FEATURES: { id: string; text: string; scope: 'base' | 'pro' }[] = [
   { id: 'p3', text: 'Unlimited assistant messages on Pro', scope: 'pro' },
   { id: 'p4', text: 'New models & workflows first', scope: 'pro' },
   { id: 'p5', text: 'Smarter descriptions & notes', scope: 'pro' },
+  { id: 'p6', text: 'MCP — Claude & Cursor board access', scope: 'pro' },
 ];
 
 export default function AccountPage({ isDarkMode }: { isDarkMode: boolean }) {
@@ -160,6 +163,56 @@ export default function AccountPage({ isDarkMode }: { isDarkMode: boolean }) {
               Profile and plan. Pro is on us during early access.
             </p>
           </header>
+
+          {!isLocalAppMode() ? (
+            <section
+              className={`mb-8 rounded-2xl border p-5 sm:p-6 ${
+                isDarkMode
+                  ? 'border-teal-500/25 bg-gradient-to-r from-teal-950/40 via-zinc-900/60 to-indigo-950/30'
+                  : 'border-teal-200/80 bg-gradient-to-r from-teal-50 via-white to-indigo-50/80'
+              }`}
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex gap-4">
+                  <span
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                      isDarkMode ? 'bg-teal-500/15 text-teal-300' : 'bg-teal-100 text-teal-700'
+                    }`}
+                  >
+                    <Plug className="h-5 w-5" aria-hidden />
+                  </span>
+                  <div>
+                    <h2 className={`text-base font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                      Connect Claude or Cursor to your boards
+                    </h2>
+                    <p className={`mt-1 max-w-xl text-sm leading-relaxed ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                      Use MCP to list projects, move tasks, and read sprint context from your editor. Open{' '}
+                      <strong>Connect AI</strong> for copy-paste setup (token + Cursor config).
+                    </p>
+                  </div>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <Link
+                    to="/connect"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-500"
+                  >
+                    Open Connect AI
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    to={documentationBoardArticlePath(MCP_DOCS_SLUG)}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium ${
+                      isDarkMode
+                        ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'
+                        : 'bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50'
+                    }`}
+                  >
+                    Docs
+                  </Link>
+                </div>
+              </div>
+            </section>
+          ) : null}
 
           <div className="flex flex-col gap-8 lg:grid lg:grid-cols-12 lg:items-start lg:gap-10">
             {/* Pro — primary visual column */}

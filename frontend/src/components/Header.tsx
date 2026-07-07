@@ -140,6 +140,19 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
                         </div>
                       </div>
                       <Link
+                        to="/connect"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          document.removeEventListener('click', closeDropdown);
+                        }}
+                        className={`block px-4 py-2 text-sm ${
+                          isDarkMode ? 'text-zinc-300 hover:bg-zinc-800/80' : 'text-zinc-700 hover:bg-zinc-50'
+                        }`}
+                      >
+                        Connect AI (MCP)
+                      </Link>
+                      <Link
                         to="/account"
                         role="menuitem"
                         onClick={() => {

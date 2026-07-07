@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Clipboard, Plug, Terminal } from 'lucide-react'
 import { Link } from 'react-router-dom';
 import promocard from '../assets/main_kanban.jpg'
 import sprintPlanning from '../assets/undraw_choose_card_n0x0.svg'
@@ -10,7 +10,8 @@ import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
 import { TrustedBy } from '../components/TrustedBy'
 import SEO from '../components/SEO'
 import { DEFAULT_DESCRIPTION, DEFAULT_KEYWORDS, DEFAULT_TITLE } from '../lib/siteMeta'
-import { DOCUMENTATION_BOARD_BASE_PATH } from '../documentation-board-feature/integration'
+import { DOCUMENTATION_BOARD_BASE_PATH, documentationBoardArticlePath } from '../documentation-board-feature/integration'
+import { MCP_DOCS_SLUG } from '../lib/mcpSetup'
 import { useLandingVariant } from '../hooks/useLandingVariant'
 
 const LandingPageVariantB = lazy(() => import('./LandingPageVariantB'))
@@ -117,25 +118,76 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
       </div>
 
       {/* MCP Section */}
-      <div className={`py-16 sm:py-20 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <div className="mx-auto max-w-3xl px-6 text-center lg:px-8">
-          <p className={`text-base font-semibold leading-7 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
-            Model Context Protocol (MCP)
-          </p>
-          <h3 className={`mt-2 text-2xl font-bold tracking-tight sm:text-3xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Your board, wired into Claude, Cursor, and more
-          </h3>
-          <p className={`mt-4 text-base leading-7 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            Kanban AI exposes a remote MCP server so AI clients can list your projects, create and update tasks,
-            and pull sprint context—without switching away from where you work.
-          </p>
-          <Link
-            to={DOCUMENTATION_BOARD_BASE_PATH}
-            className={`mt-6 inline-flex items-center text-sm font-semibold ${isDarkMode ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-500'}`}
+      <div className={`py-16 sm:py-24 ${isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-b from-indigo-50/80 to-white'}`}>
+        <div className="mx-auto max-w-5xl px-6 lg:px-8">
+          <div className="text-center">
+            <p className={`text-sm font-semibold uppercase tracking-widest ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
+              Works with your AI stack
+            </p>
+            <h3 className={`mt-3 text-2xl font-bold tracking-tight sm:text-4xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Claude & Cursor can run your board
+            </h3>
+            <p className={`mx-auto mt-4 max-w-2xl text-base leading-7 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              Kanban AI exposes an MCP server so your editor can list projects, create tasks, and pull sprint
+              context—without tab-switching.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-3">
+            {[
+              { step: '1', title: 'Sign in', desc: 'Create or open a project in Kanban AI' },
+              { step: '2', title: 'Connect AI', desc: 'Copy your token + Cursor config from /connect' },
+              { step: '3', title: 'Ask your editor', desc: '“List my projects” or “move blocked tasks to review”' },
+            ].map((item) => (
+              <div
+                key={item.step}
+                className={`rounded-2xl border p-5 text-left ${
+                  isDarkMode ? 'border-zinc-700/60 bg-zinc-800/40' : 'border-zinc-200 bg-white shadow-sm'
+                }`}
+              >
+                <span className={`text-2xl font-bold ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>{item.step}</span>
+                <p className={`mt-2 font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{item.title}</p>
+                <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              to="/login"
+              onClick={onCTAClick}
+              className="inline-flex items-center rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-500"
+            >
+              Sign in to set up MCP
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+            <Link
+              to={documentationBoardArticlePath(MCP_DOCS_SLUG)}
+              className={`inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-semibold ${
+                isDarkMode
+                  ? 'bg-zinc-800 text-zinc-200 ring-1 ring-zinc-700 hover:bg-zinc-700'
+                  : 'bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50'
+              }`}
+            >
+              Read setup guide
+            </Link>
+          </div>
+
+          <div
+            className={`mx-auto mt-8 flex max-w-xl flex-wrap items-center justify-center gap-4 text-xs ${
+              isDarkMode ? 'text-zinc-500' : 'text-zinc-500'
+            }`}
           >
-            MCP setup in docs
-            <ArrowRight className="ml-1.5 h-4 w-4" />
-          </Link>
+            <span className="inline-flex items-center gap-1.5">
+              <Plug className="h-3.5 w-3.5 text-teal-500" /> 11 board tools
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Clipboard className="h-3.5 w-3.5 text-teal-500" /> Copy-paste config
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Terminal className="h-3.5 w-3.5 text-teal-500" /> Cursor & Claude
+            </span>
+          </div>
         </div>
       </div>
 

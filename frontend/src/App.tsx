@@ -32,6 +32,7 @@ const BlogPost = lazyWithRetry(() => import('./pages/BlogPost'));
 const DocumentationBoard = lazyWithRetry(() => import('./documentation-board-feature/DocumentationBoard'));
 const DocumentationArticlePage = lazyWithRetry(() => import('./documentation-board-feature/DocumentationArticle'));
 const AccountPage = lazyWithRetry(() => import('./pages/AccountPage'));
+const McpConnectPage = lazyWithRetry(() => import('./pages/McpConnectPage'));
 
 function RouteFallback({ isDarkMode }: { isDarkMode: boolean }) {
   return (
@@ -417,6 +418,16 @@ function AppContent() {
                     <PrivateRoute>
                       <Suspense fallback={<RouteFallback isDarkMode={isDarkMode} />}>
                         <AccountPage isDarkMode={isDarkMode} />
+                      </Suspense>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/connect"
+                  element={
+                    <PrivateRoute>
+                      <Suspense fallback={<RouteFallback isDarkMode={isDarkMode} />}>
+                        <McpConnectPage isDarkMode={isDarkMode} />
                       </Suspense>
                     </PrivateRoute>
                   }

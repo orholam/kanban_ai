@@ -303,3 +303,102 @@ export const bodyFaq = `Short answers to frequent questions. For depth, open the
 ## Support path
 
 Use in-app **Feedback** or your deployment’s support channel for bugs not covered here. Keep reproduction steps and (sanitized) screenshots minimal and specific.`;
+
+export const bodyMcpConnect = `Connect **Claude Desktop**, **Cursor**, or any MCP-compatible client to your Kanban AI boards. Your AI assistant can list projects, create tasks, update status, and read sprint context—without leaving your editor.
+
+> **Start here after sign-in:** open **Connect AI** in the sidebar (or go to \`/connect\`) for copy-paste config and your access token.
+
+## What you need
+
+1. A **signed-in** Kanban AI account (guest/local mode does not expose MCP).
+2. Your deployment’s **MCP API secret** (\`MCP_API_SECRET\`) — set by whoever operates the Vercel project. Ask your admin or check Vercel → Project → Environment Variables.
+3. A **Supabase access token** from your current session (the Connect page copies this for you).
+
+## MCP endpoint
+
+\`\`\`
+https://kanbanai.dev/api/mcp
+\`\`\`
+
+On preview deployments, use that deployment’s origin instead, e.g. \`https://your-preview.vercel.app/api/mcp\`.
+
+## Step 1 — Get your access token
+
+1. Sign in at Kanban AI.
+2. Open **Connect AI** from the sidebar (path: \`/connect\`).
+3. Click **Copy access token**. Tokens expire—refresh and re-copy when MCP stops authenticating.
+
+Do not paste tokens in public chats or commit them to git.
+
+## Step 2 — Cursor (Streamable HTTP)
+
+Add to your Cursor MCP config (\`~/.cursor/mcp.json\` or Cursor Settings → MCP):
+
+\`\`\`json
+{
+  "mcpServers": {
+    "kanban-ai": {
+      "url": "https://kanbanai.dev/api/mcp",
+      "headers": {
+        "X-MCP-API-Key": "YOUR_MCP_API_SECRET",
+        "Authorization": "Bearer YOUR_SUPABASE_ACCESS_TOKEN"
+      }
+    }
+  }
+}
+\`\`\`
+
+Replace \`YOUR_MCP_API_SECRET\` and \`YOUR_SUPABASE_ACCESS_TOKEN\`. Restart Cursor or reload MCP servers.
+
+## Step 3 — Claude Desktop (stdio proxy)
+
+If your client only supports stdio, use \`mcp-remote\`:
+
+\`\`\`json
+{
+  "mcpServers": {
+    "kanban-ai": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://kanbanai.dev/api/mcp",
+        "--header",
+        "X-MCP-API-Key:YOUR_MCP_API_SECRET",
+        "--header",
+        "Authorization:Bearer YOUR_SUPABASE_ACCESS_TOKEN"
+      ]
+    }
+  }
+}
+\`\`\`
+
+## Available tools
+
+| Tool | What it does |
+|------|----------------|
+| \`list_projects\` | Projects you can access |
+| \`get_board\` | Full project + tasks + comments JSON |
+| \`create_project\` / \`update_project\` / \`delete_project\` | Project CRUD |
+| \`create_task\` / \`update_task\` / \`delete_task\` | Task CRUD |
+| \`list_task_comments\` / \`add_task_comment\` / \`delete_task_comment\` | Task threads |
+
+## Example prompts (once connected)
+
+- *"List my Kanban AI projects and tell me which have tasks in progress."*
+- *"On project \`<uuid>\`, move every todo task in sprint 2 to in-progress."*
+- *"Create a task: Ship landing page copy review — feature, high priority, due Friday."*
+- *"Summarize comments on tasks that mention 'blocked'."*
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| \`401 Unauthorized\` | Re-copy access token; confirm \`X-MCP-API-Key\` matches \`MCP_API_SECRET\` on Vercel |
+| MCP server not listed | Restart the client after editing config |
+| Tools run but no data | Ensure you are signed in as the same user whose projects you expect |
+| Local \`npm start\` only | MCP lives on the deployed API—use production/preview URL, not localhost unless \`vercel dev\` is running |
+
+## Privacy & scope
+
+MCP acts **as you**—same projects and tasks your account can access in the web app. Do not share access tokens or API secrets in public repos or screenshots.`;

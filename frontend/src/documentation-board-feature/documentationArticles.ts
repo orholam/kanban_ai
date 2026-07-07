@@ -134,4 +134,16 @@ export const DOCUMENTATION_ARTICLES: DocumentationArticle[] = [
     author: 'Kanban AI',
     body: bodies.bodyLocalDev,
   },
+  {
+    id: 'connect-mcp-claude-cursor',
+    categoryId: 'developers',
+    navOrder: 1,
+    title: 'Connect Claude & Cursor (MCP)',
+    excerpt: 'Wire Kanban AI into MCP clients: access token, Cursor config, Claude Desktop, tools, and troubleshooting.',
+    estimatedMinutes: 8,
+    tags: ['MCP', 'Cursor', 'Claude', 'integrations'],
+    date: '2026-07-07',
+    author: 'Kanban AI',
+    body: bodies.bodyMcpConnect,
+  },
 ];

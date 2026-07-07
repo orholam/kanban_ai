@@ -5,7 +5,7 @@
  * Keep `onCTAClick` on every auth CTA so conversions stay tracked.
  */
 import { useState } from 'react'
-import { ArrowRight, Check, ChevronDown, Moon, Sun } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, Clipboard, Moon, Plug, Sun, Terminal } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Logo from '../assets/kanban_ai_logo5.png'
 import promocard from '../assets/main_kanban.jpg'
@@ -13,7 +13,8 @@ import sprintPlanning from '../assets/undraw_choose_card_n0x0.svg'
 import taskManagement from '../assets/undraw_join_re_w1lh.svg'
 import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
 import { TrustedBy } from '../components/TrustedBy'
-import { DOCUMENTATION_BOARD_BASE_PATH } from '../documentation-board-feature/integration'
+import { DOCUMENTATION_BOARD_BASE_PATH, documentationBoardArticlePath } from '../documentation-board-feature/integration'
+import { MCP_DOCS_SLUG } from '../lib/mcpSetup'
 import { LANDING_HERO_VERSION_TAG } from '../lib/siteMeta'
 
 const FEATURE_PILLS = [
@@ -277,25 +278,70 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
       </section>
 
       {/* MCP */}
-      <section className={`border-b ${border} py-12 sm:py-14 ${isDarkMode ? 'bg-zinc-900/50' : 'bg-sky-50/60'}`}>
-        <div className={`${SHELL} mx-auto max-w-3xl text-center`}>
-          <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${textSubtle}`}>
-            Model Context Protocol
-          </p>
-          <h2 className={`mt-2 text-xl font-bold tracking-tight sm:text-2xl ${text}`}>
-            Claude, Cursor, and your AI stack—on your boards
-          </h2>
-          <p className={`mt-3 text-sm leading-relaxed sm:text-base ${textMuted}`}>
-            Kanban AI ships a remote MCP server so compatible clients can list projects, create and update tasks,
-            and pull sprint context without leaving where you code.
-          </p>
-          <Link
-            to={DOCUMENTATION_BOARD_BASE_PATH}
-            className="mt-5 inline-flex items-center text-sm font-semibold text-sky-600 transition hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300"
-          >
-            MCP setup in docs
-            <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden />
-          </Link>
+      <section className={`border-b ${border} py-14 sm:py-16 ${isDarkMode ? 'bg-zinc-900/50' : 'bg-gradient-to-b from-sky-50 to-white'}`}>
+        <div className={`${SHELL} mx-auto max-w-5xl`}>
+          <div className="text-center">
+            <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${textSubtle}`}>
+              Model Context Protocol
+            </p>
+            <h2 className={`mt-2 text-2xl font-bold tracking-tight sm:text-3xl ${text}`}>
+              Your editor can manage this board
+            </h2>
+            <p className={`mx-auto mt-3 max-w-2xl text-sm leading-relaxed sm:text-base ${textMuted}`}>
+              Wire Claude, Cursor, or any MCP client to list projects, move tasks, and read sprint context—without
+              leaving where you code.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            {[
+              { n: '01', title: 'Sign in', body: 'Open Kanban AI and create a project' },
+              { n: '02', title: 'Connect AI', body: 'Sidebar → Connect AI — copy token & config' },
+              { n: '03', title: 'Ship from chat', body: 'Ask: “What’s blocked?” or “Add a task for…”' },
+            ].map((s) => (
+              <div
+                key={s.n}
+                className={`rounded-xl border p-4 ${isDarkMode ? 'border-zinc-700/60 bg-zinc-800/40' : 'border-zinc-200 bg-white shadow-sm'}`}
+              >
+                <span className="font-mono text-xs font-bold text-sky-600 dark:text-sky-400">{s.n}</span>
+                <p className={`mt-2 font-semibold ${text}`}>{s.title}</p>
+                <p className={`mt-1 text-sm ${textMuted}`}>{s.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              to="/login"
+              onClick={onCTAClick}
+              className="inline-flex items-center rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-sky-500"
+            >
+              Sign in to connect
+              <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+            </Link>
+            <Link
+              to={documentationBoardArticlePath(MCP_DOCS_SLUG)}
+              className={`inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-semibold ${
+                isDarkMode
+                  ? 'bg-zinc-800 text-zinc-200 ring-1 ring-zinc-700 hover:bg-zinc-700'
+                  : 'bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50'
+              }`}
+            >
+              Setup guide
+            </Link>
+          </div>
+
+          <div className={`mt-6 flex flex-wrap items-center justify-center gap-4 text-xs ${textSubtle}`}>
+            <span className="inline-flex items-center gap-1.5">
+              <Plug className="h-3.5 w-3.5 text-sky-500" /> 11 tools
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Clipboard className="h-3.5 w-3.5 text-sky-500" /> One-click config
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Terminal className="h-3.5 w-3.5 text-sky-500" /> Cursor & Claude
+            </span>
+          </div>
         </div>
       </section>
 
