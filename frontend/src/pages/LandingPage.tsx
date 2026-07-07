@@ -1,17 +1,17 @@
 import { lazy, Suspense } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
-import { ArrowRight, Clipboard, Plug, Terminal } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom';
 import promocard from '../assets/main_kanban.jpg'
 import sprintPlanning from '../assets/undraw_choose_card_n0x0.svg'
 import taskManagement from '../assets/undraw_join_re_w1lh.svg'
 import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
+import { McpHeroInline } from '../components/McpHeroInline'
 import { TrustedBy } from '../components/TrustedBy'
 import SEO from '../components/SEO'
 import { DEFAULT_DESCRIPTION, DEFAULT_KEYWORDS, DEFAULT_TITLE } from '../lib/siteMeta'
-import { DOCUMENTATION_BOARD_BASE_PATH, documentationBoardArticlePath } from '../documentation-board-feature/integration'
-import { MCP_DOCS_SLUG } from '../lib/mcpSetup'
+import { DOCUMENTATION_BOARD_BASE_PATH } from '../documentation-board-feature/integration'
 import { useLandingVariant } from '../hooks/useLandingVariant'
 
 const LandingPageVariantB = lazy(() => import('./LandingPageVariantB'))
@@ -19,89 +19,6 @@ const LandingPageVariantB = lazy(() => import('./LandingPageVariantB'))
 interface VariantProps {
   isDarkMode: boolean;
   onCTAClick: () => void;
-}
-
-function McpHeroCallout({ isDarkMode, onCTAClick }: VariantProps) {
-  return (
-    <div className="mx-auto mt-8 max-w-2xl text-left">
-      <div className="rounded-2xl bg-gradient-to-r from-teal-500 via-indigo-500 to-teal-400 p-[1.5px] shadow-lg shadow-indigo-500/10">
-        <div
-          className={`rounded-[calc(1rem-1.5px)] p-5 sm:p-6 ${
-            isDarkMode ? 'bg-gray-900/95 backdrop-blur-sm' : 'bg-white'
-          }`}
-        >
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                isDarkMode ? 'bg-teal-500/15 text-teal-400' : 'bg-teal-50 text-teal-600'
-              }`}
-            >
-              <Plug className="h-5 w-5" aria-hidden />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                    isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-100 text-indigo-700'
-                  }`}
-                >
-                  New
-                </span>
-                <span className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                  Claude · Cursor · MCP clients
-                </span>
-              </div>
-              <p className={`mt-2 text-base font-semibold sm:text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                Connect AI to your board
-              </p>
-              <p className={`mt-1 text-sm leading-relaxed ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Model Context Protocol — list projects, manage tasks, and read sprint context without leaving your editor.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {[
-                  { icon: Terminal, label: '11 board tools' },
-                  { icon: Clipboard, label: 'Copy-paste config' },
-                  { icon: Plug, label: 'Editor-native' },
-                ].map(({ icon: Icon, label }) => (
-                  <span
-                    key={label}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
-                      isDarkMode
-                        ? 'bg-zinc-800/80 text-zinc-300 ring-1 ring-zinc-700/80'
-                        : 'bg-zinc-50 text-zinc-700 ring-1 ring-zinc-200'
-                    }`}
-                  >
-                    <Icon className="h-3 w-3 text-teal-500" aria-hidden />
-                    {label}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2.5">
-                <Link
-                  to="/login?next=/connect"
-                  onClick={onCTAClick}
-                  className="inline-flex items-center rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-500"
-                >
-                  Connect AI
-                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden />
-                </Link>
-                <Link
-                  to={documentationBoardArticlePath(MCP_DOCS_SLUG)}
-                  className={`inline-flex items-center rounded-lg px-4 py-2 text-sm font-semibold transition ${
-                    isDarkMode
-                      ? 'bg-zinc-800 text-zinc-200 ring-1 ring-zinc-700 hover:bg-zinc-700'
-                      : 'bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50'
-                  }`}
-                >
-                  Setup guide
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 /** Control variant — the original landing page. */
@@ -155,7 +72,7 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                 Transform your side projects from ideas to reality with AI-assisted project management.
                 Get personalized guidance, automated task breakdowns, and intelligent progress tracking.
               </p>
-              <McpHeroCallout isDarkMode={isDarkMode} onCTAClick={onCTAClick} />
+              <McpHeroInline isDarkMode={isDarkMode} />
               <div className="mt-10 flex flex-col items-center gap-2">
                 <div className="relative inline-flex rounded-md p-[2px]">
                   <div
@@ -190,79 +107,6 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
           {/* Decorative blob */}
           <div className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
             <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]" />
-          </div>
-        </div>
-      </div>
-
-      {/* MCP Section */}
-      <div className={`py-16 sm:py-24 ${isDarkMode ? 'bg-gray-900' : 'bg-gradient-to-b from-indigo-50/80 to-white'}`}>
-        <div className="mx-auto max-w-5xl px-6 lg:px-8">
-          <div className="text-center">
-            <p className={`text-sm font-semibold uppercase tracking-widest ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>
-              Works with your AI stack
-            </p>
-            <h3 className={`mt-3 text-2xl font-bold tracking-tight sm:text-4xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Claude & Cursor can run your board
-            </h3>
-            <p className={`mx-auto mt-4 max-w-2xl text-base leading-7 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              Three steps to wire your editor—then ask in chat instead of switching tabs.
-            </p>
-          </div>
-
-          <div className="mt-12 grid gap-6 sm:grid-cols-3">
-            {[
-              { step: '1', title: 'Sign in', desc: 'Create or open a project in Kanban AI' },
-              { step: '2', title: 'Connect AI', desc: 'Copy your token + Cursor config from /connect' },
-              { step: '3', title: 'Ask your editor', desc: '“List my projects” or “move blocked tasks to review”' },
-            ].map((item) => (
-              <div
-                key={item.step}
-                className={`rounded-2xl border p-5 text-left ${
-                  isDarkMode ? 'border-zinc-700/60 bg-zinc-800/40' : 'border-zinc-200 bg-white shadow-sm'
-                }`}
-              >
-                <span className={`text-2xl font-bold ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`}>{item.step}</span>
-                <p className={`mt-2 font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{item.title}</p>
-                <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{item.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link
-              to="/login"
-              onClick={onCTAClick}
-              className="inline-flex items-center rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-500"
-            >
-              Sign in to set up MCP
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-            <Link
-              to={documentationBoardArticlePath(MCP_DOCS_SLUG)}
-              className={`inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-semibold ${
-                isDarkMode
-                  ? 'bg-zinc-800 text-zinc-200 ring-1 ring-zinc-700 hover:bg-zinc-700'
-                  : 'bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50'
-              }`}
-            >
-              Read setup guide
-            </Link>
-          </div>
-
-          <div
-            className={`mx-auto mt-8 flex max-w-xl flex-wrap items-center justify-center gap-4 text-xs ${
-              isDarkMode ? 'text-zinc-500' : 'text-zinc-500'
-            }`}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              <Plug className="h-3.5 w-3.5 text-teal-500" /> 11 board tools
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Clipboard className="h-3.5 w-3.5 text-teal-500" /> Copy-paste config
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Terminal className="h-3.5 w-3.5 text-teal-500" /> Cursor & Claude
-            </span>
           </div>
         </div>
       </div>
