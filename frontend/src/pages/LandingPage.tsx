@@ -143,6 +143,11 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                   image: aiAssistant
                 },
                 {
+                  title: "Invite Teammates",
+                  description: "Add editors by email on shared projects—they see the board in their sidebar and can edit tasks and comments. Public links stay read-only for visitors.",
+                  image: taskManagement
+                },
+                {
                   title: "MCP for AI Clients",
                   description: "Connect Claude, Cursor, and other MCP-compatible tools to your boards—list projects, manage tasks, and read sprint context from your workflow.",
                   image: taskManagement

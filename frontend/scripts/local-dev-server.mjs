@@ -218,7 +218,7 @@ function handleInsertTask(res, body) {
     sendJson(res, 400, { error: 'Invalid task' });
     return;
   }
-  const created = t.created_at || now.split('T')[0];
+  const created = t.created_at || now;
   const updated = t.updated_at || now;
   db.prepare(
     `INSERT INTO tasks (id, project_id, title, description, type, priority, status, sprint, due_date, assignee_id, created_at, updated_at)
@@ -337,6 +337,98 @@ function handleDeleteComment(res, commentId) {
   sendJson(res, 200, { ok: true });
 }
 
+function mapCollaboratorRow(row, userRow) {
+  return {
+    id: row.id,
+    project_id: row.project_id,
+    user_id: row.user_id,
+    role: row.role,
+    invited_at: row.invited_at,
+    accepted: boolFromSql(row.accepted),
+    display_name: userRow?.display_name ?? null,
+    email: userRow?.email ?? null,
+  };
+}
+
+function getProjectOwnerId(projectId) {
+  const row = db.prepare('SELECT user_id FROM projects WHERE id = ?').get(projectId);
+  return row?.user_id ?? null;
+}
+
+/** GET /api/local/projects/:id/collaborators */
+function handleListCollaborators(res, projectId) {
+  const rows = db
+    .prepare(
+      `SELECT pc.* FROM project_collaborators pc
+       WHERE pc.project_id = ? AND pc.accepted = 1
+       ORDER BY datetime(COALESCE(pc.invited_at, '1970-01-01')) ASC`
+    )
+    .all(projectId);
+  const collaborators = rows.map((row) => {
+    const userRow = db.prepare('SELECT email, display_name FROM local_users WHERE id = ?').get(row.user_id);
+    return mapCollaboratorRow(row, userRow);
+  });
+  sendJson(res, 200, { collaborators });
+}
+
+/** POST /api/local/projects/:id/collaborators  body: { email } */
+function handleInviteCollaborator(res, projectId, body) {
+  const email = String(body.email ?? '').trim().toLowerCase();
+  if (!email) {
+    sendJson(res, 400, { error: 'email is required' });
+    return;
+  }
+  const ownerId = getProjectOwnerId(projectId);
+  if (!ownerId) {
+    sendJson(res, 404, { error: 'Project not found' });
+    return;
+  }
+  const invitee = db.prepare('SELECT id, email, display_name FROM local_users WHERE lower(email) = ?').get(email);
+  if (!invitee) {
+    sendJson(res, 404, { error: 'No account found with that email' });
+    return;
+  }
+  if (invitee.id === ownerId) {
+    sendJson(res, 400, { error: 'You are already the project owner' });
+    return;
+  }
+  const existing = db
+    .prepare('SELECT id FROM project_collaborators WHERE project_id = ? AND user_id = ?')
+    .get(projectId, invitee.id);
+  if (existing) {
+    sendJson(res, 409, { error: 'That person is already a member of this project' });
+    return;
+  }
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  db.prepare(
+    `INSERT INTO project_collaborators (id, project_id, user_id, role, invited_at, accepted)
+     VALUES (?, ?, ?, 'editor', ?, 1)`
+  ).run(id, projectId, invitee.id, now);
+  const row = db.prepare('SELECT * FROM project_collaborators WHERE id = ?').get(id);
+  sendJson(res, 201, { collaborator: mapCollaboratorRow(row, invitee) });
+}
+
+/** DELETE /api/local/projects/:id/collaborators/:collabId */
+function handleRemoveCollaborator(res, projectId, collabId) {
+  const ownerId = getProjectOwnerId(projectId);
+  if (!ownerId) {
+    sendJson(res, 404, { error: 'Project not found' });
+    return;
+  }
+  const row = db.prepare('SELECT * FROM project_collaborators WHERE id = ? AND project_id = ?').get(collabId, projectId);
+  if (!row) {
+    sendJson(res, 404, { error: 'Member not found' });
+    return;
+  }
+  if (row.role === 'owner') {
+    sendJson(res, 400, { error: 'Cannot remove the project owner' });
+    return;
+  }
+  db.prepare('DELETE FROM project_collaborators WHERE id = ?').run(collabId);
+  sendJson(res, 200, { ok: true });
+}
+
 async function handleOpenAi(req, res) {
   if (req.method === 'GET') {
     sendJson(res, 200, { configured: Boolean(process.env.OPENAI_API_KEY) });
@@ -452,6 +544,24 @@ const server = http.createServer(async (req, res) => {
     const patchProj = pathname.match(/^\/api\/local\/projects\/([^/]+)$/);
     if (patchProj && method === 'PATCH') {
       handlePatchProject(res, patchProj[1], await readBodyJson(req));
+      return;
+    }
+
+    const listCollab = pathname.match(/^\/api\/local\/projects\/([^/]+)\/collaborators$/);
+    if (listCollab && method === 'GET') {
+      handleListCollaborators(res, listCollab[1]);
+      return;
+    }
+
+    const inviteCollab = pathname.match(/^\/api\/local\/projects\/([^/]+)\/collaborators$/);
+    if (inviteCollab && method === 'POST') {
+      handleInviteCollaborator(res, inviteCollab[1], await readBodyJson(req));
+      return;
+    }
+
+    const removeCollab = pathname.match(/^\/api\/local\/projects\/([^/]+)\/collaborators\/([^/]+)$/);
+    if (removeCollab && method === 'DELETE') {
+      handleRemoveCollaborator(res, removeCollab[1], removeCollab[2]);
       return;
     }
 

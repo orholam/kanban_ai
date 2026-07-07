@@ -117,7 +117,7 @@ export async function insertTaskRow(task: Task): Promise<Task> {
   if (isLocalAppMode()) {
     const { task: row } = await localJson<{ task: Task }>(`/tasks`, {
       method: 'POST',
-      body: JSON.stringify({ task: { ...taskInsertPayload(task), updated_at: task.updated_at } }),
+      body: JSON.stringify({ task: taskInsertPayload(task) }),
     });
     return mergeTaskWithDbRow(task, row);
   }
@@ -137,12 +137,12 @@ export async function updateTaskRow(
       method: 'PATCH',
       body: JSON.stringify(patch),
     });
-    return mergeTaskWithDbRow(mergeBase, row, { bumpUpdatedAtFromClient: true });
+    return mergeTaskWithDbRow(mergeBase, row);
   }
   const { data, error } = await supabase.from('tasks').update(patch).eq('id', taskId).select();
   if (error) throw error;
   const row0 = (data ?? [])[0] as Task;
-  return mergeTaskWithDbRow(mergeBase, row0, { bumpUpdatedAtFromClient: true });
+  return mergeTaskWithDbRow(mergeBase, row0);
 }
 
 export async function updateTaskRowReturnArray(
@@ -155,13 +155,13 @@ export async function updateTaskRowReturnArray(
       method: 'PATCH',
       body: JSON.stringify(patch),
     });
-    const merged = mergeTaskWithDbRow(mergeBase, row, { bumpUpdatedAtFromClient: true });
+    const merged = mergeTaskWithDbRow(mergeBase, row);
     return { merged, data0: row };
   }
   const { data, error } = await supabase.from('tasks').update(patch).eq('id', taskId).select();
   if (error) throw error;
   const row = (data ?? [])[0] as Task;
-  const merged = mergeTaskWithDbRow(mergeBase, row, { bumpUpdatedAtFromClient: true });
+  const merged = mergeTaskWithDbRow(mergeBase, row);
   return { merged, data0: row };
 }
 
@@ -241,3 +241,9 @@ export async function fetchPublicProjectRow(projectId: string): Promise<Record<s
   }
   return data as Record<string, unknown>;
 }
+
+export {
+  listProjectCollaborators,
+  inviteProjectCollaborator,
+  removeProjectCollaborator,
+} from '../api/projectCollaborators';

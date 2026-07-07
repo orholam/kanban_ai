@@ -23,6 +23,7 @@ Kanban AI is your personal AI-powered project companion that helps you build, tr
 
 ###  **Modern Kanban Interface**
 - **Drag-and-Drop Management**: Intuitive task organization with visual kanban boards
+- **Project members**: Invite editors by email; shared boards sync through Supabase
 - **Real-time Updates**: Seamless collaboration and progress tracking
 - **Dark/Light Mode**: Beautiful interface that adapts to your preferences
 
@@ -56,6 +57,7 @@ Open **http://localhost:5173**.
 
 - Do **not** put `OPENAI_API_KEY` behind the `VITE_` prefix (that would ship it to the browser). The dev server reads it from `.env.local`.
 - First run applies [`frontend/scripts/local-schema.sql`](frontend/scripts/local-schema.sql). Account, hosted analytics, and in-app feedback are disabled in this mode (they need Supabase).
+- **Project members (local):** open a board → **Members** in the header. Invite `collaborator@dev.invalid` to test sharing (seeded in the local schema).
 
 ### Supabase + Vercel-style API (production-like)
 
@@ -73,6 +75,10 @@ Add `OPENAI_API_KEY` in the Vercel project’s Environment Variables (Production
 
 The app uses code-splitting; [`frontend/vercel.json`](frontend/vercel.json) sets long-lived caching for hashed `/assets/*` files and revalidation for HTML responses so open tabs pick up a fresh `index.html` after deploys. Lazy routes also retry once with a reload if a chunk fails to load (stale shell).
 
+### Landing page A/B test
+
+The home page randomly assigns variant **A** or **B** (persisted in `localStorage`). Preview either layout with `/?variant=A` or `/?variant=B`. Site owners compare CTA performance under **Analytics → Landing page A/B test**. When you change landing copy or layout, bump `LANDING_AB_TEST_VERSION` in [`frontend/src/lib/landingAbTest.ts`](frontend/src/lib/landingAbTest.ts) so metrics stay comparable. See the [documentation article](https://kanbanai.dev/documentation/landing-page-ab-test) for details.
+
 ### MCP server (Claude, Cursor, other AI tools)
 
 Kanban AI exposes a **remote MCP server** at `/api/mcp` on your Vercel deployment. It talks directly to Supabase with the same board operations as the web app (projects, tasks, comments).
@@ -83,7 +89,7 @@ Kanban AI exposes a **remote MCP server** at `/api/mcp` on your Vercel deploymen
 |---|---|
 | `SUPABASE_URL` | Your Supabase project URL (same value as `VITE_SUPABASE_URL`) |
 | `SUPABASE_ANON_KEY` | Supabase anon key (same value as `VITE_SUPABASE_ANON_KEY`) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key for persisting MCP analytics events (owner `/analytics` dashboard) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key for MCP analytics events and **project member invites** (`/api/invite-collaborator` resolves email → user) |
 | `MCP_API_SECRET` | Shared secret clients must send in `X-MCP-API-Key` |
 | `OPENAI_API_KEY` | Already required for in-app AI (optional for MCP CRUD tools) |
 

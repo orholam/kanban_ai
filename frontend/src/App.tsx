@@ -62,11 +62,13 @@ function KanbanBoardWrapper({
   projects,
   isLoading,
   setProjects,
+  refreshProjects,
 }: {
   isDarkMode: boolean;
   projects: Project[];
   isLoading: boolean;
   setProjects: (projects: Project[]) => void;
+  refreshProjects: () => Promise<void>;
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -102,6 +104,7 @@ function KanbanBoardWrapper({
           projects={projects}
           searchQuery=""
           setProjects={setProjects}
+          onRefreshProjects={refreshProjects}
         />
       </Suspense>
     </div>
@@ -157,6 +160,19 @@ function AppContent() {
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const refreshProjects = async () => {
+    if (!user) {
+      setProjects([]);
+      return;
+    }
+    try {
+      const userProjects = await loadSidebarProjects(user.id);
+      setProjects(userProjects);
+    } catch (err) {
+      console.error('Failed to refresh projects:', err);
+    }
+  };
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -363,6 +379,7 @@ function AppContent() {
                         projects={projects}
                         isLoading={isLoading}
                         setProjects={setProjects}
+                        refreshProjects={refreshProjects}
                       />
                     ) : (
                       <GuestKanbanBoardWrapper isDarkMode={isDarkMode} />
@@ -378,6 +395,7 @@ function AppContent() {
                         projects={projects}
                         isLoading={isLoading}
                         setProjects={setProjects}
+                        refreshProjects={refreshProjects}
                       />
                     </PrivateRoute>
                   }

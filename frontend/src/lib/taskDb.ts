@@ -3,12 +3,17 @@ import type { Task } from '../types';
 
 /**
  * Parse instants from Postgres/PostgREST (`created_at`, `updated_at`, comment times).
- * Date-only `YYYY-MM-DD` is treated as local calendar date at midnight (date-fns parseISO).
+ * Date-only `YYYY-MM-DD` is treated as local calendar date at midnight (legacy rows).
  */
 export function parseDbTimestamp(value: string | undefined): Date | null {
   if (!value?.trim()) return null;
   const d = parseISO(value.trim());
   return isValid(d) ? d : null;
+}
+
+/** Legacy rows may still store calendar dates without a time component. */
+export function isDateOnlyTimestamp(value: string | undefined): boolean {
+  return Boolean(value?.trim() && /^\d{4}-\d{2}-\d{2}$/.test(value.trim()));
 }
 
 /**
@@ -43,7 +48,7 @@ export function firstNonEmptyString(
   return undefined;
 }
 
-/** PostgREST insert body: DB columns only; no `updated_at` so older DBs without that column still accept inserts. */
+/** PostgREST insert body — omit timestamps so DB defaults (`now()`) apply. */
 export function taskInsertPayload(task: Task) {
   return {
     id: task.id,
@@ -56,34 +61,56 @@ export function taskInsertPayload(task: Task) {
     sprint: task.sprint,
     due_date: task.due_date,
     assignee_id: task.assignee_id,
-    created_at: task.created_at,
   };
 }
 
 export type MergeTaskOptions = {
   /**
-   * Use after a successful `.update()` when the API/DB only returns a calendar date or midnight
-   * for `updated_at` — so the modal shows a real “just now” instead of matching `created_at`.
+   * Legacy fallback when the API returns date-only `updated_at` (pre-migration rows).
    */
   bumpUpdatedAtFromClient?: boolean;
 };
 
+function resolveUpdatedAt(
+  row: Partial<Task>,
+  fallback: Task,
+  opts?: MergeTaskOptions
+): string {
+  const fromRow = firstNonEmptyString(row.updated_at);
+  if (fromRow && !isDateOnlyTimestamp(fromRow)) return fromRow;
+
+  if (opts?.bumpUpdatedAtFromClient) return new Date().toISOString();
+
+  const fromFallback = firstNonEmptyString(fallback.updated_at);
+  if (fromFallback && !isDateOnlyTimestamp(fromFallback)) return fromFallback;
+
+  const fromCreated =
+    firstNonEmptyString(row.created_at) ?? firstNonEmptyString(fallback.created_at);
+  if (fromCreated && !isDateOnlyTimestamp(fromCreated)) return fromCreated;
+
+  return new Date().toISOString();
+}
+
+function resolveCreatedAt(row: Partial<Task>, fallback: Task): string {
+  const fromRow = firstNonEmptyString(row.created_at);
+  if (fromRow) return fromRow;
+  const fromFallback = firstNonEmptyString(fallback.created_at);
+  if (fromFallback) return fromFallback;
+  return new Date().toISOString();
+}
+
 /**
  * Merge a PostgREST row into the client task.
- * Prefer server `updated_at` unless `bumpUpdatedAtFromClient` (post-mutation) is set.
+ * Prefer server timestamps; bump client `updated_at` only for legacy date-only API responses.
  */
 export function mergeTaskWithDbRow(
   fallback: Task,
   row: Partial<Task> & Pick<Task, 'id'>,
   opts?: MergeTaskOptions
 ): Task {
-  const updated_at = opts?.bumpUpdatedAtFromClient
-    ? new Date().toISOString()
-    : firstNonEmptyString(row.updated_at) ??
-      firstNonEmptyString(fallback.updated_at) ??
-      firstNonEmptyString(row.created_at) ??
-      firstNonEmptyString(fallback.created_at) ??
-      new Date().toISOString();
+  const legacyDateOnly =
+    isDateOnlyTimestamp(row.updated_at) || isDateOnlyTimestamp(row.created_at);
+  const bump = opts?.bumpUpdatedAtFromClient || legacyDateOnly;
 
   const dueNorm =
     row.due_date != null && String(row.due_date).trim() !== ''
@@ -93,7 +120,8 @@ export function mergeTaskWithDbRow(
   return {
     ...fallback,
     ...row,
-    updated_at,
+    created_at: resolveCreatedAt(row, fallback),
+    updated_at: resolveUpdatedAt(row, fallback, bump ? { bumpUpdatedAtFromClient: true } : undefined),
     ...(dueNorm !== undefined ? { due_date: dueNorm } : {}),
   };
 }

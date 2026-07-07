@@ -21,7 +21,7 @@ import { MCP_DOCS_SLUG } from '../lib/mcpSetup';
 /** Base = already in the free product; Pro = trial extras. Differentiation is icon + text color only. */
 const PLAN_FEATURES: { id: string; text: string; scope: 'base' | 'pro' }[] = [
   { id: 'b1', text: 'Kanban, tasks, sprints, drag-and-drop', scope: 'base' },
-  { id: 'b2', text: 'Filters, compact view, notes, public links', scope: 'base' },
+  { id: 'b2', text: 'Filters, compact view, public links', scope: 'base' },
   { id: 'p1', text: 'AI project planning from a brief', scope: 'pro' },
   { id: 'p2', text: 'Board-aware side assistant', scope: 'pro' },
   { id: 'p3', text: 'Unlimited assistant messages on Pro', scope: 'pro' },

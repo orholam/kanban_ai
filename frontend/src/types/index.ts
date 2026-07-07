@@ -64,6 +64,20 @@ export interface User {
   // Add any other properties that are part of the User object
 }
 
+/** Project membership role (`project_collaborators.role`). */
+export type ProjectMemberRole = 'owner' | 'editor';
+
+export interface ProjectCollaborator {
+  id: string;
+  project_id: string;
+  user_id: string;
+  role: ProjectMemberRole;
+  invited_at: string;
+  accepted: boolean;
+  display_name?: string | null;
+  email?: string | null;
+}
+
 /** Account-level access (not the same as `project_collaborators.role`). */
 export type AccountRole = 'owner' | 'editor' | 'admin';
 

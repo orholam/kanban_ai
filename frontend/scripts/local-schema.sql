@@ -28,8 +28,20 @@ CREATE TABLE IF NOT EXISTS project_collaborators (
   user_id TEXT,
   role TEXT NOT NULL,
   invited_at TEXT,
-  accepted INTEGER NOT NULL DEFAULT 0
+  accepted INTEGER NOT NULL DEFAULT 0,
+  UNIQUE (project_id, user_id)
 );
+
+-- Synthetic accounts for local invite-by-email (no Supabase auth).
+CREATE TABLE IF NOT EXISTS local_users (
+  id TEXT PRIMARY KEY,
+  email TEXT NOT NULL UNIQUE,
+  display_name TEXT
+);
+
+INSERT OR IGNORE INTO local_users (id, email, display_name) VALUES
+  ('00000000-0000-4000-8000-000000000001', 'local@dev.invalid', 'Local developer'),
+  ('00000000-0000-4000-8000-000000000002', 'collaborator@dev.invalid', 'Local collaborator');
 
 CREATE TABLE IF NOT EXISTS tasks (
   id TEXT PRIMARY KEY,
