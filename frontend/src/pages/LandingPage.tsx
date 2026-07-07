@@ -71,6 +71,13 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                 Transform your side projects from ideas to reality with AI-assisted project management.
                 Get personalized guidance, automated task breakdowns, and intelligent progress tracking.
               </p>
+              <p className={`mt-4 text-base leading-7 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Now with{' '}
+                <span className={`font-semibold ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`}>
+                  MCP (Model Context Protocol)
+                </span>
+                {' '}— connect Claude, Cursor, and other AI tools to list projects, manage tasks, and read board context from your editor.
+              </p>
               <div className="mt-10 flex flex-col items-center gap-2">
                 <div className="relative inline-flex rounded-md p-[2px]">
                   <div
@@ -109,6 +116,29 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
         </div>
       </div>
 
+      {/* MCP Section */}
+      <div className={`py-16 sm:py-20 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div className="mx-auto max-w-3xl px-6 text-center lg:px-8">
+          <p className={`text-base font-semibold leading-7 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
+            Model Context Protocol (MCP)
+          </p>
+          <h3 className={`mt-2 text-2xl font-bold tracking-tight sm:text-3xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Your board, wired into Claude, Cursor, and more
+          </h3>
+          <p className={`mt-4 text-base leading-7 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Kanban AI exposes a remote MCP server so AI clients can list your projects, create and update tasks,
+            and pull sprint context—without switching away from where you work.
+          </p>
+          <Link
+            to={DOCUMENTATION_BOARD_BASE_PATH}
+            className={`mt-6 inline-flex items-center text-sm font-semibold ${isDarkMode ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-500'}`}
+          >
+            MCP setup in docs
+            <ArrowRight className="ml-1.5 h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+
       {/* Features Section */}
       <div className={`py-24 sm:py-32 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
@@ -122,7 +152,7 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
           </div>
 
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
-            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
+            <dl className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 sm:grid-cols-2 lg:max-w-none lg:grid-cols-4">
               {[
                 {
                   title: "Smart Sprint Planning",
@@ -138,6 +168,11 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                   title: "Interactive AI Assistance",
                   description: "Create tasks with AI assistance, ask detailed follow-up questions, and let AI guide you through every roadblock.",
                   image: aiAssistant
+                },
+                {
+                  title: "MCP for AI Clients",
+                  description: "Connect Claude, Cursor, and other MCP-compatible tools to your boards—list projects, manage tasks, and read sprint context from your workflow.",
+                  image: taskManagement
                 }
               ].map((feature) => (
                 <div key={feature.title} className="flex flex-col items-center text-center">
@@ -193,6 +228,7 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                   "Weekly sprint planning",
                   "Resume-building retrospect",
                   "Advanced AI assistance",
+                  "MCP server access",
                   "Priority support",
                 ],
                 featured: true
