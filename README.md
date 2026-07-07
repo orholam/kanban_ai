@@ -73,6 +73,63 @@ Add `OPENAI_API_KEY` in the Vercel project’s Environment Variables (Production
 
 The app uses code-splitting; [`frontend/vercel.json`](frontend/vercel.json) sets long-lived caching for hashed `/assets/*` files and revalidation for HTML responses so open tabs pick up a fresh `index.html` after deploys. Lazy routes also retry once with a reload if a chunk fails to load (stale shell).
 
+### MCP server (Claude, Cursor, other AI tools)
+
+Kanban AI exposes a **remote MCP server** at `/api/mcp` on your Vercel deployment. It talks directly to Supabase with the same board operations as the web app (projects, tasks, comments).
+
+**Vercel environment variables** (Production + Preview):
+
+| Variable | Purpose |
+|---|---|
+| `SUPABASE_URL` | Your Supabase project URL (same value as `VITE_SUPABASE_URL`) |
+| `SUPABASE_ANON_KEY` | Supabase anon key (same value as `VITE_SUPABASE_ANON_KEY`) |
+| `MCP_API_SECRET` | Shared secret clients must send in `X-MCP-API-Key` |
+| `OPENAI_API_KEY` | Already required for in-app AI (optional for MCP CRUD tools) |
+
+**Client auth:** each MCP request must include:
+
+1. `X-MCP-API-Key: <MCP_API_SECRET>`
+2. `Authorization: Bearer <supabase_access_token>` — the signed-in user's Supabase session access token
+
+To grab a token while logged into the app, run this in the browser console:
+
+```js
+const { data } = await window.supabase?.auth.getSession?.() ?? {};
+// or from the app's Supabase client after sign-in:
+// (await supabase.auth.getSession()).data.session.access_token
+```
+
+**Cursor / Claude Desktop config** (Streamable HTTP):
+
+```json
+{
+  "mcpServers": {
+    "kanban-ai": {
+      "url": "https://your-deployment.vercel.app/api/mcp",
+      "headers": {
+        "X-MCP-API-Key": "your-mcp-api-secret",
+        "Authorization": "Bearer your-supabase-access-token"
+      }
+    }
+  }
+}
+```
+
+For stdio-only clients, proxy with `mcp-remote`:
+
+```json
+{
+  "mcpServers": {
+    "kanban-ai": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://your-deployment.vercel.app/api/mcp", "--header", "X-MCP-API-Key:your-secret", "--header", "Authorization:Bearer your-token"]
+    }
+  }
+}
+```
+
+**Available tools:** `list_projects`, `get_board`, `create_project`, `update_project`, `delete_project`, `create_task`, `update_task`, `delete_task`, `list_task_comments`, `add_task_comment`, `delete_task_comment`.
+
 ##  **Tech Stack**
 
 - **Frontend**: React 18, TypeScript, Vite
