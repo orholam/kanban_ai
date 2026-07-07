@@ -28,6 +28,53 @@ function extractBearerToken(request: Request): string | undefined {
   return alt || undefined;
 }
 
+/** Validates only the Supabase session — used for in-app setup config, not MCP tool calls. */
+export async function authenticateSupabaseAccessToken(request: Request): Promise<McpAuthResult> {
+  const accessToken = extractBearerToken(request);
+  if (!accessToken) {
+    return { ok: false, reason: 'missing_access_token' };
+  }
+
+  let url: string;
+  let anonKey: string;
+  try {
+    ({ url, anonKey } = readSupabaseConfig());
+  } catch {
+    return { ok: false, reason: 'supabase_not_configured' };
+  }
+
+  const supabase = createClient(url, anonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser(accessToken);
+
+  if (error || !user) {
+    return { ok: false, reason: 'invalid_access_token' };
+  }
+
+  return {
+    ok: true,
+    context: {
+      supabase,
+      userId: user.id,
+      userEmail: user.email,
+    },
+  };
+}
+
 function extractMcpApiKey(request: Request): string | undefined {
   return request.headers.get('x-mcp-api-key')?.trim();
 }

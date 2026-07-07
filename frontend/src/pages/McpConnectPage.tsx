@@ -1,13 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import {
-  ArrowRight,
-  Check,
+  ChevronDown,
   Clipboard,
   ClipboardCheck,
+  ExternalLink,
   Plug,
   Sparkles,
-  Terminal,
   Wrench,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -19,60 +18,72 @@ import {
   MCP_DOCS_SLUG,
   MCP_EXAMPLE_PROMPTS,
   MCP_TOOLS,
-  buildCursorMcpConfig,
-  buildMcpRemoteCommand,
+  buildMcpClientSetup,
+  fetchMcpSetup,
   getMcpEndpointUrl,
+  type McpSetupResponse,
 } from '../lib/mcpSetup';
 import { documentationBoardArticlePath } from '../documentation-board-feature/integration';
 
-type CopyField = 'token' | 'cursor' | 'claude' | null;
+type ClientTab = 'cursor' | 'claude';
 
 export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) {
   const { user } = useAuth();
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [mcpSecret, setMcpSecret] = useState('');
-  const [loadingToken, setLoadingToken] = useState(true);
-  const [copied, setCopied] = useState<CopyField>(null);
+  const [setup, setSetup] = useState<McpSetupResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [clientTab, setClientTab] = useState<ClientTab>('cursor');
+  const [copied, setCopied] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const endpoint = useMemo(() => getMcpEndpointUrl(), []);
-
-  const refreshToken = useCallback(async () => {
-    setLoadingToken(true);
+  const loadSetup = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
     const { data, error } = await supabase.auth.getSession();
-    if (error) {
-      toast.error('Could not read session');
-      setAccessToken(null);
-    } else {
-      setAccessToken(data.session?.access_token ?? null);
+    if (error || !data.session?.access_token) {
+      setSetup(null);
+      setLoadError('No active session. Try signing out and back in.');
+      setLoading(false);
+      return;
     }
-    setLoadingToken(false);
+
+    const token = data.session.access_token;
+    try {
+      const remote = await fetchMcpSetup(token);
+      setSetup(remote);
+    } catch {
+      // Fallback when /api/mcp/setup is unavailable (e.g. Vite-only local dev).
+      setSetup(
+        buildMcpClientSetup({
+          accessToken: token,
+          endpointUrl: getMcpEndpointUrl(),
+        })
+      );
+      setLoadError(
+        'Using a basic config without server credentials. If connection fails, use the hosted app at kanbanai.dev.'
+      );
+    }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
     if (!user || isLocalAppMode()) return;
-    void refreshToken();
-  }, [user, refreshToken]);
+    void loadSetup();
+  }, [user, loadSetup]);
 
-  const copyText = async (text: string, field: CopyField, label: string) => {
+  const activeConfig = setup ? (clientTab === 'cursor' ? setup.cursorConfig : setup.claudeConfig) : '';
+
+  const copyConfig = async () => {
+    if (!activeConfig) return;
     try {
-      await navigator.clipboard.writeText(text);
-      setCopied(field);
-      toast.success(`${label} copied`);
-      setTimeout(() => setCopied(null), 2000);
+      await navigator.clipboard.writeText(activeConfig);
+      setCopied(true);
+      toast.success('Config copied — paste into your MCP settings');
+      setTimeout(() => setCopied(false), 2500);
     } catch {
-      toast.error('Copy failed — select and copy manually');
+      toast.error('Copy failed — select the config and copy manually');
     }
   };
-
-  const cursorConfig = useMemo(() => {
-    if (!accessToken) return '';
-    return buildCursorMcpConfig({ accessToken, mcpApiSecret: mcpSecret || undefined, endpointUrl: endpoint });
-  }, [accessToken, mcpSecret, endpoint]);
-
-  const claudeCommand = useMemo(() => {
-    if (!accessToken) return '';
-    return buildMcpRemoteCommand({ accessToken, mcpApiSecret: mcpSecret || undefined, endpointUrl: endpoint });
-  }, [accessToken, mcpSecret, endpoint]);
 
   if (!user) {
     return <Navigate to="/login?next=/connect" replace />;
@@ -87,20 +98,15 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
             isDarkMode ? 'bg-zinc-950 text-zinc-200' : 'bg-zinc-50 text-zinc-800'
           }`}
         >
-          <Plug className={`h-10 w-10 ${isDarkMode ? 'text-teal-400' : 'text-teal-600'}`} />
-          <h1 className="text-xl font-semibold">MCP requires hosted mode</h1>
+          <Plug className={`h-10 w-10 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
+          <h1 className="text-xl font-semibold">Connect on kanbanai.dev</h1>
           <p className="max-w-md text-sm leading-relaxed text-zinc-500">
-            The MCP server runs on your deployed Vercel API. Local SQLite mode does not expose{' '}
-            <code className="rounded bg-black/10 px-1">/api/mcp</code>. Sign in on{' '}
-            <strong>kanbanai.dev</strong> to use Connect AI, or run Supabase +{' '}
-            <code className="rounded bg-black/10 px-1">vercel dev</code> locally.
+            MCP runs on the hosted API. Sign in at{' '}
+            <a href="https://kanbanai.dev/connect" className="font-semibold text-indigo-600 underline-offset-2 hover:underline">
+              kanbanai.dev/connect
+            </a>{' '}
+            for one-click config, or run <code className="rounded bg-black/10 px-1">vercel dev</code> locally.
           </p>
-          <Link
-            to={documentationBoardArticlePath(MCP_DOCS_SLUG)}
-            className={`text-sm font-semibold ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}
-          >
-            Read the MCP guide
-          </Link>
         </div>
       </>
     );
@@ -112,14 +118,21 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
     : 'rounded-2xl border border-zinc-200/90 bg-white shadow-sm';
   const muted = isDarkMode ? 'text-zinc-400' : 'text-zinc-600';
   const codeBlock = isDarkMode
-    ? 'rounded-xl border border-zinc-700/80 bg-zinc-950 p-4 font-mono text-xs text-zinc-300'
-    : 'rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-xs text-zinc-800';
+    ? 'rounded-xl border border-zinc-700/80 bg-zinc-950 p-4 font-mono text-xs leading-relaxed text-zinc-300'
+    : 'rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-xs leading-relaxed text-zinc-800';
 
-  const steps = [
-    { n: 1, title: 'Copy your token', desc: 'Proves MCP requests are you' },
-    { n: 2, title: 'Add API secret', desc: 'From your Vercel deployment' },
-    { n: 3, title: 'Paste into Cursor or Claude', desc: 'Restart the client' },
-  ];
+  const pasteSteps =
+    clientTab === 'cursor'
+      ? [
+          'Open Cursor → Settings → MCP (or edit ~/.cursor/mcp.json)',
+          'Add a new server and paste the copied JSON',
+          'Restart Cursor or click Refresh on MCP servers',
+        ]
+      : [
+          'Open Claude Desktop config: ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)',
+          'Paste the copied JSON under mcpServers (merge if you already have servers)',
+          'Quit and reopen Claude Desktop',
+        ];
 
   return (
     <>
@@ -129,219 +142,156 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
         noindex
       />
       <div className={`min-h-0 flex-1 overflow-y-auto ${shell}`}>
-        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-          {/* Hero */}
-          <div className={`relative overflow-hidden p-8 sm:p-10 ${panel}`}>
-            <div
-              className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-teal-500/20 to-indigo-500/20 blur-3xl"
-              aria-hidden
-            />
-            <div className="relative">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-teal-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-teal-600 dark:text-teal-300">
-                <Plug className="h-3.5 w-3.5" />
-                Model Context Protocol
-              </div>
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Connect Claude or Cursor to your boards</h1>
-              <p className={`mt-3 max-w-xl text-sm leading-relaxed ${muted}`}>
-                Your AI editor can list projects, move tasks, and read sprint context—using the same data as this app.
-                Setup takes about two minutes.
-              </p>
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                {steps.map((s) => (
-                  <div
-                    key={s.n}
-                    className={`rounded-xl border p-3 ${
-                      isDarkMode ? 'border-zinc-700/60 bg-zinc-800/40' : 'border-zinc-200 bg-zinc-50/80'
-                    }`}
-                  >
-                    <span className="text-lg font-bold text-teal-500">{s.n}</span>
-                    <p className="mt-1 text-sm font-semibold">{s.title}</p>
-                    <p className={`text-xs ${muted}`}>{s.desc}</p>
-                  </div>
-                ))}
-              </div>
+        <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+          <div className={`p-6 sm:p-8 ${panel}`}>
+            <div className="mb-1 inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-300">
+              <Plug className="h-3.5 w-3.5" />
+              Connect AI
             </div>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Hook up Cursor or Claude in one copy</h1>
+            <p className={`mt-2 text-sm leading-relaxed ${muted}`}>
+              We fill in your credentials automatically. Copy the config, paste it into your editor, restart — done.
+            </p>
           </div>
 
-          {/* Step 1: Token */}
-          <section className={`mt-6 p-6 ${panel}`}>
-            <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-500/15 text-xs font-bold text-teal-600 dark:text-teal-300">
-                1
-              </span>
-              Your access token
-            </h2>
-            <p className={`mt-2 text-sm ${muted}`}>
-              MCP authenticates as <strong>you</strong>. Copy this token into your client config. It expires—refresh here
-              when connections fail.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={loadingToken || !accessToken}
-                onClick={() => accessToken && copyText(accessToken, 'token', 'Access token')}
-                className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-500 disabled:opacity-50"
-              >
-                {copied === 'token' ? <ClipboardCheck className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
-                Copy access token
-              </button>
-              <button
-                type="button"
-                onClick={() => void refreshToken()}
-                className={`rounded-lg px-4 py-2 text-sm font-medium ${
-                  isDarkMode ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-800 hover:bg-zinc-200'
-                }`}
-              >
-                Refresh token
-              </button>
-            </div>
-            {accessToken ? (
-              <pre className={`mt-4 max-h-24 overflow-auto break-all ${codeBlock}`}>
-                {accessToken.slice(0, 48)}…
-              </pre>
-            ) : (
-              <p className={`mt-4 text-sm ${muted}`}>No active session token. Try signing out and back in.</p>
-            )}
-          </section>
-
-          {/* Step 2: Secret */}
-          <section className={`mt-6 p-6 ${panel}`}>
-            <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-500/15 text-xs font-bold text-teal-600 dark:text-teal-300">
-                2
-              </span>
-              MCP API secret
-            </h2>
-            <p className={`mt-2 text-sm ${muted}`}>
-              Your deployment operator sets <code className="rounded bg-black/5 px-1">MCP_API_SECRET</code> in Vercel.
-              Paste it here so generated configs are ready to use. Leave blank only if your deployment does not require
-              it.
-            </p>
-            <input
-              type="password"
-              value={mcpSecret}
-              onChange={(e) => setMcpSecret(e.target.value)}
-              placeholder="Paste MCP_API_SECRET from Vercel"
-              className={`mt-4 w-full rounded-lg border px-3 py-2 text-sm ${
-                isDarkMode
-                  ? 'border-zinc-700 bg-zinc-900 text-zinc-100 placeholder:text-zinc-600'
-                  : 'border-zinc-300 bg-white text-zinc-900 placeholder:text-zinc-400'
-              }`}
-            />
-            <p className={`mt-2 text-xs ${muted}`}>
-              Endpoint: <code className="font-mono">{endpoint}</code>
-            </p>
-          </section>
-
-          {/* Step 3: Configs */}
-          <section className={`mt-6 p-6 ${panel}`}>
-            <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-500/15 text-xs font-bold text-teal-600 dark:text-teal-300">
-                3
-              </span>
-              Client configuration
-            </h2>
-
-            <div className="mt-4">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold">Cursor (recommended)</h3>
+          <section className={`mt-6 p-6 sm:p-8 ${panel}`}>
+            <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800/80">
+              {(
+                [
+                  { id: 'cursor' as const, label: 'Cursor' },
+                  { id: 'claude' as const, label: 'Claude Desktop' },
+                ] as const
+              ).map(({ id, label }) => (
                 <button
+                  key={id}
                   type="button"
-                  disabled={!cursorConfig}
-                  onClick={() => cursorConfig && copyText(cursorConfig, 'cursor', 'Cursor MCP config')}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium ${
-                    isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700' : 'bg-zinc-100 hover:bg-zinc-200'
+                  onClick={() => setClientTab(id)}
+                  className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold transition ${
+                    clientTab === id
+                      ? isDarkMode
+                        ? 'bg-zinc-700 text-white shadow-sm'
+                        : 'bg-white text-zinc-900 shadow-sm'
+                      : muted
                   }`}
                 >
-                  {copied === 'cursor' ? <Check className="h-3.5 w-3.5" /> : <Clipboard className="h-3.5 w-3.5" />}
-                  Copy JSON
+                  {label}
                 </button>
-              </div>
-              <p className={`mb-2 text-xs ${muted}`}>
-                Cursor Settings → MCP → add server, or edit <code className="font-mono">~/.cursor/mcp.json</code>
-              </p>
-              <pre className={`max-h-64 overflow-auto whitespace-pre-wrap ${codeBlock}`}>
-                {cursorConfig || 'Sign in and refresh your token to generate config.'}
-              </pre>
+              ))}
             </div>
 
-            <div className="mt-6">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <h3 className="flex items-center gap-2 text-sm font-semibold">
-                  <Terminal className="h-4 w-4" />
-                  Claude Desktop / stdio clients
-                </h3>
-                <button
-                  type="button"
-                  disabled={!claudeCommand}
-                  onClick={() => claudeCommand && copyText(claudeCommand, 'claude', 'mcp-remote command')}
-                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium ${
-                    isDarkMode ? 'bg-zinc-800 hover:bg-zinc-700' : 'bg-zinc-100 hover:bg-zinc-200'
-                  }`}
-                >
-                  {copied === 'claude' ? <Check className="h-3.5 w-3.5" /> : <Clipboard className="h-3.5 w-3.5" />}
-                  Copy command
-                </button>
-              </div>
-              <p className={`mb-2 text-xs ${muted}`}>
-                Use <code className="font-mono">mcp-remote</code> to proxy HTTP MCP over stdio. See full JSON example in
-                docs.
-              </p>
-              <pre className={`overflow-x-auto whitespace-pre-wrap ${codeBlock}`}>{claudeCommand || '—'}</pre>
-            </div>
+            <ol className="mt-6 space-y-4">
+              <li className="flex gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/15 text-sm font-bold text-indigo-600 dark:text-indigo-300">
+                  1
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">Copy your config</p>
+                  <p className={`mt-0.5 text-sm ${muted}`}>Everything is pre-filled — no tokens or secrets to hunt down.</p>
+                  <button
+                    type="button"
+                    disabled={loading || !activeConfig}
+                    onClick={() => void copyConfig()}
+                    className="mt-3 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
+                  >
+                    {copied ? <ClipboardCheck className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
+                    {copied ? 'Copied!' : 'Copy config'}
+                  </button>
+                  {loadError ? <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{loadError}</p> : null}
+                </div>
+              </li>
+              <li className="flex gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/15 text-sm font-bold text-indigo-600 dark:text-indigo-300">
+                  2
+                </span>
+                <div>
+                  <p className="font-semibold">Paste into {clientTab === 'cursor' ? 'Cursor' : 'Claude'}</p>
+                  <ul className={`mt-2 list-inside list-decimal space-y-1.5 text-sm ${muted}`}>
+                    {pasteSteps.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ul>
+                </div>
+              </li>
+            </ol>
+
+            {!loading && activeConfig ? (
+              <details className="mt-6">
+                <summary className={`cursor-pointer text-sm font-medium ${muted}`}>Preview config</summary>
+                <pre className={`mt-3 max-h-48 overflow-auto whitespace-pre-wrap ${codeBlock}`}>{activeConfig}</pre>
+              </details>
+            ) : loading ? (
+              <p className={`mt-6 text-sm ${muted}`}>Preparing your config…</p>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={() => void loadSetup()}
+              className={`mt-4 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400`}
+            >
+              Regenerate config
+            </button>
           </section>
 
-          {/* Tools & prompts */}
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <section className={`p-6 ${panel}`}>
-              <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-                <Wrench className="h-4 w-4 text-teal-500" />
-                {MCP_TOOLS.length} tools available
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((v) => !v)}
+            className={`mt-4 flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium ${
+              isDarkMode ? 'border-zinc-800 text-zinc-300' : 'border-zinc-200 text-zinc-700'
+            }`}
+          >
+            When connection stops working
+            <ChevronDown className={`h-4 w-4 transition ${showAdvanced ? 'rotate-180' : ''}`} />
+          </button>
+          {showAdvanced ? (
+            <div className={`mt-2 rounded-xl border p-4 text-sm ${isDarkMode ? 'border-zinc-800 text-zinc-400' : 'border-zinc-200 text-zinc-600'}`}>
+              <p>
+                Access tokens expire after a while. If MCP returns <code className="font-mono text-xs">401</code>, come
+                back here and click <strong>Regenerate config</strong>, then paste the new JSON into your client again.
+              </p>
+              {setup?.endpoint ? (
+                <p className="mt-2">
+                  Endpoint: <code className="font-mono text-xs">{setup.endpoint}</code>
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            <section className={`p-5 ${panel}`}>
+              <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
+                <Wrench className="h-4 w-4 text-indigo-500" />
+                {MCP_TOOLS.length} tools
               </h2>
-              <ul className={`space-y-2 text-sm ${muted}`}>
-                {MCP_TOOLS.map((t) => (
-                  <li key={t.name} className="flex gap-2">
-                    <code className={`shrink-0 font-mono text-xs ${isDarkMode ? 'text-teal-300' : 'text-teal-700'}`}>
-                      {t.name}
-                    </code>
-                    <span>{t.description}</span>
+              <ul className={`space-y-1.5 text-xs ${muted}`}>
+                {MCP_TOOLS.slice(0, 5).map((t) => (
+                  <li key={t.name}>
+                    <code className={isDarkMode ? 'text-indigo-300' : 'text-indigo-700'}>{t.name}</code>
                   </li>
                 ))}
+                <li className="pt-1 italic">+ {MCP_TOOLS.length - 5} more</li>
               </ul>
             </section>
-
-            <section className={`p-6 ${panel}`}>
-              <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
+            <section className={`p-5 ${panel}`}>
+              <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
                 <Sparkles className="h-4 w-4 text-indigo-500" />
-                Try asking your AI
+                Try asking
               </h2>
-              <ul className="space-y-3">
-                {MCP_EXAMPLE_PROMPTS.map((prompt) => (
-                  <li
-                    key={prompt}
-                    className={`rounded-lg border px-3 py-2 text-sm italic ${
-                      isDarkMode ? 'border-zinc-700/60 bg-zinc-800/30 text-zinc-300' : 'border-zinc-200 bg-zinc-50 text-zinc-700'
-                    }`}
-                  >
-                    &ldquo;{prompt}&rdquo;
-                  </li>
-                ))}
-              </ul>
+              <p className={`text-xs italic ${muted}`}>&ldquo;{MCP_EXAMPLE_PROMPTS[0]}&rdquo;</p>
             </section>
           </div>
 
-          <div className={`mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${
-            isDarkMode ? 'border-indigo-500/30 bg-indigo-950/20' : 'border-indigo-200 bg-indigo-50/50'
-          }`}>
-            <p className={`text-sm ${muted}`}>
-              Full walkthrough, troubleshooting, and security notes live in the docs.
-            </p>
+          <div
+            className={`mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${
+              isDarkMode ? 'border-indigo-500/30 bg-indigo-950/20' : 'border-indigo-200 bg-indigo-50/50'
+            }`}
+          >
+            <p className={`text-sm ${muted}`}>Troubleshooting and security notes</p>
             <Link
               to={documentationBoardArticlePath(MCP_DOCS_SLUG)}
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 dark:text-indigo-400"
             >
-              MCP documentation
-              <ArrowRight className="h-4 w-4" />
+              MCP docs
+              <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
