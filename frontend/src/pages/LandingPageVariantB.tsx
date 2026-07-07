@@ -18,7 +18,8 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Logo from '../assets/kanban_ai_logo5.png'
-import promocard from '../assets/main_kanban.jpg'
+import promocardLight from '../assets/promocard2_light.png'
+import promocardDark from '../assets/promocard2_dark.png'
 import sprintPlanning from '../assets/undraw_choose_card_n0x0.svg'
 import taskManagement from '../assets/undraw_join_re_w1lh.svg'
 import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
@@ -297,7 +298,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
             }`}
           >
             <img
-              src={promocard}
+              src={isDarkMode ? promocardDark : promocardLight}
               alt="Kanban AI board preview"
               className="block h-auto w-full rounded-xl sm:rounded-2xl"
             />

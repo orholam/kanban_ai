@@ -3,7 +3,8 @@ import { useAuth } from '../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom';
-import promocard from '../assets/main_kanban.jpg'
+import promocardLight from '../assets/promocard2_light.png'
+import promocardDark from '../assets/promocard2_dark.png'
 import sprintPlanning from '../assets/undraw_choose_card_n0x0.svg'
 import taskManagement from '../assets/undraw_join_re_w1lh.svg'
 import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
@@ -97,7 +98,7 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
 
             <div className="mt-16 flex justify-center relative z-10 mx-2 sm:mx-8">
               <img
-                src={promocard}
+                src={isDarkMode ? promocardDark : promocardLight}
                 alt="Product preview"
                 className="rounded-xl shadow-2xl w-full max-w-[1600px] transition-shadow duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
               />
