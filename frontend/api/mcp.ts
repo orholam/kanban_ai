@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createMcpHandler } from 'mcp-handler';
-import { recordMcpAuthFailure, recordMcpSession } from './_lib/mcp/analytics';
-import { authenticateMcpRequest } from './_lib/mcp/auth';
-import { mcpRequestContext } from './_lib/mcp/requestContext';
-import { registerKanbanMcpTools } from './_lib/mcp/registerTools';
-import { sendWebResponse, vercelRequestToWebRequest } from './_lib/mcp/vercelBridge';
+import { recordMcpAuthFailure, recordMcpSession } from './_lib/mcp/analytics.js';
+import { authenticateMcpRequest } from './_lib/mcp/auth.js';
+import { mcpRequestContext } from './_lib/mcp/requestContext.js';
+import { registerKanbanMcpTools } from './_lib/mcp/registerTools.js';
+import { sendWebResponse, vercelRequestToWebRequest } from './_lib/mcp/vercelBridge.js';
 
 const mcpHandler = createMcpHandler(
   (server) => {

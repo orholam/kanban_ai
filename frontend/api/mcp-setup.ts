@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { authenticateSupabaseAccessToken } from './_lib/mcp/auth';
-import { vercelRequestToWebRequest } from './_lib/mcp/vercelBridge';
+import { authenticateSupabaseAccessToken } from './_lib/mcp/auth.js';
+import { vercelRequestToWebRequest } from './_lib/mcp/vercelBridge.js';
 
 function extractBearerToken(req: VercelRequest): string | undefined {
   const auth = req.headers.authorization?.trim();
