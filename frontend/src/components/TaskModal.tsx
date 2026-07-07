@@ -3,6 +3,7 @@ import { lazyWithRetry } from '../lib/lazyWithRetry';
 import { Link } from 'react-router-dom';
 import { X, Calendar, User, Trash2, ArrowUp, Loader2, Sparkles } from 'lucide-react';
 import type { Task, TaskComment, Status } from '../types';
+import type { AssigneeOption } from '../lib/assignee';
 
 const TaskModalCalendar = lazyWithRetry(() => import('./TaskModalCalendar'));
 import TextareaAutosize from 'react-textarea-autosize';
@@ -109,24 +110,28 @@ interface TaskModalProps {
   task: Task;
   numSprints?: number;
   guestMode?: boolean;
+  assigneeOptions?: AssigneeOption[];
   onClose: () => void;
   onStatusChange: (taskId: string, newStatus: string) => void;
   onSprintChange: (taskId: string, newSprint: number) => void;
   onDescriptionChange: (taskId: string, newDescription: string) => void;
   onTitleChange: (taskId: string, newTitle: string) => void;
   onDueDateChange: (taskId: string, newDueDate: Date) => void;
+  onAssigneeChange?: (taskId: string, newAssigneeId: string) => void;
 }
 
 export default function TaskModal({
   task,
   numSprints = 10,
   guestMode = false,
+  assigneeOptions = [],
   onClose,
   onStatusChange,
   onSprintChange,
   onDescriptionChange,
   onTitleChange,
   onDueDateChange,
+  onAssigneeChange,
 }: TaskModalProps) {
   const { user } = useAuth();
   const [status, setStatus] = useState(task.status); // Local state for the status
@@ -139,6 +144,7 @@ export default function TaskModal({
   const [isVisible, setIsVisible] = useState(false);
   const [assigneeLabel, setAssigneeLabel] = useState('');
   const [assigneeInitials, setAssigneeInitials] = useState('');
+  const [assigneeId, setAssigneeId] = useState((task.assignee_id ?? '').trim());
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const titleDebounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -209,7 +215,8 @@ export default function TaskModal({
     setSprint(task.sprint);
     setTitle(task.title);
     setDueDate(parseTaskDueDate(task.due_date));
-  }, [task.status, task.sprint, task.title, task.due_date]);
+    setAssigneeId((task.assignee_id ?? '').trim());
+  }, [task.status, task.sprint, task.title, task.due_date, task.assignee_id]);
 
   // Trigger entrance animation
   useEffect(() => {
@@ -265,6 +272,16 @@ export default function TaskModal({
     setSprint(newSprint);
     onSprintChange(task.id, newSprint);
   };
+
+  const handleAssigneeSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newAssigneeId = e.target.value;
+    setAssigneeId(newAssigneeId);
+    onAssigneeChange?.(task.id, newAssigneeId);
+  };
+
+  const selectedAssignee = assigneeOptions.find((o) => o.id === assigneeId);
+  const canEditAssignee = Boolean(onAssigneeChange) && assigneeOptions.length > 0;
+  const assigneeAvatarInitials = selectedAssignee?.initials ?? (assigneeId ? assigneeInitials : '—');
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newDescription = e.target.value;
@@ -574,15 +591,34 @@ export default function TaskModal({
                       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-600 dark:bg-gray-600 dark:text-gray-200"
                       aria-hidden
                     >
-                      {assigneeInitials === '—' ? (
+                      {assigneeAvatarInitials === '—' ? (
                         <User className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                       ) : (
-                        assigneeInitials
+                        assigneeAvatarInitials
                       )}
                     </div>
-                    <span className="min-w-0 flex-1 truncate text-sm text-gray-900 dark:text-gray-100">
-                      {assigneeLabel}
-                    </span>
+                    {canEditAssignee ? (
+                      <select
+                        value={assigneeId}
+                        onChange={handleAssigneeSelect}
+                        aria-label="Assignee"
+                        className="min-w-0 flex-1 cursor-pointer border-0 bg-transparent text-sm text-gray-900 outline-none focus:ring-0 dark:text-gray-100"
+                      >
+                        <option value="">Unassigned</option>
+                        {assigneeOptions.map((option) => (
+                          <option key={option.id} value={option.id}>
+                            {option.name}
+                          </option>
+                        ))}
+                        {assigneeId && !selectedAssignee ? (
+                          <option value={assigneeId}>{assigneeLabel || 'Unknown user'}</option>
+                        ) : null}
+                      </select>
+                    ) : (
+                      <span className="min-w-0 flex-1 truncate text-sm text-gray-900 dark:text-gray-100">
+                        {selectedAssignee?.name ?? assigneeLabel}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

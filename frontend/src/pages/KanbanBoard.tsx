@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react';
 import { lazyWithRetry } from '../lib/lazyWithRetry';
-import { useParams, Link } from 'react-router-dom';
-import { Plus, Minus, Eye, EyeOff, Link as LinkIcon, Plug, Users, X } from 'lucide-react';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { Plus, Minus, Eye, EyeOff, Link as LinkIcon, Plug, Users, X, Filter } from 'lucide-react';
 import TaskCard from '../components/TaskCard';
-import type { Project, Task } from '../types';
+import type { Project, Task, Priority, TaskType } from '../types';
 import {
   deleteTaskRow,
   fetchProjectMetaFields,
@@ -19,6 +19,11 @@ import { loadGuestDraft, saveGuestDraft } from '../lib/guestDraft';
 import { isLocalAppMode } from '../lib/localApp';
 import { useAuth } from '../contexts/AuthContext';
 import ProjectMembersPanel from '../components/ProjectMembersPanel';
+import { listProjectCollaborators } from '../api/projectCollaborators';
+import { fetchProfileDisplayName } from '../lib/profileDisplayName';
+import { getDisplayName, getUserInitials } from '../lib/userUtils';
+import type { AssigneeOption } from '../lib/assignee';
+import { initialsFromName } from '../lib/assignee';
 
 const MCP_CONNECT_BANNER_KEY = 'kanban_mcp_connect_banner_dismissed_v1';
 
@@ -27,6 +32,35 @@ const CreateTaskModal = lazyWithRetry(() => import('../components/CreateTaskModa
 const ProjectTaskChat = lazyWithRetry(() => import('../components/ProjectTaskChat'));
 
 const STAGGER_DELAY_MS = 100; // Delay between each card animation
+
+function sprintStorageKey(projectId: string): string {
+  return `kanban_active_sprint_${projectId}`;
+}
+
+function readStoredSprint(projectId: string): number | null {
+  try {
+    const raw = localStorage.getItem(sprintStorageKey(projectId));
+    if (!raw) return null;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredSprint(projectId: string, sprint: number): void {
+  try {
+    localStorage.setItem(sprintStorageKey(projectId), String(sprint));
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+function clampSprint(sprint: number, maxSprints: number): number {
+  const max = Math.max(1, maxSprints);
+  if (!Number.isFinite(sprint)) return 1;
+  return Math.min(Math.max(1, Math.floor(sprint)), max);
+}
 
 const BOARD_COLUMNS = [
   { id: 'todo' as const, title: 'To do' },
@@ -53,6 +87,8 @@ export default function KanbanBoard({
 }: KanbanBoardProps) {
   const { user } = useAuth();
   const { projectId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sprintParam = searchParams.get('sprint');
   const [tasks, setTasks] = useState<Task[]>([]); // Add explicit Task[] type
   const tasksRef = useRef<Task[]>(tasks);
   useEffect(() => {
@@ -128,6 +164,12 @@ export default function KanbanBoard({
   });
   const [isPrivacyUpdating, setIsPrivacyUpdating] = useState(false);
   const [isMembersPanelOpen, setIsMembersPanelOpen] = useState(false);
+  const [assigneeOptions, setAssigneeOptions] = useState<AssigneeOption[]>([]);
+  const [assigneeFilter, setAssigneeFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'' | TaskType>('');
+  const [priorityFilter, setPriorityFilter] = useState<'' | Priority>('');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement | null>(null);
   const [isSprintUpdating, setIsSprintUpdating] = useState(false);
   const [projectTitleDraft, setProjectTitleDraft] = useState('');
   const [projectDescDraft, setProjectDescDraft] = useState('');
@@ -191,12 +233,48 @@ export default function KanbanBoard({
     if (!currentProject) return;
     setProjectTitleDraft(currentProject.title);
     setProjectDescDraft(currentProject.description ?? '');
-  }, [currentProject?.id]); // eslint-disable-line react-hooks/exhaustive-deps -- drafts follow project id only
+    setAssigneeFilter('');
+    setTypeFilter('');
+    setPriorityFilter('');
+  }, [currentProject?.id]); // eslint-disable-line react-hooks/exhaustive-deps -- drafts and filters follow project id only
 
   useEffect(() => {
     if (!currentProject) return;
-    setActiveSprint(currentProject.current_sprint ?? 1);
-  }, [currentProject?.id, currentProject?.current_sprint]); // eslint-disable-line react-hooks/exhaustive-deps -- sync when project or stored sprint changes
+    const max = Math.max(1, currentProject.num_sprints ?? 10);
+    const fromUrl = sprintParam ? parseInt(sprintParam, 10) : NaN;
+    const hasValidUrl = Number.isFinite(fromUrl) && fromUrl >= 1 && fromUrl <= max;
+    // The team's shared active sprint (`current_sprint`) is only the default
+    // landing spot. Which sprint *this user* is viewing is per-user: URL first,
+    // then their last-viewed (localStorage), then the team default.
+    const teamActive = clampSprint(Number(currentProject.current_sprint ?? 1), max);
+    const stored = readStoredSprint(currentProject.id);
+    const fromStorage =
+      stored !== null && stored >= 1 && stored <= max ? stored : null;
+
+    const resolved = clampSprint(
+      hasValidUrl ? fromUrl : (fromStorage ?? teamActive),
+      max
+    );
+
+    setActiveSprint((prev) => (prev === resolved ? prev : resolved));
+
+    if (!hasValidUrl || sprintParam !== String(resolved)) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('sprint', String(resolved));
+          return next;
+        },
+        { replace: true }
+      );
+    }
+  }, [
+    currentProject?.id,
+    currentProject?.current_sprint,
+    currentProject?.num_sprints,
+    sprintParam,
+    setSearchParams,
+  ]);
 
   useEffect(() => {
     if (!guestMode) return;
@@ -244,6 +322,65 @@ export default function KanbanBoard({
       cancelled = true;
     };
   }, [currentProject?.id, guestMode]);
+
+  useEffect(() => {
+    const ownerId = currentProject?.user_id;
+    const projectId = currentProject?.id;
+    if (!projectId) {
+      setAssigneeOptions([]);
+      return;
+    }
+
+    if (guestMode) {
+      setAssigneeOptions(
+        user
+          ? [{ id: user.id, name: getDisplayName(user), initials: getUserInitials(user) }]
+          : []
+      );
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      const options: AssigneeOption[] = [];
+      const seen = new Set<string>();
+
+      if (ownerId) {
+        let ownerName: string;
+        if (user?.id === ownerId) {
+          ownerName = getDisplayName(user);
+        } else {
+          ownerName = (await fetchProfileDisplayName(ownerId)) ?? 'Project owner';
+        }
+        options.push({ id: ownerId, name: ownerName, initials: initialsFromName(ownerName) });
+        seen.add(ownerId);
+      }
+
+      try {
+        const collaborators = await listProjectCollaborators(projectId);
+        for (const member of collaborators) {
+          if (member.role === 'owner' || seen.has(member.user_id)) continue;
+          const name = member.display_name?.trim() || member.email?.trim() || 'Member';
+          options.push({ id: member.user_id, name, initials: initialsFromName(name) });
+          seen.add(member.user_id);
+        }
+      } catch (err) {
+        console.error('Failed to load project members for assignee list:', err);
+      }
+
+      if (!cancelled) setAssigneeOptions(options);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentProject?.id, currentProject?.user_id, guestMode, user]);
+
+  const assigneeById = useMemo(() => {
+    const map = new Map<string, AssigneeOption>();
+    for (const option of assigneeOptions) map.set(option.id, option);
+    return map;
+  }, [assigneeOptions]);
 
   {/* handle status change from todo to in progress to done etc.*/}
   const handleStatusChange = async (taskId: string, newStatus: string) => {
@@ -317,6 +454,49 @@ export default function KanbanBoard({
     } catch (error) {
       console.error('Error updating sprint status:', error);
       toast.error(error instanceof Error ? error.message : 'Could not save sprint');
+    }
+  };
+
+  const handleAssigneeChange = async (taskId: string, newAssigneeId: string) => {
+    const nextAssignee = newAssigneeId.trim();
+    if (guestMode) {
+      const touched = new Date().toISOString();
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.id === taskId
+            ? { ...task, assignee_id: nextAssignee, updated_at: touched, isAnimated: true }
+            : task
+        )
+      );
+      toast.success('Assignee updated');
+      return;
+    }
+
+    const previous = tasksRef.current.find((t) => t.id === taskId);
+    if (!previous || previous.assignee_id === nextAssignee) return;
+
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId ? { ...task, assignee_id: nextAssignee } : task
+      )
+    );
+
+    try {
+      const { merged, data0 } = await updateTaskRowReturnArray(
+        taskId,
+        { assignee_id: nextAssignee || null },
+        previous
+      );
+      setTasks((prevTasks) =>
+        prevTasks.map((task) => (task.id === data0.id ? merged : task))
+      );
+      toast.success('Assignee updated');
+    } catch (error) {
+      console.error('Error updating assignee:', error);
+      setTasks((prevTasks) =>
+        prevTasks.map((task) => (task.id === taskId ? previous : task))
+      );
+      toast.error(error instanceof Error ? error.message : 'Could not save assignee');
     }
   };
 
@@ -563,32 +743,63 @@ export default function KanbanBoard({
     await persistProjectMeta({ description: next });
   };
 
-  const handleSprintSelect = async (sprint: number) => {
-    if (!currentProject || isSprintUpdating) return;
-    if (activeSprint === sprint) return;
+  const viewSprint = useCallback(
+    (sprint: number) => {
+      if (!currentProject) return;
+      const max = Math.max(1, currentProject.num_sprints ?? 10);
+      const nextSprint = clampSprint(sprint, max);
+      setActiveSprint(nextSprint);
+      writeStoredSprint(currentProject.id, nextSprint);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set('sprint', String(nextSprint));
+          return next;
+        },
+        { replace: true }
+      );
+    },
+    [currentProject, setSearchParams]
+  );
 
-    const prevSprint = activeSprint;
-    setActiveSprint(sprint);
+  // Per-user: only changes which sprint *this* user is viewing. Never writes
+  // the shared project state, so browsing a past sprint doesn't move it for
+  // the whole team.
+  const handleSprintSelect = (sprint: number) => {
+    viewSprint(sprint);
+  };
+
+  // Shared: explicitly promote the viewed sprint to the team's active sprint.
+  const handleSetActiveSprint = async () => {
+    if (!currentProject || isSprintUpdating) return;
+    const max = Math.max(1, currentProject.num_sprints ?? 10);
+    const nextSprint = clampSprint(activeSprint, max);
+    if (currentProject.current_sprint === nextSprint) return;
+
+    const prevCurrent = currentProject.current_sprint;
 
     if (guestMode) {
-      setCurrentProject((prev) => (prev ? { ...prev, current_sprint: sprint } : null));
+      setCurrentProject((prev) => (prev ? { ...prev, current_sprint: nextSprint } : null));
+      toast.success(`Sprint ${nextSprint} is now the team's active sprint`);
       return;
     }
 
+    setCurrentProject((prev) => (prev ? { ...prev, current_sprint: nextSprint } : null));
     try {
       setIsSprintUpdating(true);
-      await updateProjectRow(currentProject.id, { current_sprint: sprint });
-
-      setCurrentProject((prev) => (prev ? { ...prev, current_sprint: sprint } : null));
+      await updateProjectRow(currentProject.id, { current_sprint: nextSprint });
       if (setProjects) {
         setProjects(
-          projects.map((p) => (p.id === currentProject.id ? { ...p, current_sprint: sprint } : p))
+          projects.map((p) =>
+            p.id === currentProject.id ? { ...p, current_sprint: nextSprint } : p
+          )
         );
       }
+      toast.success(`Sprint ${nextSprint} is now the team's active sprint`);
     } catch (error) {
       console.error('Error updating current sprint:', error);
-      setActiveSprint(prevSprint);
-      toast.error('Failed to update sprint');
+      setCurrentProject((prev) => (prev ? { ...prev, current_sprint: prevCurrent } : null));
+      toast.error('Failed to set active sprint');
     } finally {
       setIsSprintUpdating(false);
     }
@@ -636,27 +847,30 @@ export default function KanbanBoard({
 
     const prevCount = currentProject.num_sprints;
     const next = prevCount - 1;
-    const nextActive = activeSprint > next ? next : activeSprint;
+    // Clamp the team's shared active sprint only if it no longer exists.
+    const nextTeamActive = currentProject.current_sprint > next ? next : currentProject.current_sprint;
+    // Clamp this user's view only if they were looking at the removed sprint.
+    const nextView = activeSprint > next ? next : activeSprint;
+
+    if (nextView !== activeSprint) viewSprint(nextView);
 
     if (guestMode) {
       setCurrentProject((prev) =>
-        prev ? { ...prev, num_sprints: next, current_sprint: nextActive } : null
+        prev ? { ...prev, num_sprints: next, current_sprint: nextTeamActive } : null
       );
-      setActiveSprint(nextActive);
       return;
     }
 
     try {
       setIsSprintUpdating(true);
       const patch: Partial<Project> = { num_sprints: next };
-      if (activeSprint !== nextActive) {
-        patch.current_sprint = nextActive;
+      if (nextTeamActive !== currentProject.current_sprint) {
+        patch.current_sprint = nextTeamActive;
       }
       const data = await updateProjectRow(currentProject.id, patch);
       const updatedNumSprints = Number(data.num_sprints ?? next);
-      const updatedCurrentSprint = Number(data.current_sprint ?? nextActive);
+      const updatedCurrentSprint = Number(data.current_sprint ?? nextTeamActive);
 
-      setActiveSprint(updatedCurrentSprint);
       setCurrentProject((prev) =>
         prev
           ? {
@@ -754,10 +968,56 @@ export default function KanbanBoard({
   };
 
 
+  const activeFilterCount =
+    (assigneeFilter !== '' ? 1 : 0) + (typeFilter !== '' ? 1 : 0) + (priorityFilter !== '' ? 1 : 0);
+  const hasActiveFilters = activeFilterCount > 0;
+
+  const clearBoardFilters = () => {
+    setAssigneeFilter('');
+    setTypeFilter('');
+    setPriorityFilter('');
+  };
+
+  useEffect(() => {
+    if (!isFilterOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setIsFilterOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFilterOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [isFilterOpen]);
+
+  const toolbarSelectClass = `w-full min-h-[1.875rem] rounded-md border px-2 py-1 text-xs font-medium outline-none focus:ring-2 focus:ring-indigo-500/30 ${
+    isDarkMode
+      ? 'border-zinc-700/80 bg-zinc-950/60 text-zinc-200'
+      : 'border-zinc-200 bg-white text-zinc-800'
+  }`;
+
   const tasksByColumn = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const matchesSearch = (t: Task) =>
       !q || t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q);
+
+    const matchesFilters = (t: Task) => {
+      const assigneeId = (t.assignee_id ?? '').trim();
+      if (assigneeFilter === 'unassigned') {
+        if (assigneeId) return false;
+      } else if (assigneeFilter !== '' && assigneeId !== assigneeFilter) {
+        return false;
+      }
+      if (typeFilter && t.type !== typeFilter) return false;
+      if (priorityFilter && t.priority !== priorityFilter) return false;
+      return true;
+    };
 
     const out: Record<(typeof BOARD_COLUMNS)[number]['id'], Task[]> = {
       todo: [],
@@ -765,13 +1025,13 @@ export default function KanbanBoard({
       done: [],
     };
     for (const t of tasks) {
-      if (t.sprint !== activeSprint || !matchesSearch(t)) continue;
+      if (t.sprint !== activeSprint || !matchesSearch(t) || !matchesFilters(t)) continue;
       if (t.status === 'todo' || t.status === 'in-progress' || t.status === 'done') {
         out[t.status].push(t);
       }
     }
     return out;
-  }, [tasks, searchQuery, activeSprint]);
+  }, [tasks, searchQuery, activeSprint, assigneeFilter, typeFilter, priorityFilter]);
 
   return (
     <div
@@ -947,22 +1207,24 @@ export default function KanbanBoard({
                 </span>
                 <div
                   role="group"
-                  aria-label="Active sprint"
+                  aria-label="View sprint"
                   className={`inline-flex rounded-lg p-0.5 ${
                     isDarkMode ? 'bg-zinc-950/80' : 'bg-zinc-200/50'
                   }`}
                 >
                   {Array.from({ length: currentProject.num_sprints }, (_, i) => i + 1).map((sprint) => {
-                    const active = activeSprint === sprint;
+                    const viewing = activeSprint === sprint;
+                    const teamActive = currentProject.current_sprint === sprint;
                     return (
                       <button
                         key={sprint}
                         type="button"
-                        aria-pressed={active}
+                        aria-pressed={viewing}
                         disabled={isSprintUpdating}
-                        onClick={() => void handleSprintSelect(sprint)}
-                        className={`min-h-[1.625rem] min-w-[1.625rem] rounded-md px-2 text-xs font-semibold tabular-nums transition-colors disabled:opacity-60 ${
-                          active
+                        onClick={() => handleSprintSelect(sprint)}
+                        title={teamActive ? `Sprint ${sprint} (team's active sprint)` : `View sprint ${sprint}`}
+                        className={`relative min-h-[1.625rem] min-w-[1.625rem] rounded-md px-2 text-xs font-semibold tabular-nums transition-colors disabled:opacity-60 ${
+                          viewing
                             ? isDarkMode
                               ? 'bg-zinc-800 text-indigo-300'
                               : 'bg-white text-indigo-800'
@@ -972,10 +1234,43 @@ export default function KanbanBoard({
                         }`}
                       >
                         {sprint}
+                        {teamActive ? (
+                          <span
+                            aria-hidden
+                            className={`absolute -top-0.5 right-0.5 h-1.5 w-1.5 rounded-full ${
+                              isDarkMode ? 'bg-emerald-400' : 'bg-emerald-500'
+                            }`}
+                          />
+                        ) : null}
                       </button>
                     );
                   })}
                 </div>
+                {currentProject.current_sprint !== activeSprint ? (
+                  <button
+                    type="button"
+                    disabled={isSprintUpdating}
+                    onClick={() => void handleSetActiveSprint()}
+                    className={`inline-flex min-h-[1.625rem] items-center gap-1 rounded-md px-2 text-xs font-semibold transition-colors disabled:opacity-60 ${
+                      isDarkMode
+                        ? 'text-emerald-300 hover:bg-emerald-950/50'
+                        : 'text-emerald-700 hover:bg-emerald-50'
+                    }`}
+                    title={`Set sprint ${activeSprint} as the team's active sprint`}
+                  >
+                    Set active
+                  </button>
+                ) : (
+                  <span
+                    className={`inline-flex min-h-[1.625rem] items-center gap-1 rounded-md px-2 text-xs font-medium ${
+                      isDarkMode ? 'text-emerald-400/80' : 'text-emerald-600'
+                    }`}
+                    title="You're viewing the team's active sprint"
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${isDarkMode ? 'bg-emerald-400' : 'bg-emerald-500'}`} aria-hidden />
+                    Active
+                  </span>
+                )}
                 <button
                   type="button"
                   disabled={isSprintUpdating}
@@ -1006,6 +1301,127 @@ export default function KanbanBoard({
                     <Minus className="h-3 w-3" aria-hidden />
                     Sprint
                   </button>
+                ) : null}
+              </div>
+
+              <span
+                className={`hidden h-5 w-px shrink-0 sm:block ${isDarkMode ? 'bg-zinc-700/80' : 'bg-zinc-300/70'}`}
+                aria-hidden
+              />
+
+              <div ref={filterRef} className="relative px-1 py-1">
+                <button
+                  type="button"
+                  onClick={() => setIsFilterOpen((v) => !v)}
+                  aria-haspopup="dialog"
+                  aria-expanded={isFilterOpen}
+                  className={`inline-flex min-h-[1.75rem] items-center gap-1.5 rounded-md px-2 text-xs font-semibold transition-colors ${
+                    hasActiveFilters
+                      ? isDarkMode
+                        ? 'bg-indigo-950/50 text-indigo-300'
+                        : 'bg-indigo-50 text-indigo-700'
+                      : isDarkMode
+                        ? 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
+                        : 'text-zinc-600 hover:bg-zinc-200/80 hover:text-zinc-900'
+                  }`}
+                >
+                  <Filter className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  Filter
+                  {activeFilterCount > 0 ? (
+                    <span
+                      className={`ml-0.5 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums ${
+                        isDarkMode ? 'bg-indigo-500 text-white' : 'bg-indigo-600 text-white'
+                      }`}
+                    >
+                      {activeFilterCount}
+                    </span>
+                  ) : null}
+                </button>
+
+                {isFilterOpen ? (
+                  <div
+                    role="dialog"
+                    aria-label="Filter tasks"
+                    className={`absolute left-0 top-full z-20 mt-1.5 w-60 max-w-[calc(100vw-2rem)] rounded-xl border p-3 shadow-lg ${
+                      isDarkMode ? 'border-zinc-800 bg-zinc-900' : 'border-zinc-200 bg-white'
+                    }`}
+                  >
+                    <div className="space-y-3">
+                      <div>
+                        <label
+                          htmlFor="board-filter-assignee"
+                          className={`mb-1 block text-[10px] font-semibold uppercase tracking-wide ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}
+                        >
+                          Assignee
+                        </label>
+                        <select
+                          id="board-filter-assignee"
+                          value={assigneeFilter}
+                          onChange={(e) => setAssigneeFilter(e.target.value)}
+                          className={toolbarSelectClass}
+                        >
+                          <option value="">All assignees</option>
+                          <option value="unassigned">Unassigned</option>
+                          {assigneeOptions.map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="board-filter-type"
+                          className={`mb-1 block text-[10px] font-semibold uppercase tracking-wide ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}
+                        >
+                          Type
+                        </label>
+                        <select
+                          id="board-filter-type"
+                          value={typeFilter}
+                          onChange={(e) => setTypeFilter(e.target.value as '' | TaskType)}
+                          className={toolbarSelectClass}
+                        >
+                          <option value="">All types</option>
+                          <option value="feature">Feature</option>
+                          <option value="bug">Bug</option>
+                          <option value="scope">Scope</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="board-filter-priority"
+                          className={`mb-1 block text-[10px] font-semibold uppercase tracking-wide ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}
+                        >
+                          Priority
+                        </label>
+                        <select
+                          id="board-filter-priority"
+                          value={priorityFilter}
+                          onChange={(e) => setPriorityFilter(e.target.value as '' | Priority)}
+                          className={toolbarSelectClass}
+                        >
+                          <option value="">All priorities</option>
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                      </div>
+                      {hasActiveFilters ? (
+                        <button
+                          type="button"
+                          onClick={clearBoardFilters}
+                          className={`w-full rounded-md border px-2 py-1.5 text-xs font-semibold transition-colors ${
+                            isDarkMode
+                              ? 'border-zinc-700 text-zinc-300 hover:bg-zinc-800'
+                              : 'border-zinc-200 text-zinc-700 hover:bg-zinc-100'
+                          }`}
+                        >
+                          Clear all filters
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
                 ) : null}
               </div>
 
@@ -1110,6 +1526,7 @@ export default function KanbanBoard({
                           onDeleteTask={handleDeleteTask}
                           isDarkMode={isDarkMode}
                           isCondensed={isCondensed}
+                          assignee={assigneeById.get((task.assignee_id ?? '').trim())}
                         />
                         {task.aiBrandish ? (
                           <div
@@ -1158,6 +1575,8 @@ export default function KanbanBoard({
             onDescriptionChange={handleDescriptionChange}
             onTitleChange={handleTitleChange}
             onDueDateChange={handleDueDateChange}
+            assigneeOptions={assigneeOptions}
+            onAssigneeChange={handleAssigneeChange}
           />
         </Suspense>
       )}
@@ -1170,6 +1589,7 @@ export default function KanbanBoard({
             projectId={currentProject?.id || ''}
             numSprints={currentProject?.num_sprints ?? 10}
             defaultSprint={activeSprint}
+            assigneeOptions={assigneeOptions}
           />
         </Suspense>
       )}
