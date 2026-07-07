@@ -1,6 +1,7 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 import type { Task } from '../types';
+import type { AssigneeOption } from '../lib/assignee';
 import { KANBAN_TASK_DRAG_MIME } from '../lib/taskDnD';
 
 interface TaskCardProps {
@@ -9,9 +10,23 @@ interface TaskCardProps {
   onDeleteTask: (taskId: string) => void;
   isDarkMode: boolean;
   isCondensed: boolean;
+  assignee?: AssigneeOption;
 }
 
-export default function TaskCard({ task, onClick, onDeleteTask, isDarkMode , isCondensed}: TaskCardProps) {
+export default function TaskCard({ task, onClick, onDeleteTask, isDarkMode , isCondensed, assignee}: TaskCardProps) {
+  const assigneeAvatar = assignee ? (
+    <span
+      title={`Assigned to ${assignee.name}`}
+      aria-label={`Assigned to ${assignee.name}`}
+      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${
+        isDarkMode
+          ? 'bg-indigo-500/20 text-indigo-200 ring-1 ring-indigo-400/30'
+          : 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200'
+      }`}
+    >
+      {assignee.initials}
+    </span>
+  ) : null;
   const priorityPill = {
     low: isDarkMode
       ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/25'
@@ -83,12 +98,15 @@ export default function TaskCard({ task, onClick, onDeleteTask, isDarkMode , isC
               </span>
             </div>
           </div>
-          <button
-            onClick={handleDelete}
-            className={`shrink-0 pt-0.5 ${isDarkMode ? 'text-zinc-500 hover:text-rose-400' : 'text-zinc-400 hover:text-rose-600'} transition-colors`}
-          >
-            <Trash2 className="h-[1.125rem] w-[1.125rem]" />
-          </button>
+          <div className="flex shrink-0 items-center gap-2 pt-0.5">
+            {assigneeAvatar}
+            <button
+              onClick={handleDelete}
+              className={`${isDarkMode ? 'text-zinc-500 hover:text-rose-400' : 'text-zinc-400 hover:text-rose-600'} transition-colors`}
+            >
+              <Trash2 className="h-[1.125rem] w-[1.125rem]" />
+            </button>
+          </div>
         </div>
       ) : (
         <>
@@ -120,12 +138,15 @@ export default function TaskCard({ task, onClick, onDeleteTask, isDarkMode , isC
                 {task.priority}
               </span>
             </div>
-            <button
-              onClick={handleDelete}
-              className={`${isDarkMode ? 'text-zinc-500 hover:text-rose-400' : 'text-zinc-400 hover:text-rose-600'} transition-colors`}
-            >
-              <Trash2 className="h-[1.125rem] w-[1.125rem]" />
-            </button>
+            <div className="flex shrink-0 items-center gap-2">
+              {assigneeAvatar}
+              <button
+                onClick={handleDelete}
+                className={`${isDarkMode ? 'text-zinc-500 hover:text-rose-400' : 'text-zinc-400 hover:text-rose-600'} transition-colors`}
+              >
+                <Trash2 className="h-[1.125rem] w-[1.125rem]" />
+              </button>
+            </div>
           </div>
         </>
       )}

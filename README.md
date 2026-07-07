@@ -75,6 +75,8 @@ Add `OPENAI_API_KEY` in the Vercel project’s Environment Variables (Production
 
 The app uses code-splitting; [`frontend/vercel.json`](frontend/vercel.json) sets long-lived caching for hashed `/assets/*` files and revalidation for HTML responses so open tabs pick up a fresh `index.html` after deploys. Lazy routes also retry once with a reload if a chunk fails to load (stale shell).
 
+**SEO prerender:** `npm run build` in `frontend/` runs a post-build Puppeteer step that snapshots public marketing routes (`/`, `/blog`, `/blog/*`, `/docs`, `/docs/*`, `/login`, etc.) into route-specific `index.html` files under `dist/`, so search engines receive full page HTML without executing JavaScript. Skip with `SKIP_PRERENDER=1` or use `npm run build:no-prerender` for a faster local build only.
+
 ### Landing page A/B test
 
 The home page randomly assigns variant **A** or **B** (persisted in `localStorage`). Preview either layout with `/?variant=A` or `/?variant=B`. Site owners compare CTA performance under **Analytics → Landing page A/B test**. When you change landing copy or layout, bump `LANDING_AB_TEST_VERSION` in [`frontend/src/lib/landingAbTest.ts`](frontend/src/lib/landingAbTest.ts) so metrics stay comparable. See the [documentation article](https://kanbanai.dev/documentation/landing-page-ab-test) for details.

@@ -35,6 +35,11 @@ export default function BlogPost({ isDarkMode }: BlogPostProps) {
         section="Productivity"
         tags={post.tags}
         image={post.featuredImage ?? DEFAULT_OG_IMAGE}
+        breadcrumbs={[
+          { name: 'Home', url: 'https://kanbanai.dev/' },
+          { name: 'Blog', url: 'https://kanbanai.dev/blog' },
+          { name: post.title, url: `https://kanbanai.dev/blog/${slug}` },
+        ]}
       />
       <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

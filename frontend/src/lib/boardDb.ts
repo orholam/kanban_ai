@@ -193,7 +193,13 @@ export async function updateProjectRow(
 /** Long text / notes fields not loaded in the sidebar project list. */
 export async function fetchProjectMetaFields(
   projectId: string
-): Promise<Pick<Project, 'master_plan' | 'initial_prompt' | 'achievements' | 'notes'> | null> {
+): Promise<
+  | Pick<
+      Project,
+      'master_plan' | 'initial_prompt' | 'achievements' | 'notes' | 'num_sprints' | 'current_sprint'
+    >
+  | null
+> {
   if (isLocalAppMode()) {
     try {
       const { project } = await localJson<{ project: Record<string, unknown> }>(
@@ -204,6 +210,8 @@ export async function fetchProjectMetaFields(
         initial_prompt: String(project.initial_prompt ?? ''),
         achievements: String(project.achievements ?? ''),
         notes: String(project.notes ?? ''),
+        num_sprints: Number(project.num_sprints ?? 10),
+        current_sprint: Number(project.current_sprint ?? 1),
       };
     } catch {
       return null;
@@ -211,11 +219,15 @@ export async function fetchProjectMetaFields(
   }
   const { data, error } = await supabase
     .from('projects')
-    .select('master_plan, initial_prompt, achievements, notes')
+    .select('master_plan, initial_prompt, achievements, notes, num_sprints, current_sprint')
     .eq('id', projectId)
     .maybeSingle();
   if (error || !data) return null;
-  return data as Pick<Project, 'master_plan' | 'initial_prompt' | 'achievements' | 'notes'>;
+  return {
+    ...(data as Pick<Project, 'master_plan' | 'initial_prompt' | 'achievements' | 'notes'>),
+    num_sprints: Number((data as { num_sprints?: number }).num_sprints ?? 10),
+    current_sprint: Number((data as { current_sprint?: number }).current_sprint ?? 1),
+  };
 }
 
 export async function fetchPublicProjectRow(projectId: string): Promise<Record<string, unknown> | null> {

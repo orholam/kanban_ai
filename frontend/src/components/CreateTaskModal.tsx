@@ -2,6 +2,7 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { lazyWithRetry } from '../lib/lazyWithRetry';
 import { X, Calendar, User } from 'lucide-react';
 import type { Task } from '../types';
+import type { AssigneeOption } from '../lib/assignee';
 import TextareaAutosize from 'react-textarea-autosize';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,6 +18,7 @@ interface CreateTaskModalProps {
   projectId: string;
   numSprints?: number;
   defaultSprint?: number;
+  assigneeOptions?: AssigneeOption[];
 }
 
 export default function CreateTaskModal({
@@ -25,6 +27,7 @@ export default function CreateTaskModal({
   projectId,
   numSprints = 10,
   defaultSprint = 1,
+  assigneeOptions = [],
 }: CreateTaskModalProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
@@ -35,6 +38,7 @@ export default function CreateTaskModal({
   const [showCalendar, setShowCalendar] = useState(false);
   const [type, setType] = useState('feature');
   const [priority, setPriority] = useState('medium');
+  const [assigneeId, setAssigneeId] = useState(user?.id || '');
   const [isClosing, setIsClosing] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -66,7 +70,7 @@ export default function CreateTaskModal({
       status: status as 'todo' | 'in-progress' | 'done',
       sprint: parseInt(sprint.toString(), 10),
       due_date: dueDate.toISOString().split('T')[0],
-      assignee_id: user?.id || '',
+      assignee_id: assigneeId,
       created_at: ts,
       updated_at: ts,
     };
@@ -82,8 +86,12 @@ export default function CreateTaskModal({
     }
   };
 
-  const assigneeLabel = user ? getDisplayName(user) : 'Unassigned';
-  const assigneeInitials = user ? getUserInitials(user) : '—';
+  const selectedAssignee = assigneeOptions.find((o) => o.id === assigneeId);
+  const fallbackLabel = user ? getDisplayName(user) : 'Unassigned';
+  const fallbackInitials = user ? getUserInitials(user) : '—';
+  const canEditAssignee = assigneeOptions.length > 0;
+  const assigneeLabel = selectedAssignee?.name ?? (assigneeId ? fallbackLabel : 'Unassigned');
+  const assigneeInitials = selectedAssignee?.initials ?? (assigneeId ? fallbackInitials : '—');
 
   const fieldSelectClass =
     'w-full rounded-lg border border-gray-200 bg-white py-2 pl-3 pr-3 text-sm text-gray-900 focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-indigo-400/50 dark:focus:ring-indigo-400/15';
@@ -256,9 +264,25 @@ export default function CreateTaskModal({
                         assigneeInitials
                       )}
                     </div>
-                    <span className="min-w-0 flex-1 truncate text-sm text-gray-900 dark:text-gray-100">
-                      {assigneeLabel}
-                    </span>
+                    {canEditAssignee ? (
+                      <select
+                        value={assigneeId}
+                        onChange={(e) => setAssigneeId(e.target.value)}
+                        aria-label="Assignee"
+                        className="min-w-0 flex-1 cursor-pointer border-0 bg-transparent text-sm text-gray-900 outline-none focus:ring-0 dark:text-gray-100"
+                      >
+                        <option value="">Unassigned</option>
+                        {assigneeOptions.map((option) => (
+                          <option key={option.id} value={option.id}>
+                            {option.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="min-w-0 flex-1 truncate text-sm text-gray-900 dark:text-gray-100">
+                        {assigneeLabel}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

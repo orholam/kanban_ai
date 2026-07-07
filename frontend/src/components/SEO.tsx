@@ -27,6 +27,8 @@ interface SEOProps {
   tags?: string[];
   /** Use for account-only or internal pages — keeps them out of the index. */
   noindex?: boolean;
+  /** Ordered trail (Home → … → current) rendered as BreadcrumbList structured data. */
+  breadcrumbs?: { name: string; url: string }[];
 }
 
 export default function SEO({
@@ -42,6 +44,7 @@ export default function SEO({
   section,
   tags = [],
   noindex = false,
+  breadcrumbs = [],
 }: SEOProps) {
   useEffect(() => {
     document.querySelectorAll('meta[property^="article:"]').forEach((el) => el.remove());
@@ -118,7 +121,23 @@ export default function SEO({
       if (modifiedTime) pageLd.dateModified = modifiedTime;
     }
 
-    upsertPageJsonLd(pageLd);
+    if (breadcrumbs.length > 0) {
+      const breadcrumbLd = {
+        '@type': 'BreadcrumbList',
+        itemListElement: breadcrumbs.map((crumb, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: crumb.name,
+          item: crumb.url,
+        })),
+      };
+      upsertPageJsonLd({
+        '@context': 'https://schema.org',
+        '@graph': [pageLd, breadcrumbLd],
+      });
+    } else {
+      upsertPageJsonLd(pageLd);
+    }
 
     return () => {
       articleTagEls.forEach((el) => el.remove());
@@ -137,6 +156,7 @@ export default function SEO({
     section,
     tags,
     noindex,
+    breadcrumbs,
   ]);
 
   return null;

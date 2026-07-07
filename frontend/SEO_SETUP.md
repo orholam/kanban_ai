@@ -10,6 +10,7 @@
 6. **Dynamic SEO**: Created SEO component for page-specific meta tags
 7. **Public Content SEO**: SEO tags are applied to landing, docs, blog, login, privacy, and terms pages
 8. **Docs + Blog Discovery**: Sitemap includes docs/articles + blog/posts, and `index.html` includes a noscript crawlable link hub
+9. **Post-build prerender**: `npm run build` runs `scripts/prerender.mjs` after Vite to write static HTML for public routes (`/`, `/blog/*`, `/docs/*`, etc.). Set `SKIP_PRERENDER=1` to skip (e.g. fast local builds). Failures log a warning and do not fail the deploy.
 
 ## 🖼️ Open Graph Image Setup
 

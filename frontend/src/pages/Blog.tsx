@@ -18,6 +18,10 @@ export default function Blog({ isDarkMode }: BlogProps) {
         description="Guides and comparisons from the Kanban AI team: kanban tools, AI-assisted planning, sprint workflows, and productivity for builders and teams."
         keywords="kanban AI blog, AI kanban, kanban software, task management, productivity, sprint planning"
         url="https://kanbanai.dev/blog"
+        breadcrumbs={[
+          { name: 'Home', url: 'https://kanbanai.dev/' },
+          { name: 'Blog', url: 'https://kanbanai.dev/blog' },
+        ]}
       />
       <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
