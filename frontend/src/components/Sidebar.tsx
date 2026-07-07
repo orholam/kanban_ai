@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { MessageSquare, FolderPlus, Sparkles, LayoutDashboard, Trash2, BarChart3 } from 'lucide-react';
+import { MessageSquare, FolderPlus, Sparkles, LayoutDashboard, Trash2, BarChart3, Plug } from 'lucide-react';
 import { User } from '@supabase/supabase-js';
 import { getUserInitials, getDisplayName } from '../lib/userUtils';
 import type { Project } from '../types';
@@ -71,6 +71,17 @@ export default function Sidebar({
           >
             <MessageSquare className="h-[18px] w-[18px] shrink-0 opacity-80" />
             Feedback
+          </Link>
+
+          <Link
+            to="/connect"
+            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${navLinkBase(
+              isDarkMode,
+              location.pathname === '/connect'
+            )}`}
+          >
+            <Plug className="h-[18px] w-[18px] shrink-0 opacity-80" />
+            Connect AI
           </Link>
 
           {showAnalyticsLink ? (

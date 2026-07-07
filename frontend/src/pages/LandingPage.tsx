@@ -7,6 +7,7 @@ import promocard from '../assets/main_kanban.jpg'
 import sprintPlanning from '../assets/undraw_choose_card_n0x0.svg'
 import taskManagement from '../assets/undraw_join_re_w1lh.svg'
 import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
+import { McpHeroInline } from '../components/McpHeroInline'
 import { TrustedBy } from '../components/TrustedBy'
 import SEO from '../components/SEO'
 import { DEFAULT_DESCRIPTION, DEFAULT_KEYWORDS, DEFAULT_TITLE } from '../lib/siteMeta'
@@ -71,13 +72,7 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                 Transform your side projects from ideas to reality with AI-assisted project management.
                 Get personalized guidance, automated task breakdowns, and intelligent progress tracking.
               </p>
-              <p className={`mt-4 text-base leading-7 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                Now with{' '}
-                <span className={`font-semibold ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`}>
-                  MCP (Model Context Protocol)
-                </span>
-                {' '}— connect Claude, Cursor, and other AI tools to list projects, manage tasks, and read board context from your editor.
-              </p>
+              <McpHeroInline isDarkMode={isDarkMode} />
               <div className="mt-10 flex flex-col items-center gap-2">
                 <div className="relative inline-flex rounded-md p-[2px]">
                   <div
@@ -113,29 +108,6 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
           <div className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]">
             <div className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]" />
           </div>
-        </div>
-      </div>
-
-      {/* MCP Section */}
-      <div className={`py-16 sm:py-20 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <div className="mx-auto max-w-3xl px-6 text-center lg:px-8">
-          <p className={`text-base font-semibold leading-7 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
-            Model Context Protocol (MCP)
-          </p>
-          <h3 className={`mt-2 text-2xl font-bold tracking-tight sm:text-3xl ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-            Your board, wired into Claude, Cursor, and more
-          </h3>
-          <p className={`mt-4 text-base leading-7 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            Kanban AI exposes a remote MCP server so AI clients can list your projects, create and update tasks,
-            and pull sprint context—without switching away from where you work.
-          </p>
-          <Link
-            to={DOCUMENTATION_BOARD_BASE_PATH}
-            className={`mt-6 inline-flex items-center text-sm font-semibold ${isDarkMode ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-500'}`}
-          >
-            MCP setup in docs
-            <ArrowRight className="ml-1.5 h-4 w-4" />
-          </Link>
         </div>
       </div>
 

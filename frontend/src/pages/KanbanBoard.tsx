@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react';
 import { lazyWithRetry } from '../lib/lazyWithRetry';
 import { useParams, Link } from 'react-router-dom';
-import { Plus, Eye, EyeOff, FileText, Link as LinkIcon } from 'lucide-react';
+import { Plus, Eye, EyeOff, FileText, Link as LinkIcon, Plug, X } from 'lucide-react';
 import TaskCard from '../components/TaskCard';
 import type { Project, Task } from '../types';
 import {
@@ -16,6 +16,9 @@ import {
 import { formatDueDateForDb } from '../lib/taskDb';
 import { toast } from 'sonner';
 import { loadGuestDraft, saveGuestDraft } from '../lib/guestDraft';
+import { isLocalAppMode } from '../lib/localApp';
+
+const MCP_CONNECT_BANNER_KEY = 'kanban_mcp_connect_banner_dismissed_v1';
 
 const TaskModal = lazyWithRetry(() => import('../components/TaskModal'));
 const CreateTaskModal = lazyWithRetry(() => import('../components/CreateTaskModal'));
@@ -63,6 +66,29 @@ export default function KanbanBoard({
   }, []);
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [showMcpBanner, setShowMcpBanner] = useState(false);
+
+  useEffect(() => {
+    if (guestMode || isLocalAppMode()) {
+      setShowMcpBanner(false);
+      return;
+    }
+    try {
+      setShowMcpBanner(localStorage.getItem(MCP_CONNECT_BANNER_KEY) !== '1');
+    } catch {
+      setShowMcpBanner(true);
+    }
+  }, [guestMode]);
+
+  const dismissMcpBanner = useCallback(() => {
+    setShowMcpBanner(false);
+    try {
+      localStorage.setItem(MCP_CONNECT_BANNER_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   useEffect(() => {
     setSelectedTask((prev) => {
       if (!prev) return prev;
@@ -643,6 +669,36 @@ export default function KanbanBoard({
       }`}
     >
       <div className="min-h-0 flex-1 overflow-auto px-3 py-3 sm:px-4">
+        {showMcpBanner ? (
+          <div
+            className={`mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm ${
+              isDarkMode
+                ? 'border-teal-500/30 bg-teal-950/25 text-zinc-200'
+                : 'border-teal-200 bg-teal-50/80 text-zinc-800'
+            }`}
+          >
+            <div className="flex min-w-0 items-start gap-3">
+              <Plug className="mt-0.5 h-4 w-4 shrink-0 text-teal-500" aria-hidden />
+              <p>
+                <span className="font-semibold">Connect Claude or Cursor</span>
+                {' '}— use MCP to manage this board from your editor.{' '}
+                <Link to="/connect" className="font-semibold text-teal-600 underline-offset-2 hover:underline dark:text-teal-400">
+                  Open Connect AI
+                </Link>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={dismissMcpBanner}
+              className={`shrink-0 rounded-md p-1 ${
+                isDarkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-500 hover:bg-white/80'
+              }`}
+              aria-label="Dismiss"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        ) : null}
         <header className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-x-6 sm:gap-y-2">
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
