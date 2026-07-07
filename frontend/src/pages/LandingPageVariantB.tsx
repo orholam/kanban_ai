@@ -4,7 +4,7 @@
  * Premium B2B SaaS layout (iridescent hero, centered copy, floating product card).
  * Keep `onCTAClick` on every auth CTA so conversions stay tracked.
  */
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -26,8 +26,6 @@ import { McpHeroInline } from '../components/McpHeroInline'
 import { TrustedBy } from '../components/TrustedBy'
 import { DOCUMENTATION_BOARD_BASE_PATH, documentationBoardArticlePath } from '../documentation-board-feature/integration'
 import { MCP_DOCS_SLUG } from '../lib/mcpSetup'
-import { LANDING_HERO_VERSION_TAG } from '../lib/siteMeta'
-
 const FEATURE_PILLS = [
   'Sprints',
   'AI planning',
@@ -54,21 +52,56 @@ function NavChevron() {
 
 const SHELL = 'mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8'
 
-/** Iridescent mesh gradient + faint code texture — light-first, dark fallback. */
+/** Iridescent mesh + ASCII code rain — Fonla-style light hero. */
 function HeroAtmosphere({ isDarkMode }: Pick<Props, 'isDarkMode'>) {
+  const asciiPattern = `url("data:image/svg+xml,${encodeURIComponent(`
+    <svg xmlns='http://www.w3.org/2000/svg' width='360' height='360'>
+      <text x='8' y='24' font-family='ui-monospace,monospace' font-size='12' fill='%23000' opacity='0.9'>0101</text>
+      <text x='120' y='18' font-family='ui-monospace,monospace' font-size='11' fill='%23000' opacity='0.7'>+</text>
+      <text x='200' y='42' font-family='ui-monospace,monospace' font-size='10' fill='%23000' opacity='0.8'>ctx</text>
+      <text x='300' y='28' font-family='ui-monospace,monospace' font-size='11' fill='%23000' opacity='0.65'>1010</text>
+      <text x='40' y='72' font-family='ui-monospace,monospace' font-size='9' fill='%23000' opacity='0.55'>x</text>
+      <text x='160' y='88' font-family='ui-monospace,monospace' font-size='12' fill='%23000' opacity='0.75'>MCP</text>
+      <text x='260' y='76' font-family='ui-monospace,monospace' font-size='10' fill='%23000' opacity='0.6'>ai</text>
+      <text x='12' y='130' font-family='ui-monospace,monospace' font-size='11' fill='%23000' opacity='0.7'>+</text>
+      <text x='100' y='148' font-family='ui-monospace,monospace' font-size='10' fill='%23000' opacity='0.55'>0x</text>
+      <text x='220' y='132' font-family='ui-monospace,monospace' font-size='12' fill='%23000' opacity='0.8'>sprint</text>
+      <text x='310' y='156' font-family='ui-monospace,monospace' font-size='9' fill='%23000' opacity='0.5'>*</text>
+      <text x='56' y='200' font-family='ui-monospace,monospace' font-size='11' fill='%23000' opacity='0.65'>1101</text>
+      <text x='180' y='212' font-family='ui-monospace,monospace' font-size='10' fill='%23000' opacity='0.7'>+</text>
+      <text x='280' y='196' font-family='ui-monospace,monospace' font-size='11' fill='%23000' opacity='0.75'>board</text>
+      <text x='24' y='268' font-family='ui-monospace,monospace' font-size='10' fill='%23000' opacity='0.55'>01</text>
+      <text x='140' y='280' font-family='ui-monospace,monospace' font-size='12' fill='%23000' opacity='0.8'>task</text>
+      <text x='240' y='260' font-family='ui-monospace,monospace' font-size='9' fill='%23000' opacity='0.6'>+</text>
+      <text x='320' y='292' font-family='ui-monospace,monospace' font-size='11' fill='%23000' opacity='0.7'>1010</text>
+      <text x='80' y='330' font-family='ui-monospace,monospace' font-size='10' fill='%23000' opacity='0.5'>ctx</text>
+      <text x='200' y='340' font-family='ui-monospace,monospace' font-size='11' fill='%23000' opacity='0.65'>ai</text>
+    </svg>
+  `)}")`
+
   if (isDarkMode) {
     return (
       <>
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-zinc-950" />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-zinc-950"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `
+              radial-gradient(ellipse 75% 55% at 50% 8%, rgba(186,230,253,0.22) 0%, transparent 58%),
+              radial-gradient(ellipse 55% 45% at 82% 12%, rgba(253,186,216,0.18) 0%, transparent 52%),
+              radial-gradient(ellipse 50% 40% at 18% 55%, rgba(167,243,208,0.14) 0%, transparent 50%),
+              radial-gradient(ellipse 45% 40% at 55% 70%, rgba(254,240,138,0.12) 0%, transparent 48%)
+            `,
+          }}
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-60"
+          className="pointer-events-none absolute inset-0 opacity-[0.04]"
           style={{
-            background:
-              'radial-gradient(ellipse 80% 50% at 50% -10%, rgba(56,189,248,0.18) 0%, transparent 55%), radial-gradient(ellipse 60% 40% at 90% 20%, rgba(167,139,250,0.14) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 10% 60%, rgba(52,211,153,0.12) 0%, transparent 50%)',
+            backgroundImage: asciiPattern,
+            maskImage: 'radial-gradient(ellipse 95% 85% at 50% 30%, black 20%, transparent 78%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 95% 85% at 50% 30%, black 20%, transparent 78%)',
           }}
         />
       </>
@@ -77,54 +110,80 @@ function HeroAtmosphere({ isDarkMode }: Pick<Props, 'isDarkMode'>) {
 
   return (
     <>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[#f8f7fc]"
-      />
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-[#f6f5fa]" />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background: `
-            radial-gradient(ellipse 90% 70% at 15% 10%, rgba(186,230,253,0.55) 0%, transparent 55%),
-            radial-gradient(ellipse 70% 60% at 85% 5%, rgba(253,186,216,0.45) 0%, transparent 50%),
-            radial-gradient(ellipse 60% 55% at 70% 75%, rgba(254,240,138,0.35) 0%, transparent 50%),
-            radial-gradient(ellipse 55% 50% at 5% 70%, rgba(167,243,208,0.4) 0%, transparent 50%),
-            radial-gradient(ellipse 50% 45% at 50% 45%, rgba(196,181,253,0.25) 0%, transparent 55%)
+            radial-gradient(ellipse 85% 65% at 50% 0%, rgba(186,230,253,0.75) 0%, transparent 58%),
+            radial-gradient(ellipse 70% 55% at 88% 8%, rgba(253,186,216,0.65) 0%, transparent 52%),
+            radial-gradient(ellipse 65% 50% at 12% 45%, rgba(167,243,208,0.55) 0%, transparent 50%),
+            radial-gradient(ellipse 60% 50% at 72% 68%, rgba(254,240,138,0.5) 0%, transparent 48%),
+            radial-gradient(ellipse 55% 45% at 38% 72%, rgba(196,181,253,0.45) 0%, transparent 50%),
+            radial-gradient(ellipse 50% 40% at 50% 35%, rgba(255,255,255,0.9) 0%, transparent 55%)
           `,
         }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+        className="pointer-events-none absolute inset-0 opacity-[0.07]"
         style={{
-          backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(`
-            <svg xmlns='http://www.w3.org/2000/svg' width='280' height='280'>
-              <text x='12' y='28' font-family='ui-monospace, monospace' font-size='11' fill='%23000'>0101</text>
-              <text x='140' y='52' font-family='ui-monospace, monospace' font-size='10' fill='%23000'>ctx</text>
-              <text x='220' y='110' font-family='ui-monospace, monospace' font-size='9' fill='%23000'>+</text>
-              <text x='48' y='160' font-family='ui-monospace, monospace' font-size='10' fill='%23000'>MCP</text>
-              <text x='190' y='200' font-family='ui-monospace, monospace' font-size='11' fill='%23000'>1010</text>
-              <text x='90' y='240' font-family='ui-monospace, monospace' font-size='9' fill='%23000'>+</text>
-              <text x='250' y='260' font-family='ui-monospace, monospace' font-size='10' fill='%23000'>ai</text>
-            </svg>
-          `)}")`,
-          maskImage: 'radial-gradient(ellipse 85% 75% at 50% 35%, black 15%, transparent 72%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 85% 75% at 50% 35%, black 15%, transparent 72%)',
+          backgroundImage: asciiPattern,
+          maskImage: 'radial-gradient(ellipse 100% 90% at 50% 28%, black 25%, transparent 80%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 100% 90% at 50% 28%, black 25%, transparent 80%)',
         }}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.025]"
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(0,0,0,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.4) 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
-          maskImage: 'radial-gradient(ellipse 90% 80% at 50% 40%, black 10%, transparent 75%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 90% 80% at 50% 40%, black 10%, transparent 75%)',
+            'linear-gradient(rgba(0,0,0,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.35) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+          maskImage: 'radial-gradient(ellipse 100% 85% at 50% 35%, black 15%, transparent 78%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 100% 85% at 50% 35%, black 15%, transparent 78%)',
         }}
       />
     </>
+  )
+}
+
+function GradientCtaButton({
+  to,
+  onClick,
+  children,
+  isDarkMode,
+}: {
+  to: string
+  onClick?: () => void
+  children: ReactNode
+  isDarkMode: boolean
+}) {
+  return (
+    <div
+      className={`inline-flex rounded-xl p-[1.5px] shadow-[0_4px_32px_-8px_rgba(56,189,248,0.35),0_8px_24px_-12px_rgba(251,146,60,0.25)] ${
+        isDarkMode
+          ? 'bg-gradient-to-r from-sky-400/70 via-violet-400/60 to-amber-300/50'
+          : 'bg-gradient-to-r from-sky-300 via-pink-300 via-40% to-amber-200'
+      }`}
+    >
+      <Link
+        to={to}
+        onClick={onClick}
+        className={`group inline-flex items-center rounded-[10px] px-7 py-3.5 text-[15px] font-semibold transition ${
+          isDarkMode
+            ? 'bg-zinc-950 text-white hover:bg-zinc-900'
+            : 'bg-zinc-950 text-white hover:bg-zinc-800'
+        }`}
+      >
+        {children}
+        <ArrowUpRight
+          className="ml-1.5 h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+          aria-hidden
+        />
+      </Link>
+    </div>
   )
 }
 
@@ -156,128 +215,85 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
     <div className="relative flex h-full min-h-0 w-full flex-1 flex-col overflow-y-auto overflow-x-hidden">
       <HeroAtmosphere isDarkMode={isDarkMode} />
 
-      {/* Floating pill nav */}
-      <header className="sticky top-0 z-30 flex justify-center px-4 pb-2 pt-4 sm:pt-5">
+      {/* Floating pill nav — Fonla-style */}
+      <header className="sticky top-0 z-30 flex justify-center px-4 pb-2 pt-5 sm:pt-6">
         <div
-          className={`flex w-full max-w-4xl flex-wrap items-center justify-between gap-2 rounded-full border px-2 py-1.5 shadow-lg shadow-black/[0.04] backdrop-blur-xl sm:gap-1 sm:px-3 ${
+          className={`flex w-full max-w-3xl items-center justify-between gap-4 rounded-full border px-4 py-2 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.08)] backdrop-blur-xl sm:px-5 ${
             isDarkMode
-              ? 'border-zinc-700/60 bg-zinc-900/75'
-              : 'border-white/70 bg-white/75'
+              ? 'border-zinc-700/50 bg-zinc-900/70'
+              : 'border-white/80 bg-white/65'
           }`}
         >
-          <Link to="/" className="flex min-w-0 shrink-0 items-center gap-2 pl-1 sm:pl-2">
-            <img src={Logo} alt="Kanban AI" className="h-7 w-auto sm:h-8" width={128} height={32} />
-            <span className={`hidden text-sm font-bold tracking-tight sm:inline ${text}`}>Kanban AI</span>
+          <Link to="/" className="flex shrink-0 items-center gap-2">
+            <img src={Logo} alt="Kanban AI" className="h-7 w-auto" width={128} height={32} />
+            <span className={`text-sm font-bold tracking-tight ${text}`}>Kanban AI</span>
           </Link>
 
           <nav
-            className={`order-3 flex w-full flex-wrap items-center justify-center gap-0.5 text-[13px] font-medium sm:order-none sm:w-auto ${textMuted}`}
+            className={`hidden items-center gap-1 text-[13px] font-medium sm:flex ${textMuted}`}
             aria-label="Marketing"
           >
-            <a href="#features" className={`inline-flex items-center gap-0.5 rounded-full px-2 py-1.5 ${navLink}`}>
-              Product
+            <a href="#features" className={`inline-flex items-center gap-0.5 rounded-full px-2.5 py-1 ${navLink}`}>
+              Features
               <NavChevron />
             </a>
-            <Link
-              to={DOCUMENTATION_BOARD_BASE_PATH}
-              className={`inline-flex items-center rounded-full px-2 py-1.5 ${navLink}`}
-            >
+            <a href="#features" className={`rounded-full px-2.5 py-1 ${navLink}`}>
+              Product
+            </a>
+            <Link to={DOCUMENTATION_BOARD_BASE_PATH} className={`rounded-full px-2.5 py-1 ${navLink}`}>
               Docs
             </Link>
-            <a href="#pricing" className={`rounded-full px-2 py-1.5 ${navLink}`}>
+            <a href="#pricing" className={`rounded-full px-2.5 py-1 ${navLink}`}>
               Pricing
             </a>
-            <Link to="/blog" className={`rounded-full px-2 py-1.5 ${navLink}`}>
-              Learn
-            </Link>
           </nav>
 
-          <div className="flex shrink-0 items-center gap-1 pr-1 sm:pr-2">
-            <Link
-              to="/login"
-              className={`hidden rounded-full px-2.5 py-1.5 text-[13px] font-semibold sm:inline ${textMuted} hover:underline`}
-            >
-              Login
-            </Link>
-            <Link
-              to="/login"
-              onClick={onCTAClick}
-              className="rounded-full bg-zinc-950 px-3 py-1.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950"
-            >
-              Sign up
-            </Link>
+          <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"
               onClick={toggleTheme}
-              className={`rounded-full p-1.5 transition-colors ${navLink}`}
+              className={`rounded-full p-1.5 transition-colors sm:mr-1 ${navLink}`}
               aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
+            <Link
+              to="/login"
+              onClick={onCTAClick}
+              className="rounded-full bg-zinc-950 px-3.5 py-1.5 text-[13px] font-semibold text-white transition hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-950"
+            >
+              Sign up
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* Hero — centered */}
-      <section className={`relative z-10 pb-8 pt-8 sm:pb-12 sm:pt-12 lg:pb-16 lg:pt-14 ${SHELL}`}>
+      {/* Hero — minimal centered stack like Fonla */}
+      <section className={`relative z-10 pb-4 pt-10 sm:pb-6 sm:pt-14 lg:pt-16 ${SHELL}`}>
         <div className="mx-auto max-w-3xl text-center">
-          <Link
-            to="/blog"
-            className={`mb-6 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold transition ${
-              isDarkMode
-                ? 'border-zinc-700/80 bg-zinc-900/60 text-zinc-300 hover:bg-zinc-800/80'
-                : 'border-white/80 bg-white/70 text-zinc-700 shadow-sm backdrop-blur-sm hover:bg-white/90'
-            }`}
-          >
-            Sprints, backlog & AI—on one board
-            <span
-              className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold tabular-nums tracking-wide ${
-                isDarkMode ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-700'
-              }`}
-            >
-              {LANDING_HERO_VERSION_TAG}
-            </span>
-            <ArrowRight className="h-3 w-3 opacity-60" aria-hidden />
-          </Link>
-
           <h1
-            className={`text-[2rem] font-bold leading-[1.08] tracking-tight sm:text-5xl sm:leading-[1.06] lg:text-[3.25rem] ${text}`}
+            className={`text-[2rem] font-bold leading-[1.08] tracking-tight sm:text-[2.75rem] sm:leading-[1.06] lg:text-[3.5rem] ${text}`}
           >
             Enterprise-grade sprint planning powered by AI
           </h1>
-          <p className={`mx-auto mt-5 max-w-xl text-base leading-relaxed sm:text-lg ${textMuted}`}>
+          <p className={`mx-auto mt-4 max-w-lg text-base leading-relaxed sm:mt-5 sm:text-lg ${textMuted}`}>
             Kanban AI is an AI-powered project platform that turns messy backlogs into weekly boards you can commit to.
           </p>
 
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <Link
-              to="/login"
-              onClick={onCTAClick}
-              className={`group relative inline-flex items-center rounded-xl px-7 py-3.5 text-[15px] font-semibold transition ${
-                isDarkMode
-                  ? 'bg-zinc-100 text-zinc-950 shadow-[0_2px_20px_-4px_rgba(56,189,248,0.35)] hover:bg-white'
-                  : 'bg-zinc-950 text-white shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_2px_20px_-2px_rgba(251,146,60,0.35),0_8px_28px_-6px_rgba(251,191,36,0.22)] hover:bg-zinc-800'
-              }`}
-            >
+          <div className="mt-7 sm:mt-8">
+            <GradientCtaButton to="/login" onClick={onCTAClick} isDarkMode={isDarkMode}>
               Get started free
-              <ArrowUpRight
-                className="ml-1.5 h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                aria-hidden
-              />
-            </Link>
-            <p className={`text-sm ${textSubtle}`}>Free forever · No credit card</p>
+            </GradientCtaButton>
           </div>
-
-          <McpHeroInline isDarkMode={isDarkMode} />
         </div>
 
-        {/* Floating product mockup */}
-        <div className="relative mx-auto mt-12 max-w-5xl sm:mt-14 lg:mt-16">
+        {/* Product mockup — large, floating over the glow */}
+        <div className="relative mx-auto mt-8 max-w-6xl sm:mt-10 lg:mt-12">
           <div
-            className={`overflow-hidden rounded-2xl border p-1.5 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.18),0_8px_24px_-8px_rgba(0,0,0,0.08)] sm:rounded-3xl sm:p-2 ${
+            className={`overflow-hidden rounded-2xl border p-1 shadow-[0_32px_100px_-24px_rgba(0,0,0,0.22),0_12px_40px_-16px_rgba(0,0,0,0.1)] sm:rounded-[1.25rem] sm:p-1.5 ${
               isDarkMode
-                ? 'border-zinc-700/60 bg-zinc-900/90'
-                : 'border-white/90 bg-white/95 backdrop-blur-sm'
+                ? 'border-zinc-700/50 bg-zinc-900/95'
+                : 'border-white bg-white/90 backdrop-blur-sm'
             }`}
           >
             <img
@@ -286,13 +302,13 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
               className="block h-auto w-full rounded-xl sm:rounded-2xl"
             />
           </div>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -inset-x-8 -bottom-8 -z-10 h-24 bg-gradient-to-t from-white/80 to-transparent dark:from-zinc-950/80"
-          />
         </div>
 
-        <div className="mx-auto mt-12 max-w-3xl text-center sm:mt-14">
+        <div className="mx-auto mt-10 max-w-3xl text-center sm:mt-12">
+          <McpHeroInline isDarkMode={isDarkMode} />
+        </div>
+
+        <div className="mx-auto mt-8 max-w-3xl text-center sm:mt-10">
           <p className={`text-[11px] font-semibold uppercase tracking-[0.16em] ${textSubtle}`}>
             What people emphasize on the board
           </p>
