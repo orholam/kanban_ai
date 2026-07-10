@@ -10,6 +10,9 @@ import kanbanAiV01LaunchPost from '../data/blog/kanbanai-v0-1-launch.json';
 import clickCrisisPost from '../data/blog/click-crisis-project-management-tools.json';
 import finishSideProjectSummerPost from '../data/blog/finish-side-project-summer-ai-kanban.json';
 import kanbanMcpToolsComparedPost from '../data/blog/kanban-mcp-tools-compared.json';
+import bestKanbanToolsWithMcp2026Post from '../data/blog/best-kanban-tools-with-mcp-2026.json';
+import bestAiProjectManagementToolsSideProjectsPost from '../data/blog/best-ai-project-management-tools-side-projects.json';
+import llmoAiToolDiscoverabilityPost from '../data/blog/llmo-ai-tool-discoverability-2026.json';
 
 export interface BlogPost {
   id: string;
@@ -35,6 +38,9 @@ const allPosts: BlogPost[] = [
   clickCrisisPost as BlogPost,
   finishSideProjectSummerPost as BlogPost,
   kanbanMcpToolsComparedPost as BlogPost,
+  bestKanbanToolsWithMcp2026Post as BlogPost,
+  bestAiProjectManagementToolsSideProjectsPost as BlogPost,
+  llmoAiToolDiscoverabilityPost as BlogPost,
 ];
 
 /**

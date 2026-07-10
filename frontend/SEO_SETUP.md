@@ -8,9 +8,10 @@
 4. **Robots.txt**: Configured to guide search engine crawlers
 5. **PWA Support**: Added manifest.json for better mobile experience
 6. **Dynamic SEO**: Created SEO component for page-specific meta tags
-7. **Public Content SEO**: SEO tags are applied to landing, docs, blog, login, privacy, and terms pages
+7. **Public Content SEO**: SEO tags are applied to landing, docs, blog, login, contact, privacy, and terms pages
 8. **Docs + Blog Discovery**: Sitemap includes docs/articles + blog/posts, and `index.html` includes a noscript crawlable link hub
-9. **Post-build prerender**: `npm run build` runs `scripts/prerender.mjs` after Vite to write static HTML for public routes (`/`, `/blog/*`, `/docs/*`, etc.). Set `SKIP_PRERENDER=1` to skip (e.g. fast local builds). Failures log a warning and do not fail the deploy.
+9. **Post-build prerender**: `npm run build` runs `scripts/prerender.mjs` after Vite to write static HTML for public routes (`/`, `/blog/*`, `/docs/*`, `/contact`, etc.). Set `SKIP_PRERENDER=1` to skip (e.g. fast local builds). Failures log a warning and do not fail the deploy.
+10. **LLMO / AI discoverability**: `llms.txt`, `llms-full.txt`, `openapi/mcp.json`, and `/.well-known/mcp-server` in `public/`; `robots.txt` includes Cloudflare `Content-Signal` and explicit AI crawler rules
 
 ## 🖼️ Open Graph Image Setup
 
@@ -36,6 +37,7 @@ The SEO component automatically:
 
 **Landing Page**: Rich description of your AI-powered project management tool
 **Login Page**: Clear call-to-action for signing in
+**Contact Page**: Public sales / partnership form (same `feedback` table as in-app Feedback)
 **Docs Hub + Articles**: Indexed knowledge-base style pages with article-level metadata
 **Blog + Posts**: Indexed article pages with canonical + article schema metadata
 **Privacy Policy**: Professional privacy information
@@ -62,5 +64,7 @@ These pages require authentication and won't be indexed:
 - SEO component: `frontend/src/components/SEO.tsx`
 - SEO utilities: `frontend/src/lib/seo.ts`
 - Sitemap: `frontend/public/sitemap.xml`
-- Robots: `frontend/public/robots.txt`
+- Robots: `frontend/public/robots.txt` (includes `Content-Signal` and AI crawler allow rules)
+- LLMO index: `frontend/public/llms.txt`, `frontend/public/llms-full.txt`
+- MCP discovery: `frontend/public/.well-known/mcp-server`, `frontend/public/openapi/mcp.json`
 - Manifest: `frontend/public/manifest.json` 

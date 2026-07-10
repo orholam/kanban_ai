@@ -85,6 +85,8 @@ The home page randomly assigns variant **A** or **B** (persisted in `localStorag
 
 Kanban AI exposes a **remote MCP server** at `/api/mcp` on your Vercel deployment. It talks directly to Supabase with the same board operations as the web app (projects, tasks, comments).
 
+**Discovery manifest:** [`/.well-known/mcp-server`](https://kanbanai.dev/.well-known/mcp-server) — machine-readable metadata per [draft-serra-mcp-discovery-uri](https://datatracker.ietf.org/doc/draft-serra-mcp-discovery-uri/) (endpoint, auth, tools preview, setup links).
+
 **Vercel environment variables** (Production + Preview):
 
 | Variable | Purpose |

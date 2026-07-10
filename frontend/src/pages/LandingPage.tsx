@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Navigate } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Github } from 'lucide-react'
 import { Link } from 'react-router-dom';
 import promocardLight from '../assets/promocard2_light.png'
 import promocardDark from '../assets/promocard2_dark.png'
@@ -74,8 +74,8 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                 Get personalized guidance, automated task breakdowns, and intelligent progress tracking.
               </p>
               <McpHeroInline isDarkMode={isDarkMode} />
-              <div className="mt-8 flex flex-col items-center gap-2 sm:mt-10">
-                <div className="relative inline-flex max-w-full overflow-hidden rounded-md p-[2px]">
+              <div className="mt-8 flex flex-col items-center gap-3 sm:mt-10 sm:flex-row sm:justify-center sm:gap-4">
+                <div className="relative inline-flex w-full max-w-full overflow-hidden rounded-md p-[2px] sm:w-auto">
                   <div
                     aria-hidden
                     className="pointer-events-none absolute inset-0 overflow-hidden rounded-md"
@@ -93,6 +93,19 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </div>
+                <a
+                  href="https://github.com/orholam/kanban_ai"
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`inline-flex items-center justify-center gap-2 rounded-md px-4 py-3 text-sm font-semibold transition-colors sm:py-2.5 ${
+                    isDarkMode
+                      ? 'text-zinc-300 ring-1 ring-zinc-700 hover:bg-zinc-800 hover:text-white'
+                      : 'text-zinc-700 ring-1 ring-zinc-300 hover:bg-zinc-100 hover:text-zinc-900'
+                  }`}
+                >
+                  <Github className="h-4 w-4" aria-hidden />
+                  GitHub
+                </a>
               </div>
             </div>
 
@@ -331,6 +344,11 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                   <li>
                     <Link to="/blog" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
                       Blog
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/contact" className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}>
+                      Contact
                     </Link>
                   </li>
                   <li>

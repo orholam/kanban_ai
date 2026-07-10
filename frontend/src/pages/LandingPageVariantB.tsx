@@ -11,6 +11,7 @@ import {
   Check,
   ChevronDown,
   Clipboard,
+  Github,
   Menu,
   Moon,
   Plug,
@@ -333,10 +334,23 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
             Kanban AI is an AI-powered project platform that turns messy backlogs into weekly boards you can commit to.
           </p>
 
-          <div className="mt-6 flex justify-center sm:mt-8">
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:mt-8 sm:flex-row sm:gap-4">
             <GradientCtaButton to="/login" onClick={onCTAClick} isDarkMode={isDarkMode}>
               Get started free
             </GradientCtaButton>
+            <a
+              href="https://github.com/orholam/kanban_ai"
+              target="_blank"
+              rel="noreferrer"
+              className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+                isDarkMode
+                  ? 'text-zinc-300 ring-1 ring-zinc-700 hover:bg-zinc-800/80 hover:text-white'
+                  : 'text-zinc-700 ring-1 ring-zinc-300/90 hover:bg-white hover:text-zinc-900'
+              }`}
+            >
+              <Github className="h-4 w-4" aria-hidden />
+              Open source
+            </a>
           </div>
         </div>
 
@@ -628,7 +642,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
                   </ul>
                 </div>
                 <Link
-                  to={tier.name === 'Enterprise' ? '/feedback' : '/login'}
+                  to={tier.name === 'Enterprise' ? '/contact' : '/login'}
                   onClick={tier.name !== 'Enterprise' ? onCTAClick : undefined}
                   className={`mt-8 block rounded-xl px-4 py-2.5 text-center text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
                     tier.featured
@@ -688,6 +702,11 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
                   <li>
                     <Link to="/blog" className={`text-sm font-medium ${textMuted} transition hover:text-zinc-900 dark:hover:text-zinc-100`}>
                       Blog
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/contact" className={`text-sm font-medium ${textMuted} transition hover:text-zinc-900 dark:hover:text-zinc-100`}>
+                      Contact
                     </Link>
                   </li>
                   <li>

@@ -1,0 +1,860 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Kanban AI MCP Tools",
+    "version": "1.0.0",
+    "description": "OpenAPI description of the Kanban AI remote MCP server tools.\n\n**Transport:** All tools are invoked over MCP JSON-RPC 2.0 at `POST /api/mcp` using the `tools/call` method. The paths in this document (`/api/mcp/tools/{toolName}`) are logical documentation endpoints — they are not separate HTTP routes. Example JSON-RPC request:\n\n```json\n{\n  \"jsonrpc\": \"2.0\",\n  \"id\": 1,\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"list_projects\",\n    \"arguments\": {}\n  }\n}\n```\n\nSuccessful tool results return MCP `CallToolResult` with a single `text` content block containing JSON (pretty-printed). Errors return `{ \"error\": \"message\" }` in that text block.\n\n**Setup:** See https://kanbanai.dev/docs/connect-mcp-claude-cursor and https://kanbanai.dev/connect for ready-to-paste client config.",
+    "contact": {
+      "name": "Kanban AI",
+      "url": "https://kanbanai.dev"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/orholam/kanban_ai/blob/main/LICENSE"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://kanbanai.dev",
+      "description": "Production"
+    }
+  ],
+  "tags": [
+    { "name": "Projects", "description": "Kanban project CRUD and listing" },
+    { "name": "Board", "description": "Full board context for a project" },
+    { "name": "Tasks", "description": "Task CRUD on a project board" },
+    { "name": "Comments", "description": "Task comment threads" },
+    { "name": "Transport", "description": "Actual MCP JSON-RPC endpoint" }
+  ],
+  "paths": {
+    "/api/mcp": {
+      "post": {
+        "operationId": "mcpJsonRpc",
+        "tags": ["Transport"],
+        "summary": "MCP JSON-RPC transport",
+        "description": "The real MCP endpoint. Send JSON-RPC 2.0 requests (`initialize`, `tools/list`, `tools/call`, etc.) per the Model Context Protocol. Tool-specific request/response shapes are documented under `/api/mcp/tools/{toolName}`.",
+        "security": [
+          { "bearerAuth": [], "apiKeyAuth": [] },
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/McpJsonRpcRequest" },
+              "examples": {
+                "toolsCall": {
+                  "summary": "Call list_projects",
+                  "value": {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "tools/call",
+                    "params": {
+                      "name": "list_projects",
+                      "arguments": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-RPC response (MCP protocol)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/McpJsonRpcResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid authentication",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnauthorizedError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mcp/tools/list_projects": {
+      "post": {
+        "operationId": "list_projects",
+        "tags": ["Projects"],
+        "summary": "List Projects",
+        "description": "List all Kanban AI projects the signed-in user can access.\n\n**MCP invocation:** `tools/call` with `name: \"list_projects\"` and `arguments: {}`.",
+        "security": [
+          { "bearerAuth": [], "apiKeyAuth": [] },
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ListProjectsInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP tool result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ListProjectsResult" }
+              }
+            }
+          }
+        },
+        "x-mcp-tool-name": "list_projects"
+      }
+    },
+    "/api/mcp/tools/get_board": {
+      "post": {
+        "operationId": "get_board",
+        "tags": ["Board"],
+        "summary": "Get Board",
+        "description": "Get a project and all of its tasks (with task comments) as JSON context.\n\n**MCP invocation:** `tools/call` with `name: \"get_board\"`.",
+        "security": [
+          { "bearerAuth": [], "apiKeyAuth": [] },
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/GetBoardInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP tool result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/GetBoardResult" }
+              }
+            }
+          }
+        },
+        "x-mcp-tool-name": "get_board"
+      }
+    },
+    "/api/mcp/tools/create_project": {
+      "post": {
+        "operationId": "create_project",
+        "tags": ["Projects"],
+        "summary": "Create Project",
+        "description": "Create a new Kanban AI project for the signed-in user.\n\n**MCP invocation:** `tools/call` with `name: \"create_project\"`.",
+        "security": [
+          { "bearerAuth": [], "apiKeyAuth": [] },
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateProjectInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP tool result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CreateProjectResult" }
+              }
+            }
+          }
+        },
+        "x-mcp-tool-name": "create_project"
+      }
+    },
+    "/api/mcp/tools/update_project": {
+      "post": {
+        "operationId": "update_project",
+        "tags": ["Projects"],
+        "summary": "Update Project",
+        "description": "Update project metadata (title, notes, privacy, sprint fields, etc.).\n\n**MCP invocation:** `tools/call` with `name: \"update_project\"`.",
+        "security": [
+          { "bearerAuth": [], "apiKeyAuth": [] },
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateProjectInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP tool result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UpdateProjectResult" }
+              }
+            }
+          }
+        },
+        "x-mcp-tool-name": "update_project"
+      }
+    },
+    "/api/mcp/tools/delete_project": {
+      "post": {
+        "operationId": "delete_project",
+        "tags": ["Projects"],
+        "summary": "Delete Project",
+        "description": "Delete a project and all of its tasks and collaborator rows.\n\n**MCP invocation:** `tools/call` with `name: \"delete_project\"`.",
+        "security": [
+          { "bearerAuth": [], "apiKeyAuth": [] },
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DeleteProjectInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP tool result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteProjectResult" }
+              }
+            }
+          }
+        },
+        "x-mcp-tool-name": "delete_project"
+      }
+    },
+    "/api/mcp/tools/create_task": {
+      "post": {
+        "operationId": "create_task",
+        "tags": ["Tasks"],
+        "summary": "Create Task",
+        "description": "Create a task on a project board.\n\n**MCP invocation:** `tools/call` with `name: \"create_task\"`.",
+        "security": [
+          { "bearerAuth": [], "apiKeyAuth": [] },
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateTaskInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP tool result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CreateTaskResult" }
+              }
+            }
+          }
+        },
+        "x-mcp-tool-name": "create_task"
+      }
+    },
+    "/api/mcp/tools/update_task": {
+      "post": {
+        "operationId": "update_task",
+        "tags": ["Tasks"],
+        "summary": "Update Task",
+        "description": "Update an existing task by id.\n\n**MCP invocation:** `tools/call` with `name: \"update_task\"`.",
+        "security": [
+          { "bearerAuth": [], "apiKeyAuth": [] },
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateTaskInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP tool result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UpdateTaskResult" }
+              }
+            }
+          }
+        },
+        "x-mcp-tool-name": "update_task"
+      }
+    },
+    "/api/mcp/tools/delete_task": {
+      "post": {
+        "operationId": "delete_task",
+        "tags": ["Tasks"],
+        "summary": "Delete Task",
+        "description": "Delete a task from a board.\n\n**MCP invocation:** `tools/call` with `name: \"delete_task\"`.",
+        "security": [
+          { "bearerAuth": [], "apiKeyAuth": [] },
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DeleteTaskInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP tool result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteTaskResult" }
+              }
+            }
+          }
+        },
+        "x-mcp-tool-name": "delete_task"
+      }
+    },
+    "/api/mcp/tools/list_task_comments": {
+      "post": {
+        "operationId": "list_task_comments",
+        "tags": ["Comments"],
+        "summary": "List Task Comments",
+        "description": "List comments on a task.\n\n**MCP invocation:** `tools/call` with `name: \"list_task_comments\"`.",
+        "security": [
+          { "bearerAuth": [], "apiKeyAuth": [] },
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ListTaskCommentsInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP tool result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ListTaskCommentsResult" }
+              }
+            }
+          }
+        },
+        "x-mcp-tool-name": "list_task_comments"
+      }
+    },
+    "/api/mcp/tools/add_task_comment": {
+      "post": {
+        "operationId": "add_task_comment",
+        "tags": ["Comments"],
+        "summary": "Add Task Comment",
+        "description": "Add a comment to a task thread.\n\n**MCP invocation:** `tools/call` with `name: \"add_task_comment\"`.",
+        "security": [
+          { "bearerAuth": [], "apiKeyAuth": [] },
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AddTaskCommentInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP tool result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AddTaskCommentResult" }
+              }
+            }
+          }
+        },
+        "x-mcp-tool-name": "add_task_comment"
+      }
+    },
+    "/api/mcp/tools/delete_task_comment": {
+      "post": {
+        "operationId": "delete_task_comment",
+        "tags": ["Comments"],
+        "summary": "Delete Task Comment",
+        "description": "Delete a task comment by id.\n\n**MCP invocation:** `tools/call` with `name: \"delete_task_comment\"`.",
+        "security": [
+          { "bearerAuth": [], "apiKeyAuth": [] },
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/DeleteTaskCommentInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MCP tool result",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteTaskCommentResult" }
+              }
+            }
+          }
+        },
+        "x-mcp-tool-name": "delete_task_comment"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Supabase session access token for the signed-in user. Obtain from the Kanban AI Connect page or Supabase Auth."
+      },
+      "apiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-MCP-API-Key",
+        "description": "Deployment secret (`MCP_API_SECRET`). Required when the operator configures it on Vercel; omitted on deployments without the secret."
+      }
+    },
+    "schemas": {
+      "McpJsonRpcRequest": {
+        "type": "object",
+        "required": ["jsonrpc", "method"],
+        "properties": {
+          "jsonrpc": { "type": "string", "const": "2.0" },
+          "id": {
+            "oneOf": [{ "type": "string" }, { "type": "integer" }],
+            "description": "Request correlation id"
+          },
+          "method": {
+            "type": "string",
+            "description": "MCP method (e.g. initialize, tools/list, tools/call)"
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Method-specific parameters"
+          }
+        }
+      },
+      "McpJsonRpcResponse": {
+        "type": "object",
+        "required": ["jsonrpc"],
+        "properties": {
+          "jsonrpc": { "type": "string", "const": "2.0" },
+          "id": {
+            "oneOf": [{ "type": "string" }, { "type": "integer" }, { "type": "null" }]
+          },
+          "result": { "type": "object", "additionalProperties": true },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "integer" },
+              "message": { "type": "string" },
+              "data": {}
+            }
+          }
+        }
+      },
+      "UnauthorizedError": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "Unauthorized" },
+          "hint": {
+            "type": "string",
+            "example": "Send Authorization: Bearer <supabase_access_token> and, if configured, X-MCP-API-Key."
+          }
+        }
+      },
+      "McpToolResult": {
+        "type": "object",
+        "required": ["content"],
+        "description": "MCP CallToolResult envelope. Parse the `text` field as JSON for tool payload.",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type", "text"],
+              "properties": {
+                "type": { "type": "string", "const": "text" },
+                "text": { "type": "string", "description": "JSON string (pretty-printed) of tool output or `{ \"error\": \"...\" }`" }
+              }
+            },
+            "minItems": 1,
+            "maxItems": 1
+          },
+          "isError": { "type": "boolean" }
+        }
+      },
+      "ToolErrorPayload": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": { "type": "string" }
+        }
+      },
+      "BoardProject": {
+        "type": "object",
+        "required": ["id", "title", "description"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "master_plan": { "type": "string" },
+          "initial_prompt": { "type": "string" },
+          "keywords": { "type": "string" },
+          "projectType": { "type": "string" },
+          "num_sprints": { "type": "integer" },
+          "current_sprint": { "type": "integer" },
+          "due_date": { "type": "string" },
+          "achievements": { "type": "string" },
+          "complete": { "type": "boolean" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "user_id": { "type": "string", "format": "uuid" },
+          "private": { "type": "boolean" },
+          "notes": { "type": "string" }
+        }
+      },
+      "BoardTask": {
+        "type": "object",
+        "required": ["id", "project_id", "title", "description", "type", "priority", "status", "sprint", "due_date", "assignee_id", "created_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "project_id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "type": { "type": "string", "enum": ["bug", "feature", "scope"] },
+          "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+          "status": { "type": "string", "enum": ["todo", "in-progress", "done"] },
+          "sprint": { "type": "integer" },
+          "due_date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+          "assignee_id": { "type": "string", "format": "uuid" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "updated_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "BoardTaskWithComments": {
+        "allOf": [
+          { "$ref": "#/components/schemas/BoardTask" },
+          {
+            "type": "object",
+            "properties": {
+              "comments": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/BoardTaskComment" }
+              }
+            }
+          }
+        ]
+      },
+      "BoardTaskComment": {
+        "type": "object",
+        "required": ["id", "task_id", "user_id", "body", "created_at"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "task_id": { "type": "string", "format": "uuid" },
+          "user_id": { "type": "string", "format": "uuid" },
+          "body": { "type": "string" },
+          "author_display_name": { "type": ["string", "null"] },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "TaskType": { "type": "string", "enum": ["bug", "feature", "scope"] },
+      "TaskPriority": { "type": "string", "enum": ["low", "medium", "high"] },
+      "TaskStatus": { "type": "string", "enum": ["todo", "in-progress", "done"] },
+      "ListProjectsInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "No arguments"
+      },
+      "ListProjectsResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/McpToolResult" },
+          {
+            "type": "object",
+            "description": "Parsed `content[0].text` payload",
+            "properties": {
+              "projects": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/BoardProject" }
+              }
+            }
+          }
+        ]
+      },
+      "GetBoardInput": {
+        "type": "object",
+        "required": ["project_id"],
+        "additionalProperties": false,
+        "properties": {
+          "project_id": { "type": "string", "format": "uuid", "description": "Project UUID" }
+        }
+      },
+      "GetBoardResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/McpToolResult" },
+          {
+            "type": "object",
+            "description": "Parsed `content[0].text` payload",
+            "properties": {
+              "project": { "$ref": "#/components/schemas/BoardProject" },
+              "tasks": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/BoardTaskWithComments" }
+              }
+            }
+          }
+        ]
+      },
+      "CreateProjectInput": {
+        "type": "object",
+        "required": ["title", "description"],
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "projectType": { "type": "string" },
+          "num_sprints": { "type": "integer", "minimum": 1, "maximum": 52 },
+          "private": { "type": "boolean" },
+          "master_plan": { "type": "string" },
+          "initial_prompt": { "type": "string" },
+          "keywords": { "type": "string" },
+          "notes": { "type": "string" }
+        }
+      },
+      "CreateProjectResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/McpToolResult" },
+          {
+            "type": "object",
+            "description": "Parsed `content[0].text` payload",
+            "properties": {
+              "success": { "type": "boolean", "const": true },
+              "project": { "$ref": "#/components/schemas/BoardProject" }
+            }
+          }
+        ]
+      },
+      "UpdateProjectInput": {
+        "type": "object",
+        "required": ["project_id"],
+        "additionalProperties": false,
+        "properties": {
+          "project_id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "master_plan": { "type": "string" },
+          "initial_prompt": { "type": "string" },
+          "keywords": { "type": "string" },
+          "projectType": { "type": "string" },
+          "num_sprints": { "type": "integer" },
+          "current_sprint": { "type": "integer" },
+          "due_date": { "type": "string" },
+          "achievements": { "type": "string" },
+          "complete": { "type": "boolean" },
+          "private": { "type": "boolean" },
+          "notes": { "type": "string" }
+        }
+      },
+      "UpdateProjectResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/McpToolResult" },
+          {
+            "type": "object",
+            "description": "Parsed `content[0].text` payload",
+            "properties": {
+              "success": { "type": "boolean", "const": true },
+              "project": { "$ref": "#/components/schemas/BoardProject" }
+            }
+          }
+        ]
+      },
+      "DeleteProjectInput": {
+        "type": "object",
+        "required": ["project_id"],
+        "additionalProperties": false,
+        "properties": {
+          "project_id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "DeleteProjectResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/McpToolResult" },
+          {
+            "type": "object",
+            "description": "Parsed `content[0].text` payload",
+            "properties": {
+              "success": { "type": "boolean", "const": true },
+              "project_id": { "type": "string", "format": "uuid" }
+            }
+          }
+        ]
+      },
+      "CreateTaskInput": {
+        "type": "object",
+        "required": ["project_id", "title"],
+        "additionalProperties": false,
+        "properties": {
+          "project_id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" },
+          "type": { "$ref": "#/components/schemas/TaskType" },
+          "priority": { "$ref": "#/components/schemas/TaskPriority" },
+          "status": { "$ref": "#/components/schemas/TaskStatus" },
+          "sprint": { "type": "integer" },
+          "due_date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+        }
+      },
+      "CreateTaskResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/McpToolResult" },
+          {
+            "type": "object",
+            "description": "Parsed `content[0].text` payload",
+            "properties": {
+              "success": { "type": "boolean", "const": true },
+              "task": { "$ref": "#/components/schemas/BoardTask" }
+            }
+          }
+        ]
+      },
+      "UpdateTaskInput": {
+        "type": "object",
+        "required": ["task_id"],
+        "additionalProperties": false,
+        "properties": {
+          "task_id": { "type": "string", "format": "uuid" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "type": { "$ref": "#/components/schemas/TaskType" },
+          "priority": { "$ref": "#/components/schemas/TaskPriority" },
+          "status": { "$ref": "#/components/schemas/TaskStatus" },
+          "sprint": { "type": "integer" },
+          "due_date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" }
+        }
+      },
+      "UpdateTaskResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/McpToolResult" },
+          {
+            "type": "object",
+            "description": "Parsed `content[0].text` payload",
+            "properties": {
+              "success": { "type": "boolean", "const": true },
+              "task": { "$ref": "#/components/schemas/BoardTask" }
+            }
+          }
+        ]
+      },
+      "DeleteTaskInput": {
+        "type": "object",
+        "required": ["task_id"],
+        "additionalProperties": false,
+        "properties": {
+          "task_id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "DeleteTaskResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/McpToolResult" },
+          {
+            "type": "object",
+            "description": "Parsed `content[0].text` payload",
+            "properties": {
+              "success": { "type": "boolean", "const": true },
+              "task_id": { "type": "string", "format": "uuid" }
+            }
+          }
+        ]
+      },
+      "ListTaskCommentsInput": {
+        "type": "object",
+        "required": ["task_id"],
+        "additionalProperties": false,
+        "properties": {
+          "task_id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "ListTaskCommentsResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/McpToolResult" },
+          {
+            "type": "object",
+            "description": "Parsed `content[0].text` payload",
+            "properties": {
+              "comments": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/BoardTaskComment" }
+              }
+            }
+          }
+        ]
+      },
+      "AddTaskCommentInput": {
+        "type": "object",
+        "required": ["task_id", "body"],
+        "additionalProperties": false,
+        "properties": {
+          "task_id": { "type": "string", "format": "uuid" },
+          "body": { "type": "string", "minLength": 1 },
+          "author_display_name": { "type": "string" }
+        }
+      },
+      "AddTaskCommentResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/McpToolResult" },
+          {
+            "type": "object",
+            "description": "Parsed `content[0].text` payload",
+            "properties": {
+              "success": { "type": "boolean", "const": true },
+              "comment": { "$ref": "#/components/schemas/BoardTaskComment" }
+            }
+          }
+        ]
+      },
+      "DeleteTaskCommentInput": {
+        "type": "object",
+        "required": ["comment_id"],
+        "additionalProperties": false,
+        "properties": {
+          "comment_id": { "type": "string", "format": "uuid" }
+        }
+      },
+      "DeleteTaskCommentResult": {
+        "allOf": [
+          { "$ref": "#/components/schemas/McpToolResult" },
+          {
+            "type": "object",
+            "description": "Parsed `content[0].text` payload",
+            "properties": {
+              "success": { "type": "boolean", "const": true },
+              "comment_id": { "type": "string", "format": "uuid" }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
