@@ -30,6 +30,7 @@ import { McpHeroInline } from '../components/McpHeroInline'
 import { TrustedBy } from '../components/TrustedBy'
 import { DOCUMENTATION_BOARD_BASE_PATH, documentationBoardArticlePath } from '../documentation-board-feature/integration'
 import { MCP_DOCS_SLUG } from '../lib/mcpSetup'
+import { formatPublicUserCountLabel, usePublicUserCount } from '../hooks/usePublicUserCount'
 const FEATURE_PILLS = [
   'Sprints',
   'AI planning',
@@ -194,6 +195,8 @@ function GradientCtaButton({
 export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleTheme }: Props) {
   const [activePill, setActivePill] = useState<string>('Sprints')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { count: userCount, isLive: userCountIsLive } = usePublicUserCount()
+  const userCountLabel = formatPublicUserCountLabel(userCount, userCountIsLive)
 
   const text = isDarkMode ? 'text-zinc-50' : 'text-zinc-950'
   const textMuted = isDarkMode ? 'text-zinc-400' : 'text-zinc-600'
@@ -257,11 +260,25 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
             </a>
           </nav>
 
-          <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <a
+              href="https://github.com/orholam/kanban_ai"
+              target="_blank"
+              rel="noreferrer"
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[12px] font-semibold transition sm:px-3 sm:text-[13px] ${
+                isDarkMode
+                  ? 'bg-zinc-800 text-zinc-50 ring-1 ring-zinc-500/70 hover:bg-zinc-700'
+                  : 'bg-white text-zinc-900 ring-1 ring-zinc-300 shadow-sm hover:bg-zinc-50'
+              }`}
+              aria-label="Open source on GitHub"
+            >
+              <Github className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
+              <span className="hidden min-[380px]:inline">Open source</span>
+            </a>
             <button
               type="button"
               onClick={toggleTheme}
-              className={`rounded-full p-1.5 transition-colors sm:mr-1 ${navLink}`}
+              className={`rounded-full p-1.5 transition-colors ${navLink}`}
               aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -308,6 +325,16 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
             <a href="#pricing" onClick={closeMobileMenu} className={mobileNavLink}>
               Pricing
             </a>
+            <a
+              href="https://github.com/orholam/kanban_ai"
+              target="_blank"
+              rel="noreferrer"
+              onClick={closeMobileMenu}
+              className={`${mobileNavLink} inline-flex items-center gap-2 font-semibold`}
+            >
+              <Github className="h-4 w-4" aria-hidden />
+              Open source on GitHub
+            </a>
             <Link
               to="/login"
               onClick={() => {
@@ -334,23 +361,10 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
             Kanban AI is an AI-powered project platform that turns messy backlogs into weekly boards you can commit to.
           </p>
 
-          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:mt-8 sm:flex-row sm:gap-4">
+          <div className="mt-6 flex justify-center sm:mt-8">
             <GradientCtaButton to="/login" onClick={onCTAClick} isDarkMode={isDarkMode}>
               Get started free
             </GradientCtaButton>
-            <a
-              href="https://github.com/orholam/kanban_ai"
-              target="_blank"
-              rel="noreferrer"
-              className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
-                isDarkMode
-                  ? 'text-zinc-300 ring-1 ring-zinc-700 hover:bg-zinc-800/80 hover:text-white'
-                  : 'text-zinc-700 ring-1 ring-zinc-300/90 hover:bg-white hover:text-zinc-900'
-              }`}
-            >
-              <Github className="h-4 w-4" aria-hidden />
-              Open source
-            </a>
           </div>
         </div>
 
@@ -370,6 +384,37 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
               loading="eager"
               decoding="async"
             />
+          </div>
+          {/* GitHub-stars social button pattern — high, clear of the screenshot */}
+          <div
+            className="absolute -top-7 right-2 z-10 sm:-top-8 sm:right-4 lg:-right-2"
+            aria-label={`${userCountLabel} users on Kanban AI`}
+          >
+            <div
+              className={`inline-flex overflow-hidden rounded-md text-[13px] font-semibold shadow-[0_10px_30px_-12px_rgba(0,0,0,0.45)] ring-1 ${
+                isDarkMode
+                  ? 'bg-zinc-900 text-zinc-100 ring-zinc-600/80'
+                  : 'bg-[#f6f8fa] text-zinc-900 ring-zinc-300'
+              }`}
+            >
+              <span
+                className={`inline-flex items-center gap-1.5 border-r px-3 py-1.5 ${
+                  isDarkMode ? 'border-zinc-700' : 'border-zinc-300'
+                }`}
+              >
+                <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 fill-current opacity-80" aria-hidden>
+                  <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
+                </svg>
+                Users
+              </span>
+              <span
+                className={`inline-flex min-w-[3.25rem] items-center justify-center px-3 py-1.5 font-mono tabular-nums ${
+                  isDarkMode ? 'bg-zinc-950/80' : 'bg-white'
+                }`}
+              >
+                {userCountLabel}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -409,7 +454,11 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
       >
         <div className={`flex flex-col items-center justify-center gap-4 px-2 py-8 text-center sm:flex-row sm:justify-between sm:gap-6 sm:py-10 sm:text-left ${SHELL}`}>
           <p className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${textSubtle}`}>Trusted by builders</p>
-          <TrustedBy isDarkMode={isDarkMode} trustLabel="Indie hackers, founders & small crews" />
+          <TrustedBy
+            isDarkMode={isDarkMode}
+            trustLabel={`Trusted by ${userCountLabel} indie hackers, founders & small crews`}
+            countBadge={userCountLabel}
+          />
         </div>
       </section>
 
