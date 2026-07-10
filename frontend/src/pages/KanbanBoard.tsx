@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react';
 import { lazyWithRetry } from '../lib/lazyWithRetry';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { Plus, Minus, Eye, EyeOff, Link as LinkIcon, Plug, Users, X, Filter } from 'lucide-react';
+import { Plus, Minus, Eye, EyeOff, Link as LinkIcon, Plug, Users, X, Filter, Sparkles } from 'lucide-react';
 import TaskCard from '../components/TaskCard';
 import type { Project, Task, Priority, TaskType } from '../types';
 import {
@@ -158,6 +158,7 @@ export default function KanbanBoard({
   const [isLoading, setIsLoading] = useState(true);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [chatOpenRequest, setChatOpenRequest] = useState(0);
   const [isCondensed, setIsCondensed] = useState(() => {
     const saved = localStorage.getItem('kanban-condensed-mode');
     return saved ? JSON.parse(saved) : false;
@@ -1465,6 +1466,50 @@ export default function KanbanBoard({
           </button>
         </div>
 
+        {!isLoading && currentProject && tasks.length === 0 ? (
+          <div
+            className={`mb-4 rounded-xl border px-4 py-4 sm:mb-5 sm:px-5 ${
+              isDarkMode
+                ? 'border-indigo-500/25 bg-indigo-950/30'
+                : 'border-indigo-200/80 bg-indigo-50/60'
+            }`}
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className={`text-sm font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                  Your board is empty
+                </p>
+                <p className={`mt-1 text-xs leading-relaxed sm:text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  Add a task manually or let the AI assistant break down sprint one — use the panel on the right or the
+                  buttons below.
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                    isDarkMode
+                      ? 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700'
+                      : 'bg-white text-zinc-900 ring-1 ring-zinc-200 hover:bg-zinc-50'
+                  }`}
+                >
+                  <Plus className="h-3.5 w-3.5 shrink-0" />
+                  Add first task
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChatOpenRequest((n) => n + 1)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-500"
+                >
+                  <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                  Plan with AI
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-1 gap-y-5 md:grid-cols-3 md:gap-x-5 md:gap-y-0 md:items-stretch lg:gap-x-6">
           {BOARD_COLUMNS.map((column) => {
             const columnTasks = tasksByColumn[column.id];
@@ -1557,6 +1602,7 @@ export default function KanbanBoard({
           tasks={tasks}
           boardLoading={isLoading}
           guestMode={guestMode}
+          chatOpenRequest={chatOpenRequest}
           onCreateTask={handleCreateTaskFromChat}
           onUpdateTask={handleTaskUpdateFromChat}
           onDeleteTask={handleDeleteTaskFromChat}

@@ -1,0 +1,104 @@
+# Kanban AI — Full Summary
+
+> Transform your side projects from ideas to reality with AI-assisted project management.
+
+Kanban AI is your personal AI-powered project companion that helps you build, track, and complete side projects with intelligent guidance. Whether you are a developer showcasing new skills, an entrepreneur building a SaaS, or a creator bringing ideas to life, Kanban AI provides structure and support through modern kanban boards, AI-assisted planning, and native MCP integration for coding agents.
+
+## Key Features
+
+### AI-Powered Project Planning
+
+- **Smart Project Breakdown:** Describe your idea and let AI create a comprehensive development plan.
+- **Personalized Roadmaps:** Tailored to your skills, tech stack, and learning goals.
+- **Intelligent Task Generation:** AI creates specific, actionable tasks for each development phase.
+
+### Intelligent Progress Tracking
+
+- **Adaptive Planning:** AI adjusts your roadmap based on actual progress.
+- **Smart Recommendations:** Personalized suggestions when ahead or behind schedule.
+- **Progress Analytics:** Visual insights into your development journey.
+
+### Modern Kanban Interface
+
+- **Drag-and-Drop Management:** Intuitive task organization with visual kanban boards.
+- **Project Members:** Invite editors by email; shared boards sync through Supabase.
+- **Real-time Updates:** Seamless collaboration and progress tracking.
+- **Dark/Light Mode:** Interface that adapts to your preferences.
+
+### AI Assistant Integration
+
+- **Contextual Guidance:** Ask questions and get project-specific advice.
+- **Roadblock Resolution:** AI helps overcome technical challenges.
+- **Learning Support:** Explanations and resources for new technologies.
+
+## Public URLs
+
+- Home: https://kanbanai.dev/
+- Connect AI (MCP setup): https://kanbanai.dev/connect
+- Documentation: https://kanbanai.dev/docs
+- Blog: https://kanbanai.dev/blog
+- GitHub: https://github.com/orholam/kanban_ai
+
+## MCP Server
+
+Kanban AI exposes a **remote MCP server** at `https://kanbanai.dev/api/mcp`. It talks directly to Supabase with the same board operations as the web app (projects, tasks, comments).
+
+### Setup
+
+1. Sign in at Kanban AI.
+2. Open **Connect AI** (`/connect`).
+3. Click **Copy config** — credentials are filled in server-side.
+4. Paste into Cursor or Claude Desktop MCP settings and restart.
+
+For stdio-only clients, the Connect page provides a Claude Desktop JSON block using `mcp-remote`.
+
+### Authentication
+
+Each MCP request must include:
+
+1. `Authorization: Bearer <supabase_access_token>` — the signed-in user's Supabase session access token (required).
+2. `X-MCP-API-Key: <MCP_API_SECRET>` — when `MCP_API_SECRET` is configured on the deployment (optional per deployment; required on kanbanai.dev production).
+
+Authenticated users fetch full config from `GET /api/mcp-setup` with their session bearer token.
+
+### MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_projects` | List all Kanban AI projects the signed-in user can access. |
+| `get_board` | Get a project and all of its tasks (with task comments) as JSON context. |
+| `create_project` | Create a new Kanban AI project for the signed-in user. |
+| `update_project` | Update project metadata (title, notes, privacy, sprint fields, etc.). |
+| `delete_project` | Delete a project and all of its tasks and collaborator rows. |
+| `create_task` | Create a task on a project board. |
+| `update_task` | Update an existing task by id. |
+| `delete_task` | Delete a task from a board. |
+| `list_task_comments` | List comments on a task. |
+| `add_task_comment` | Add a comment to a task thread. |
+| `delete_task_comment` | Delete a task comment by id. |
+
+### Example Prompts
+
+- "List my Kanban AI projects and tell me which have tasks in progress."
+- "On project `<uuid>`, move every todo task in sprint 2 to in-progress."
+- "Create a task: Ship landing page copy review — feature, high priority, due Friday."
+
+### Further Reading
+
+- MCP setup docs: https://kanbanai.dev/docs/connect-mcp-claude-cursor
+- Kanban + MCP comparison (2026): https://kanbanai.dev/blog/kanban-mcp-tools-compared
+
+## Tech Stack
+
+- **Frontend:** React 18, TypeScript, Vite
+- **Styling:** Tailwind CSS
+- **Backend:** Supabase (PostgreSQL, Auth, Real-time)
+- **AI:** OpenAI GPT-4
+- **Deployment:** Vercel
+- **License:** MIT
+
+## Use Cases
+
+- **Developers:** Skill showcase, portfolio projects, structured learning paths.
+- **Entrepreneurs:** MVP development, AI-guided roadmaps, rapid iteration.
+- **Creators:** Project organization, goal breakdown, progress visualization.

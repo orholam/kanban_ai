@@ -26,6 +26,7 @@ const PublicProject = lazyWithRetry(() => import('./pages/PublicProject'));
 const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazyWithRetry(() => import('./pages/TermsOfService'));
 const Feedback = lazyWithRetry(() => import('./pages/Feedback'));
+const ContactPage = lazyWithRetry(() => import('./pages/ContactPage'));
 const Blog = lazyWithRetry(() => import('./pages/Blog'));
 const BlogPost = lazyWithRetry(() => import('./pages/BlogPost'));
 // DOCUMENTATION_BOARD — remove with `documentation-board-feature/`
@@ -273,6 +274,16 @@ function AppContent() {
           <div className="flex-1 overflow-y-auto">
             <Suspense fallback={<RouteFallback isDarkMode={isDarkMode} />}>
               <TermsOfService />
+            </Suspense>
+          </div>
+        </div>
+      } />
+      <Route path="/contact" element={
+        <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+          <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+          <div className="flex-1 overflow-y-auto">
+            <Suspense fallback={<RouteFallback isDarkMode={isDarkMode} />}>
+              <ContactPage isDarkMode={isDarkMode} />
             </Suspense>
           </div>
         </div>

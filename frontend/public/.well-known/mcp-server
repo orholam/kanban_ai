@@ -1,0 +1,72 @@
+{
+  "mcp_version": "2025-06-18",
+  "version": "1.0.0",
+  "name": "Kanban AI",
+  "description": "Remote MCP server for Kanban AI boards — list projects, read boards, and manage tasks and comments with the same operations as the web app.",
+  "endpoint": "https://kanbanai.dev/api/mcp",
+  "transport": "http",
+  "trust_class": "enterprise",
+  "capabilities": ["tools"],
+  "categories": ["project-management", "kanban"],
+  "auth": {
+    "required": true,
+    "methods": ["bearer", "apikey"],
+    "endpoint": "https://kanbanai.dev/connect",
+    "apikey_header": "X-MCP-API-Key"
+  },
+  "docs": "https://kanbanai.dev/docs/connect-mcp-claude-cursor",
+  "links": {
+    "connect": "https://kanbanai.dev/connect",
+    "documentation": "https://kanbanai.dev/docs/connect-mcp-claude-cursor"
+  },
+  "repository": "https://github.com/orholam/kanban_ai",
+  "last_updated": "2026-07-10T00:00:00Z",
+  "cache_ttl": 3600,
+  "crawl": true,
+  "tools_preview": [
+    {
+      "name": "list_projects",
+      "description": "List all Kanban AI projects the signed-in user can access."
+    },
+    {
+      "name": "get_board",
+      "description": "Get a project and all of its tasks (with task comments) as JSON context."
+    },
+    {
+      "name": "create_project",
+      "description": "Create a new Kanban AI project for the signed-in user."
+    },
+    {
+      "name": "update_project",
+      "description": "Update project metadata (title, notes, privacy, sprint fields, etc.)."
+    },
+    {
+      "name": "delete_project",
+      "description": "Delete a project and all of its tasks and collaborator rows."
+    },
+    {
+      "name": "create_task",
+      "description": "Create a task on a project board."
+    },
+    {
+      "name": "update_task",
+      "description": "Update an existing task by id."
+    },
+    {
+      "name": "delete_task",
+      "description": "Delete a task from a board."
+    },
+    {
+      "name": "list_task_comments",
+      "description": "List comments on a task."
+    },
+    {
+      "name": "add_task_comment",
+      "description": "Add a comment to a task thread."
+    },
+    {
+      "name": "delete_task_comment",
+      "description": "Delete a task comment by id."
+    }
+  ]
+}

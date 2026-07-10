@@ -1,7 +1,11 @@
-User-agent: *
-Allow: /
+# Content-Signal (Cloudflare robots.txt extension)
+# search=yes     — allow content in search engine results
+# ai-input=yes   — allow AI systems to use content for answers and citations
+# ai-train=yes   — allow use in model training (opt-in for discoverability)
+# See: https://developers.cloudflare.com/fundamentals/reference/robots-txt/
 
-Sitemap: https://kanbanai.dev/sitemap.xml
+User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
 
 # App / private surfaces — keep crawl budget on marketing & content URLs
 Disallow: /kanban
@@ -22,3 +26,156 @@ Allow: /docs/
 Allow: /docs/*
 Allow: /privacy-policy
 Allow: /terms-of-service
+Allow: /contact
+
+Sitemap: https://kanbanai.dev/sitemap.xml
+
+# --- AI crawlers: explicit allow on public marketing paths ---
+
+User-agent: GPTBot
+Allow: /
+Allow: /login
+Allow: /blog
+Allow: /blog/
+Allow: /blog/*
+Allow: /docs
+Allow: /docs/
+Allow: /docs/*
+Allow: /privacy-policy
+Allow: /terms-of-service
+Allow: /contact
+Disallow: /kanban
+Disallow: /project/
+Disallow: /new-project
+Disallow: /analytics
+Disallow: /feedback
+Disallow: /account
+Disallow: /public/project/
+
+User-agent: OAI-SearchBot
+Allow: /
+Allow: /login
+Allow: /blog
+Allow: /blog/
+Allow: /blog/*
+Allow: /docs
+Allow: /docs/
+Allow: /docs/*
+Allow: /privacy-policy
+Allow: /terms-of-service
+Allow: /contact
+Disallow: /kanban
+Disallow: /project/
+Disallow: /new-project
+Disallow: /analytics
+Disallow: /feedback
+Disallow: /account
+Disallow: /public/project/
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /login
+Allow: /blog
+Allow: /blog/
+Allow: /blog/*
+Allow: /docs
+Allow: /docs/
+Allow: /docs/*
+Allow: /privacy-policy
+Allow: /terms-of-service
+Allow: /contact
+Disallow: /kanban
+Disallow: /project/
+Disallow: /new-project
+Disallow: /analytics
+Disallow: /feedback
+Disallow: /account
+Disallow: /public/project/
+
+User-agent: anthropic-ai
+Allow: /
+Allow: /login
+Allow: /blog
+Allow: /blog/
+Allow: /blog/*
+Allow: /docs
+Allow: /docs/
+Allow: /docs/*
+Allow: /privacy-policy
+Allow: /terms-of-service
+Allow: /contact
+Disallow: /kanban
+Disallow: /project/
+Disallow: /new-project
+Disallow: /analytics
+Disallow: /feedback
+Disallow: /account
+Disallow: /public/project/
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /login
+Allow: /blog
+Allow: /blog/
+Allow: /blog/*
+Allow: /docs
+Allow: /docs/
+Allow: /docs/*
+Allow: /privacy-policy
+Allow: /terms-of-service
+Allow: /contact
+Disallow: /kanban
+Disallow: /project/
+Disallow: /new-project
+Disallow: /analytics
+Disallow: /feedback
+Disallow: /account
+Disallow: /public/project/
+
+User-agent: Google-Extended
+Allow: /
+Allow: /login
+Allow: /blog
+Allow: /blog/
+Allow: /blog/*
+Allow: /docs
+Allow: /docs/
+Allow: /docs/*
+Allow: /privacy-policy
+Allow: /terms-of-service
+Allow: /contact
+Disallow: /kanban
+Disallow: /project/
+Disallow: /new-project
+Disallow: /analytics
+Disallow: /feedback
+Disallow: /account
+Disallow: /public/project/
+
+User-agent: Applebot-Extended
+Allow: /
+Allow: /login
+Allow: /blog
+Allow: /blog/
+Allow: /blog/*
+Allow: /docs
+Allow: /docs/
+Allow: /docs/*
+Allow: /privacy-policy
+Allow: /terms-of-service
+Allow: /contact
+Disallow: /kanban
+Disallow: /project/
+Disallow: /new-project
+Disallow: /analytics
+Disallow: /feedback
+Disallow: /account
+Disallow: /public/project/
+
+# --- Bulk training scrapers (no citation value; block entirely) ---
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /

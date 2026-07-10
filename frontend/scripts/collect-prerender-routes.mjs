@@ -15,6 +15,7 @@ const STATIC_PUBLIC_ROUTES = [
   '/waitlist',
   '/blog',
   '/docs',
+  '/contact',
   '/privacy-policy',
   '/terms-of-service',
 ];

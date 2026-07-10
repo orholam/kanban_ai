@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, LayoutGrid, Loader2, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 import { createProject } from '../api/createProject';
 import { useAuth } from '../contexts/AuthContext';
 import { NewProjectPageLayout } from '../components/NewProjectPageLayout';
@@ -67,6 +68,7 @@ export default function SimpleNewProject({ isDarkMode, setProjects }: SimpleNewP
       navigate(`/project/${project_id}`);
     } catch (err) {
       console.error('Failed to create project:', err);
+      toast.error(err instanceof Error ? err.message : 'Could not create project');
     } finally {
       setIsLoading(false);
     }

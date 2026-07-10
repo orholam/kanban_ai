@@ -1,0 +1,36 @@
+# Kanban AI
+
+> Transform your side projects from ideas to reality with AI-assisted project management.
+
+Kanban AI is an AI-powered kanban board and project companion for builders, entrepreneurs, and creators. It combines drag-and-drop boards, sprint planning, and in-app AI guidance with a **native remote MCP server** so coding agents (Cursor, Claude Desktop, and other MCP clients) can list projects, read boards, and manage tasks without leaving the editor.
+
+**Tech:** React, TypeScript, Vite, Tailwind CSS, Supabase (PostgreSQL, Auth), OpenAI GPT-4, deployed on Vercel. MIT licensed.
+
+**MCP endpoint:** `https://kanbanai.dev/api/mcp`
+
+**MCP authentication:** each request requires `Authorization: Bearer <supabase_access_token>`. When the deployment sets `MCP_API_SECRET`, also send `X-MCP-API-Key: <secret>`. End users get both pre-filled from Connect AI; operators set `MCP_API_SECRET` on Vercel.
+
+**MCP tools (11):** `list_projects`, `get_board`, `create_project`, `update_project`, `delete_project`, `create_task`, `update_task`, `delete_task`, `list_task_comments`, `add_task_comment`, `delete_task_comment`.
+
+## Site
+
+- [Home](https://kanbanai.dev/): Landing page; try a guest board with no signup.
+- [Connect AI](https://kanbanai.dev/connect): Sign in and copy a ready-to-paste MCP config for Cursor or Claude Desktop.
+- [Documentation](https://kanbanai.dev/docs): Product guides, setup, and troubleshooting.
+- [Blog](https://kanbanai.dev/blog): Articles on kanban, AI workflows, and project management.
+- [GitHub](https://github.com/orholam/kanban_ai): Source code, issues, and discussions.
+
+## MCP
+
+- [MCP discovery manifest](https://kanbanai.dev/.well-known/mcp-server): Machine-readable server metadata (endpoint, auth, tools preview) per draft-serra-mcp-discovery-uri.
+- [MCP endpoint](https://kanbanai.dev/api/mcp): Remote Model Context Protocol server; same board operations as the web app.
+- [MCP OpenAPI schema](https://kanbanai.dev/openapi/mcp.json): Machine-readable OpenAPI 3.1 description of all 11 MCP tools (request/response shapes; actual transport is JSON-RPC at `/api/mcp`).
+- [Connect Claude & Cursor (MCP)](https://kanbanai.dev/docs/connect-mcp-claude-cursor): Setup guide — tokens, Cursor/Claude config, tools, and troubleshooting.
+- [Kanban Tools With MCP Compared](https://kanbanai.dev/blog/kanban-mcp-tools-compared): 2026 landscape comparison of kanban products with MCP support.
+
+## Optional
+
+- [Full site summary](https://kanbanai.dev/llms-full.txt): Expanded AI-readable mirror with feature details, tool descriptions, and use cases.
+- [Sign in](https://kanbanai.dev/login): Create an account for cloud sync and MCP access.
+- [Privacy Policy](https://kanbanai.dev/privacy-policy): Data handling and third-party services.
+- [Terms of Service](https://kanbanai.dev/terms-of-service): Usage terms.

@@ -37,6 +37,13 @@ backend/dist/
 # Local SQLite (npm run dev:local)
 .local/
 
+# MCP publisher local auth (never commit)
+.mcpregistry_github_token
+.mcpregistry_registry_token
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
 # Miscellaneous
 Thumbs.db
 desktop.ini

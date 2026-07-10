@@ -444,6 +444,8 @@ interface ProjectTaskChatProps {
   boardLoading: boolean;
   /** Local guest boards skip loading comments from Supabase. */
   guestMode?: boolean;
+  /** Increment to programmatically expand the assistant panel (e.g. from empty-board CTA). */
+  chatOpenRequest?: number;
   onCreateTask: (task: Task) => Promise<void>;
   onUpdateTask: (
     taskId: string,
@@ -477,6 +479,7 @@ export default function ProjectTaskChat({
   tasks,
   boardLoading,
   guestMode = false,
+  chatOpenRequest = 0,
   onCreateTask,
   onUpdateTask,
   onDeleteTask,
@@ -502,6 +505,10 @@ export default function ProjectTaskChat({
       return true;
     }
   });
+
+  useEffect(() => {
+    if (chatOpenRequest > 0) setOpen(true);
+  }, [chatOpenRequest]);
   const [messages, setMessages] = useState<ProjectTaskChatMessage[]>([]);
   const messagesRef = useRef<ProjectTaskChatMessage[]>([]);
   useEffect(() => {
