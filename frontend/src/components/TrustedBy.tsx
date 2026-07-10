@@ -6,15 +6,18 @@ interface TrustedByProps {
   isDarkMode: boolean;
   /** Defaults to the standard trust line; pass to align with landing variant tone. */
   trustLabel?: string;
+  /** Optional override for the avatar stack badge (e.g. live user count). */
+  countBadge?: string;
 }
 
-export function TrustedBy({ isDarkMode, trustLabel }: TrustedByProps) {
+export function TrustedBy({ isDarkMode, trustLabel, countBadge }: TrustedByProps) {
   const avatars = [
     { src: p1, alt: 'Customer' },
     { src: p2, alt: 'Customer' },
     { src: p3, alt: 'Customer' },
   ];
   const label = trustLabel ?? 'Trusted by 104+ indie founders';
+  const badge = countBadge ?? '100+';
 
   return (
     <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-x-3">
@@ -31,8 +34,8 @@ export function TrustedBy({ isDarkMode, trustLabel }: TrustedByProps) {
             />
           </div>
         ))}
-        <div className="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-gray-900 bg-indigo-600 flex items-center justify-center">
-          <span className="text-xs font-medium text-white">100+</span>
+        <div className="inline-flex h-8 min-w-[2.25rem] items-center justify-center rounded-full bg-indigo-600 px-2 ring-2 ring-white dark:ring-gray-900">
+          <span className="text-[11px] font-bold tabular-nums leading-none text-white">{badge}</span>
         </div>
       </div>
       <span className={`text-center text-sm font-medium leading-snug sm:text-left ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
