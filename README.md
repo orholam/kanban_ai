@@ -1,44 +1,22 @@
-# **Kanban AI** 🤖
+# Kanban AI
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white)](https://vitejs.dev/)
 
-**Transform your side projects from ideas to reality with AI-assisted project management.**
+Open-source AI kanban for side projects. Plan with AI, manage a board in the browser, and (optionally) drive the same board from Cursor or Claude via MCP.
 
-Kanban AI is your personal AI-powered project companion that helps you build, track, and complete your side projects with intelligent guidance. Whether you're a developer looking to showcase new skills, an entrepreneur building your next SaaS, or a creator bringing ideas to life, Kanban AI provides the structure and support you need.
+**Try the hosted app:** [kanbanai.dev](https://kanbanai.dev) · **Docs:** [kanbanai.dev/docs](https://kanbanai.dev/docs)
 
-##  **Key Features**
+Most people cloning this repo want the **local** app. That path is first below.
 
-###  **AI-Powered Project Planning**
-- **Smart Project Breakdown**: Describe your idea and let AI create a comprehensive 10-week development plan
-- **Personalized Roadmaps**: Tailored to your skills, tech stack, and learning goals
-- **Intelligent Task Generation**: AI creates specific, actionable tasks for each development phase
+---
 
-###  **Intelligent Progress Tracking**
-- **Adaptive Planning**: AI adjusts your roadmap based on your actual progress
-- **Smart Recommendations**: Get personalized suggestions when you're ahead or behind schedule
-- **Progress Analytics**: Visual insights into your development journey
+## Run locally (recommended)
 
-###  **Modern Kanban Interface**
-- **Drag-and-Drop Management**: Intuitive task organization with visual kanban boards
-- **Project members**: Invite editors by email; shared boards sync through Supabase
-- **Real-time Updates**: Seamless collaboration and progress tracking
-- **Dark/Light Mode**: Beautiful interface that adapts to your preferences
+No Supabase account, no sign-in. One SQLite database under `.local/` (gitignored). Vite serves the UI; a small local API on port **3000** handles data and OpenAI.
 
-###  **AI Assistant Integration**
-- **Contextual Guidance**: Ask questions and get project-specific advice
-- **Roadblock Resolution**: AI helps you overcome technical challenges
-- **Learning Support**: Get explanations and resources for new technologies
-
-##  **Getting Started**
-
-**Requirements:** Node.js 18+, npm, and an [OpenAI API key](https://platform.openai.com/api-keys) if you want AI features.
-
-### Run locally (recommended for contributors)
-
-One SQLite database under `.local/` (gitignored), no Supabase account, no sign-in. The app talks to a small local API on port **3000**; Vite proxies `/api` there ([`frontend/vite.config.ts`](frontend/vite.config.ts)).
+**Requirements:** Node.js 18+, npm, and an [OpenAI API key](https://platform.openai.com/api-keys) for AI features.
 
 ```bash
 git clone https://github.com/orholam/kanban_ai.git
@@ -47,7 +25,14 @@ npm install
 cp env.local.example .env.local
 ```
 
-Edit `.env.local`: set **`OPENAI_API_KEY`** to your key. Leave **`VITE_LOCAL_MODE=true`** as in the example.
+Edit `.env.local`:
+
+```bash
+VITE_LOCAL_MODE=true
+OPENAI_API_KEY=sk-...
+```
+
+Do **not** prefix the OpenAI key with `VITE_` — that would expose it in the browser.
 
 ```bash
 npm run dev:local
@@ -55,160 +40,99 @@ npm run dev:local
 
 Open **http://localhost:5173**.
 
-- Do **not** put `OPENAI_API_KEY` behind the `VITE_` prefix (that would ship it to the browser). The dev server reads it from `.env.local`.
-- First run applies [`frontend/scripts/local-schema.sql`](frontend/scripts/local-schema.sql). Account, hosted analytics, and in-app feedback are disabled in this mode (they need Supabase).
-- **Project members (local):** open a board → **Members** in the header. Invite `collaborator@dev.invalid` to test sharing (seeded in the local schema).
+### What works in local mode
 
-### Supabase + Vercel-style API (production-like)
+| Feature | Local |
+|---|---|
+| Kanban board, sprints, tasks, comments | Yes |
+| AI project planning + board assistant | Yes (needs `OPENAI_API_KEY`) |
+| Project members (invite by email) | Yes — invite `collaborator@dev.invalid` to try (seeded) |
+| Cloud auth / account / hosted analytics / feedback | No (needs Supabase) |
+| Remote MCP (`/api/mcp`) | No — use a hosted deploy or `vercel dev` with Supabase |
 
-Use this when you need real auth and cloud data.
+First run applies [`frontend/scripts/local-schema.sql`](frontend/scripts/local-schema.sql). Vite proxies `/api` to the local process ([`frontend/vite.config.ts`](frontend/vite.config.ts)).
 
-1. In `frontend/.env.local` (or `.env`): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and **`VITE_LOCAL_MODE`** removed or not `true`.
-2. Same **`OPENAI_API_KEY`** as above for `/api/openai`.
-3. Two terminals from `frontend/`: `npx vercel dev --listen 3000` then `npm start`. UI: **http://localhost:5173**.
+### Useful scripts
+
+| Command | What it does |
+|---|---|
+| `npm run dev:local` | Local SQLite API + Vite (default for contributors) |
+| `npm start` | Vite only (pair with Supabase / `vercel dev`) |
+| `npm run build` | Production build (+ SEO prerender; skip with `SKIP_PRERENDER=1`) |
+| `npm run build:no-prerender` | Faster local production build |
 
 ---
 
-### Deploying on Vercel
+## Optional: Supabase (cloud auth + sync)
 
-Add `OPENAI_API_KEY` in the Vercel project’s Environment Variables (Production and Preview as needed). The [`frontend/api/openai.ts`](frontend/api/openai.ts) handler reads it at runtime; no OpenAI key belongs in client env vars.
+Use this when you want real accounts, multi-device sync, or the hosted MCP server.
 
-The app uses code-splitting; [`frontend/vercel.json`](frontend/vercel.json) sets long-lived caching for hashed `/assets/*` files and revalidation for HTML responses so open tabs pick up a fresh `index.html` after deploys. Lazy routes also retry once with a reload if a chunk fails to load (stale shell).
+1. In `frontend/.env.local`, set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, and remove `VITE_LOCAL_MODE` (or set it to anything other than `true`).
+2. Keep `OPENAI_API_KEY` for `/api/openai`.
+3. From `frontend/`, run two terminals: `npx vercel dev --listen 3000` then `npm start`. UI: **http://localhost:5173**.
 
-**SEO prerender:** `npm run build` in `frontend/` runs a post-build Puppeteer step that snapshots public marketing routes (`/`, `/blog`, `/blog/*`, `/docs`, `/docs/*`, `/login`, etc.) into route-specific `index.html` files under `dist/`, so search engines receive full page HTML without executing JavaScript. Skip with `SKIP_PRERENDER=1` or use `npm run build:no-prerender` for a faster local build only.
+### Deploy on Vercel
 
-### Landing page A/B test
+Set `OPENAI_API_KEY` (and Supabase / MCP vars below) in the Vercel project. The OpenAI key is read only on the server — never put it in `VITE_*` client env.
 
-The home page randomly assigns variant **A** or **B** (persisted in `localStorage`). Preview either layout with `/?variant=A` or `/?variant=B`. Site owners compare CTA performance under **Analytics → Landing page A/B test**. When you change landing copy or layout, bump `LANDING_AB_TEST_VERSION` in [`frontend/src/lib/landingAbTest.ts`](frontend/src/lib/landingAbTest.ts) so metrics stay comparable. See the [documentation article](https://kanbanai.dev/documentation/landing-page-ab-test) for details.
+---
 
-### MCP server (Claude, Cursor, other AI tools)
+## MCP (Cursor, Claude, other agents)
 
-Kanban AI exposes a **remote MCP server** at `/api/mcp` on your Vercel deployment. It talks directly to Supabase with the same board operations as the web app (projects, tasks, comments).
+On a **hosted** deployment, Kanban AI exposes a remote MCP server at `/api/mcp` with the same board operations as the web app.
 
-**Discovery manifest:** [`/.well-known/mcp-server`](https://kanbanai.dev/.well-known/mcp-server) — machine-readable metadata per [draft-serra-mcp-discovery-uri](https://datatracker.ietf.org/doc/draft-serra-mcp-discovery-uri/) (endpoint, auth, tools preview, setup links).
-
-**Vercel environment variables** (Production + Preview):
+- **End users:** sign in → **Connect AI** (`/connect`) → copy the generated config into Cursor or Claude Desktop.
+- **Operators:** see [`docs/MCP_REGISTRY.md`](docs/MCP_REGISTRY.md) and the env table below.
+- **Discovery:** [`/.well-known/mcp-server`](https://kanbanai.dev/.well-known/mcp-server) · OpenAPI: [`/openapi/mcp.json`](https://kanbanai.dev/openapi/mcp.json) · AI index: [`/llms.txt`](https://kanbanai.dev/llms.txt)
 
 | Variable | Purpose |
 |---|---|
-| `SUPABASE_URL` | Your Supabase project URL (same value as `VITE_SUPABASE_URL`) |
-| `SUPABASE_ANON_KEY` | Supabase anon key (same value as `VITE_SUPABASE_ANON_KEY`) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key for MCP analytics events and **project member invites** (`/api/invite-collaborator` resolves email → user) |
-| `MCP_API_SECRET` | Shared secret clients must send in `X-MCP-API-Key` |
-| `OPENAI_API_KEY` | Already required for in-app AI (optional for MCP CRUD tools) |
+| `SUPABASE_URL` | Same as `VITE_SUPABASE_URL` |
+| `SUPABASE_ANON_KEY` | Same as `VITE_SUPABASE_ANON_KEY` |
+| `SUPABASE_SERVICE_ROLE_KEY` | MCP analytics + member invites |
+| `MCP_API_SECRET` | Shared secret for `X-MCP-API-Key` |
+| `OPENAI_API_KEY` | In-app AI (optional for MCP CRUD tools) |
 
-**End-user setup:** sign in and open **Connect AI** (`/connect`). The app generates a ready-to-paste MCP config (token + API secret filled in server-side). Copy once, paste into Cursor or Claude Desktop, restart.
+**Tools:** `list_projects`, `get_board`, `create_project`, `update_project`, `delete_project`, `create_task`, `update_task`, `delete_task`, `list_task_comments`, `add_task_comment`, `delete_task_comment`.
 
-**Operator setup:** set `MCP_API_SECRET` on Vercel. Authenticated users fetch full config from `GET /api/mcp-setup` with their session bearer token.
+---
 
-**Client auth:** each MCP request must include:
+## Features
 
-1. `X-MCP-API-Key: <MCP_API_SECRET>` (when configured on the deployment)
-2. `Authorization: Bearer <supabase_access_token>` — the signed-in user's Supabase session access token
+- AI project breakdown and sprint-aware task generation
+- Drag-and-drop kanban with priorities, types, due dates, and comments
+- In-board AI assistant (and `@kanban` replies on task threads)
+- Project members (cloud) or local seeded collaborator for sharing tests
+- Dark / light mode
+- Optional remote MCP so coding agents manage the same board
 
-**Cursor / Claude Desktop** — use the JSON from `/connect` instead of hand-editing placeholders:
+## Tech stack
 
-```json
-{
-  "mcpServers": {
-    "kanban-ai": {
-      "url": "https://your-deployment.vercel.app/api/mcp",
-      "headers": {
-        "X-MCP-API-Key": "...",
-        "Authorization": "Bearer ..."
-      }
-    }
-  }
-}
-```
+React 18, TypeScript, Vite, Tailwind CSS · Local: SQLite API · Hosted: Supabase + Vercel · AI: OpenAI · MCP: `mcp-handler`
 
-For stdio-only clients, the Connect page provides a Claude Desktop JSON block using `mcp-remote`:
-
-```json
-{
-  "mcpServers": {
-    "kanban-ai": {
-      "command": "npx",
-      "args": ["-y", "mcp-remote", "https://your-deployment.vercel.app/api/mcp", "--header", "X-MCP-API-Key:your-secret", "--header", "Authorization:Bearer your-token"]
-    }
-  }
-}
-```
-
-**Available tools:** `list_projects`, `get_board`, `create_project`, `update_project`, `delete_project`, `create_task`, `update_task`, `delete_task`, `list_task_comments`, `add_task_comment`, `delete_task_comment`.
-
-##  **Tech Stack**
-
-- **Frontend**: React 18, TypeScript, Vite
-- **Styling**: Tailwind CSS
-- **Backend**: Supabase (PostgreSQL, Auth, Real-time)
-- **AI Integration**: OpenAI GPT-4
-- **State Management**: React Context + Hooks
-- **Routing**: React Router v6
-- **UI Components**: Lucide React Icons
-- **Deployment**: Vercel
-
-### Owner: product analytics & landing A/B
-
-The owner-only `/analytics` view includes landing page A/B results. Bump **`LANDING_AB_TEST_VERSION`** in [`frontend/src/lib/landingAbTest.ts`](frontend/src/lib/landingAbTest.ts) whenever you materially change variant A or B so new traffic is tagged separately and the dashboard does not blend runs.
-
-For **variant B**, logged-out visitors on `/` use a self-contained marketing header (the global app header is hidden so the layout can match the ClickUp-style hero). Variant A still uses the shared header.
-
-##  **Project Structure**
+## Project layout
 
 ```
 frontend/
+├── api/                 # Vercel serverless (OpenAI, MCP, feedback, invites)
+├── scripts/             # Local schema, prerender, etc.
 ├── src/
-│   ├── components/          # Reusable UI components
-│   ├── pages/              # Page components
-│   ├── contexts/           # React contexts
-│   ├── lib/                # Utility libraries
-│   ├── types/              # TypeScript type definitions
-│   ├── api/                # API integration
-│   └── assets/             # Static assets
-├── public/                 # Public assets
+│   ├── components/
+│   ├── pages/
+│   ├── lib/
+│   └── ...
+├── public/              # Static assets, llms.txt, OpenAPI, .well-known
 └── package.json
 ```
 
-##  **Use Cases**
+## Contributing
 
-### For Developers
-- **Skill Showcase**: Build projects that demonstrate new technologies
-- **Portfolio Enhancement**: Create impressive side projects for your resume
-- **Learning Path**: Structured approach to mastering new frameworks
+1. Fork and clone
+2. Use **Run locally** above
+3. Branch, commit, open a PR
 
-### For Entrepreneurs
-- **MVP Development**: Rapidly prototype and validate business ideas
-- **Product Roadmap**: AI-guided development planning
-- **Market Testing**: Build and iterate quickly
+Issues and ideas: [GitHub Issues](https://github.com/orholam/kanban_ai/issues)
 
-### For Creators
-- **Project Organization**: Keep creative projects on track
-- **Goal Achievement**: Break down complex projects into manageable tasks
-- **Progress Visualization**: See your creative journey unfold
+## License
 
-##  **Contributing**
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-##  **License**
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-##  **Support**
-
-- **Documentation**: [https://kanbanai.dev/docs](https://kanbanai.dev/docs)
-- **Issues**: [GitHub Issues](https://github.com/orholam/kanban_ai/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/orholam/kanban_ai/discussions)
-
-
-- Hosted on Vercel for lightning-fast performance
-- Styled with Tailwind CSS for beautiful, responsive design
-
----
+MIT — see [LICENSE](LICENSE).

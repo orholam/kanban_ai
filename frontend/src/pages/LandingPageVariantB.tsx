@@ -798,6 +798,18 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
               </div>
             </div>
           </div>
+
+          <div className={`mt-10 flex justify-center border-t pt-8 sm:mt-12 ${border}`}>
+            <a href="https://smollaunch.com" target="_blank" rel="noopener">
+              <img
+                src="https://smollaunch.com/badges/featured.svg"
+                alt="Kanban AI — Featured on Smol Launch"
+                loading="lazy"
+                width={250}
+                height={60}
+              />
+            </a>
+          </div>
         </div>
       </footer>
     </div>
