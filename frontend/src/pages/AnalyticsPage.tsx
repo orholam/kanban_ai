@@ -81,6 +81,29 @@ function labelForProfileRow(p: {
   return s || p.id.slice(0, 8);
 }
 
+function mcpEventUserLabel(
+  e: AnalyticsEventRow,
+  nameByUserId: Record<string, string>
+): string {
+  if (e.user_id) {
+    return nameByUserId[e.user_id] ?? e.user_id.slice(0, 8);
+  }
+
+  const attemptedEmail =
+    typeof e.metadata?.attempted_email === 'string' ? e.metadata.attempted_email.trim() : '';
+  if (attemptedEmail) return attemptedEmail;
+
+  const fingerprint =
+    typeof e.metadata?.token_fingerprint === 'string'
+      ? e.metadata.token_fingerprint
+      : e.guest_session_id && e.guest_session_id !== 'mcp_auth_failure'
+        ? e.guest_session_id
+        : null;
+  if (fingerprint) return `token:${fingerprint.slice(0, 8)}`;
+
+  return 'Unknown';
+}
+
 function DailyVolumeChart({
   series,
   isDarkMode,
@@ -930,7 +953,7 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                                   {isMcpEventType(e.event_type) ? MCP_EVENT_LABELS[e.event_type] : e.event_type}
                                 </td>
                                 <td className="px-3 py-2 font-mono">
-                                  {e.user_id ? nameByUserId[e.user_id] ?? e.user_id.slice(0, 8) : '—'}
+                                  {mcpEventUserLabel(e, nameByUserId)}
                                 </td>
                                 <td className={`px-3 py-2 ${muted}`}>
                                   {toolName ? (
@@ -941,7 +964,17 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                                       {typeof e.metadata?.error === 'string' ? ` · ${e.metadata.error}` : ''}
                                     </>
                                   ) : reason ? (
-                                    <>reason: {reason}</>
+                                    <>
+                                      reason: {reason}
+                                      {typeof e.metadata?.token_fingerprint === 'string' &&
+                                      !e.user_id &&
+                                      !e.metadata?.attempted_email
+                                        ? ` · token:${e.metadata.token_fingerprint.slice(0, 8)}`
+                                        : ''}
+                                      {typeof e.metadata?.user_agent === 'string'
+                                        ? ` · ${e.metadata.user_agent.slice(0, 48)}`
+                                        : ''}
+                                    </>
                                   ) : typeof e.metadata?.method === 'string' ? (
                                     <>method: {e.metadata.method}</>
                                   ) : (

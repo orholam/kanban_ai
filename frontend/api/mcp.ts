@@ -37,7 +37,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const request = vercelRequestToWebRequest(req);
   const auth = await authenticateMcpRequest(request);
   if (!auth.ok) {
-    recordMcpAuthFailure({ reason: auth.reason });
+    recordMcpAuthFailure({
+      reason: auth.reason,
+      attemptedUserId: auth.attemptedUserId,
+      attemptedEmail: auth.attemptedEmail,
+      tokenFingerprint: auth.tokenFingerprint,
+      userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined,
+    });
     res.status(401).json({
       error: 'Unauthorized',
       hint: 'Send Authorization: Bearer <supabase_access_token> and, if configured, X-MCP-API-Key.',
