@@ -1,6 +1,6 @@
 import type { Task } from '../types';
-import { PROJECT_SETUP_SYSTEM_PROMPT } from './prompts';
-import type { ProjectSetupResult } from './projectSetup';
+import { PROJECT_BUILDER_CHAT_SYSTEM_PROMPT, PROJECT_SETUP_SYSTEM_PROMPT } from './prompts';
+import type { ProjectBuilderDraft, ProjectSetupResult, GeneratedSetupTask, RoadmapPhase } from './projectSetup';
 import { titleFromBrief } from './projectSetup';
 
 /** Browser calls this; Vercel serverless adds OPENAI_API_KEY and forwards to OpenAI. */
@@ -32,7 +32,7 @@ interface OpenAIRequest {
   temperature?: number;
   max_tokens?: number;
   tools?: unknown[];
-  tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
+  tool_choice?: 'auto' | 'none' | 'required' | { type: 'function'; function: { name: string } };
   function_call?: string;
   stream?: boolean;
 }
@@ -227,6 +227,416 @@ export async function generateProjectSetup(input: {
   }
 
   return normalizeSetupResult(parsed, brief, titleHint);
+}
+
+const PROJECT_BUILDER_MODEL = 'gpt-4o-mini' as const;
+
+const projectBuilderTools = [
+  {
+    type: 'function',
+    function: {
+      name: 'update_project_identity',
+      description: 'Set or refine the project title and short description shown in the workspace.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Short project name (max ~60 chars).' },
+          description: { type: 'string', description: '1–2 sentence description.' },
+        },
+        required: ['title', 'description'],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'set_roadmap',
+      description: 'Replace the workspace roadmap with 3–8 milestone phases.',
+      parameters: {
+        type: 'object',
+        properties: {
+          phases: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                title: { type: 'string' },
+                description: { type: 'string' },
+              },
+              required: ['title', 'description'],
+            },
+            minItems: 3,
+            maxItems: 10,
+          },
+        },
+        required: ['phases'],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'set_starter_tasks',
+      description: 'Replace starter kanban tasks (usually for phase/sprint 1).',
+      parameters: {
+        type: 'object',
+        properties: {
+          tasks: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                title: { type: 'string' },
+                description: { type: 'string' },
+                priority: { type: 'string', enum: ['low', 'medium', 'high'] },
+                type: { type: 'string', enum: ['feature', 'scope', 'bug'] },
+                sprint: { type: 'integer' },
+              },
+              required: ['title', 'description', 'priority', 'type'],
+            },
+            minItems: 3,
+            maxItems: 10,
+          },
+        },
+        required: ['tasks'],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'set_focus_phase',
+      description: 'Highlight which roadmap phase (0-based index) you are currently shaping.',
+      parameters: {
+        type: 'object',
+        properties: {
+          index: { type: 'integer', minimum: 0 },
+        },
+        required: ['index'],
+        additionalProperties: false,
+      },
+    },
+  },
+] as const;
+
+export type ProjectBuilderChatMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
+export type ProjectBuilderProgress =
+  | { phase: 'awaiting_model' }
+  | { phase: 'streaming' }
+  | { phase: 'running_tool'; toolName: string };
+
+function normalizePhases(raw: unknown): RoadmapPhase[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((p): p is Record<string, unknown> => p != null && typeof p === 'object')
+    .map((p) => ({
+      title: String(p.title ?? '').trim() || 'Phase',
+      description: String(p.description ?? '').trim(),
+    }))
+    .filter((p) => p.title.length > 0)
+    .slice(0, 10);
+}
+
+function normalizeTasks(raw: unknown): GeneratedSetupTask[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((t): t is Record<string, unknown> => t != null && typeof t === 'object')
+    .map((t) => {
+      const priority = String(t.priority ?? 'medium');
+      const type = String(t.type ?? 'feature');
+      const sprintNum = Number(t.sprint);
+      return {
+        title: String(t.title ?? '').trim(),
+        description: String(t.description ?? '').trim(),
+        priority: (['low', 'medium', 'high'].includes(priority) ? priority : 'medium') as
+          | 'low'
+          | 'medium'
+          | 'high',
+        type: (['feature', 'scope', 'bug'].includes(type) ? type : 'feature') as
+          | 'feature'
+          | 'scope'
+          | 'bug',
+        sprint: Number.isFinite(sprintNum) && sprintNum >= 1 ? Math.floor(sprintNum) : 1,
+      };
+    })
+    .filter((t) => t.title.length > 0)
+    .slice(0, 10);
+}
+
+function buildProjectBuilderSystem(draft: ProjectBuilderDraft): string {
+  return `${PROJECT_BUILDER_CHAT_SYSTEM_PROMPT}
+
+Current workspace JSON (read-only snapshot — update via tools):
+${JSON.stringify(
+  {
+    title: draft.title,
+    description: draft.description,
+    phases: draft.phases,
+    tasks: draft.tasks,
+    focusPhaseIndex: draft.focusPhaseIndex,
+  },
+  null,
+  2
+)}`;
+}
+
+type StreamedToolCall = {
+  id: string;
+  name: string;
+  arguments: string;
+};
+
+type StreamRoundResult = {
+  content: string;
+  toolCalls: StreamedToolCall[];
+  finishReason: string | null;
+};
+
+/** Parse one OpenAI chat.completion stream round (text deltas + tool_calls). */
+async function consumeOpenAiChatStream(
+  response: Response,
+  onContentDelta?: (fullText: string) => void
+): Promise<StreamRoundResult> {
+  if (!response.body) {
+    throw new Error('OpenAI stream missing body');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let content = '';
+  const toolByIndex = new Map<number, StreamedToolCall>();
+  let finishReason: string | null = null;
+
+  const applyDelta = (delta: Record<string, unknown>, choiceFinish: string | null | undefined) => {
+    if (typeof delta.content === 'string' && delta.content) {
+      content += delta.content;
+      onContentDelta?.(content);
+    }
+    const toolCalls = delta.tool_calls;
+    if (Array.isArray(toolCalls)) {
+      for (const raw of toolCalls) {
+        if (!raw || typeof raw !== 'object') continue;
+        const tc = raw as {
+          index?: number;
+          id?: string;
+          function?: { name?: string; arguments?: string };
+        };
+        const index = typeof tc.index === 'number' ? tc.index : 0;
+        const existing = toolByIndex.get(index) ?? { id: '', name: '', arguments: '' };
+        if (tc.id) existing.id = tc.id;
+        if (tc.function?.name) existing.name = tc.function.name;
+        if (typeof tc.function?.arguments === 'string') {
+          existing.arguments += tc.function.arguments;
+        }
+        toolByIndex.set(index, existing);
+      }
+    }
+    if (choiceFinish) finishReason = choiceFinish;
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith(':')) continue;
+      if (!trimmed.startsWith('data:')) continue;
+      const payload = trimmed.slice(5).trim();
+      if (payload === '[DONE]') continue;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(payload);
+      } catch {
+        continue;
+      }
+      if (!parsed || typeof parsed !== 'object') continue;
+      const choice = (parsed as { choices?: Array<{ delta?: Record<string, unknown>; finish_reason?: string | null }> })
+        .choices?.[0];
+      if (!choice) continue;
+      applyDelta(choice.delta ?? {}, choice.finish_reason);
+    }
+  }
+
+  const toolCalls = [...toolByIndex.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([, tc]) => tc)
+    .filter((tc) => tc.name);
+
+  return { content, toolCalls, finishReason };
+}
+
+/**
+ * Single streaming turn for the project builder: text + tools in one model call loop.
+ * Workspace action chips are UI-only (from applyTool) — no extra LLM call for narration.
+ */
+export async function runProjectBuilderChat(input: {
+  priorMessages: ProjectBuilderChatMessage[];
+  userMessage: string;
+  getDraft: () => ProjectBuilderDraft;
+  applyTool: (name: string, args: Record<string, unknown>) => string;
+  onProgress?: (event: ProjectBuilderProgress) => void;
+  onAssistantDelta?: (text: string) => void;
+  signal?: AbortSignal;
+}): Promise<string> {
+  const apiMessages: Record<string, unknown>[] = [
+    { role: 'system', content: buildProjectBuilderSystem(input.getDraft()) },
+  ];
+  for (const m of input.priorMessages) {
+    apiMessages.push({ role: m.role, content: m.content });
+  }
+  apiMessages.push({ role: 'user', content: input.userMessage });
+
+  const MAX_TOOL_ROUNDS = 8;
+  let lastText = '';
+
+  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+    apiMessages[0] = { role: 'system', content: buildProjectBuilderSystem(input.getDraft()) };
+
+    const needsForcedTools =
+      round === 0 && (!input.getDraft().title.trim() || input.getDraft().phases.length < 3);
+
+    input.onProgress?.({ phase: 'awaiting_model' });
+
+    const response = await postViaOpenAiProxy(
+      {
+        model: PROJECT_BUILDER_MODEL,
+        messages: apiMessages,
+        temperature: 0.55,
+        max_tokens: 1200,
+        tools: [...projectBuilderTools],
+        tool_choice: needsForcedTools ? 'required' : 'auto',
+        stream: true,
+      } satisfies OpenAIRequest,
+      input.signal
+    );
+
+    if (!response.ok) {
+      const errText = await response.text().catch(() => '');
+      throw new Error(`OpenAI API error: ${response.status}${errText ? ` — ${errText.slice(0, 200)}` : ''}`);
+    }
+
+    input.onProgress?.({ phase: 'streaming' });
+    const streamed = await consumeOpenAiChatStream(response, (text) => {
+      lastText = text;
+      input.onAssistantDelta?.(text);
+    });
+    lastText = streamed.content;
+
+    if (streamed.toolCalls.length > 0) {
+      apiMessages.push({
+        role: 'assistant',
+        content: streamed.content || null,
+        tool_calls: streamed.toolCalls.map((tc) => ({
+          id: tc.id || `call_${tc.name}_${round}`,
+          type: 'function',
+          function: { name: tc.name, arguments: tc.arguments || '{}' },
+        })),
+      });
+
+      for (const tc of streamed.toolCalls) {
+        let args: Record<string, unknown> = {};
+        try {
+          args = JSON.parse(tc.arguments || '{}') as Record<string, unknown>;
+        } catch {
+          args = {};
+        }
+        input.onProgress?.({ phase: 'running_tool', toolName: tc.name });
+        const toolContent = input.applyTool(tc.name, args);
+        apiMessages.push({
+          role: 'tool',
+          tool_call_id: tc.id || `call_${tc.name}_${round}`,
+          content: toolContent,
+        });
+      }
+
+      // If the model already spoke alongside tools, keep that text — skip another round.
+      if (streamed.content.trim()) {
+        return streamed.content.trim();
+      }
+      continue;
+    }
+
+    if (streamed.content.trim()) {
+      return streamed.content.trim();
+    }
+
+    if (streamed.finishReason === 'length') {
+      throw new Error('Model response was truncated; try a shorter message.');
+    }
+
+    throw new Error('Model returned no text and no tool calls.');
+  }
+
+  if (lastText.trim()) return lastText.trim();
+  throw new Error('Too many tool rounds; try a simpler follow-up.');
+}
+
+/** Apply a builder tool to a draft; returns a short result string for the model. */
+export function applyProjectBuilderTool(
+  draft: ProjectBuilderDraft,
+  name: string,
+  args: Record<string, unknown>
+): { draft: ProjectBuilderDraft; result: string } {
+  switch (name) {
+    case 'update_project_identity': {
+      const title = String(args.title ?? '').trim().slice(0, 80);
+      const description = String(args.description ?? '').trim().slice(0, 600);
+      if (!title) return { draft, result: 'Rejected: title required.' };
+      return {
+        draft: { ...draft, title, description: description || draft.description },
+        result: JSON.stringify({ ok: true, title, description: description || draft.description }),
+      };
+    }
+    case 'set_roadmap': {
+      const phases = normalizePhases(args.phases);
+      if (phases.length < 3) {
+        return { draft, result: 'Rejected: need at least 3 phases.' };
+      }
+      const focusPhaseIndex =
+        draft.focusPhaseIndex != null && draft.focusPhaseIndex < phases.length
+          ? draft.focusPhaseIndex
+          : 0;
+      return {
+        draft: { ...draft, phases, focusPhaseIndex },
+        result: JSON.stringify({ ok: true, phaseCount: phases.length }),
+      };
+    }
+    case 'set_starter_tasks': {
+      const tasks = normalizeTasks(args.tasks);
+      if (tasks.length < 3) {
+        return { draft, result: 'Rejected: need at least 3 starter tasks.' };
+      }
+      return {
+        draft: { ...draft, tasks },
+        result: JSON.stringify({ ok: true, taskCount: tasks.length }),
+      };
+    }
+    case 'set_focus_phase': {
+      const index = Number(args.index);
+      if (!Number.isFinite(index) || index < 0) {
+        return { draft, result: 'Rejected: invalid phase index.' };
+      }
+      const clamped = Math.min(Math.floor(index), Math.max(0, draft.phases.length - 1));
+      return {
+        draft: { ...draft, focusPhaseIndex: draft.phases.length ? clamped : null },
+        result: JSON.stringify({ ok: true, focusPhaseIndex: draft.phases.length ? clamped : null }),
+      };
+    }
+    default:
+      return { draft, result: `Unknown tool: ${name}` };
+  }
 }
 
 const KANBAN_COMMENT_AI_MODEL = 'gpt-4o-mini' as const;

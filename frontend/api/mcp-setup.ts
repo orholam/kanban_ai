@@ -13,13 +13,40 @@ function getMcpEndpointFromRequest(req: VercelRequest): string {
   return 'https://kanbanai.dev/api/mcp';
 }
 
+function extractBearerToken(req: VercelRequest): string | undefined {
+  const auth = req.headers.authorization?.trim();
+  if (auth?.toLowerCase().startsWith('bearer ')) {
+    return auth.slice(7).trim();
+  }
+  return undefined;
+}
+
+function jwtExpiresAt(accessToken: string): number | null {
+  try {
+    const payload = accessToken.split('.')[1];
+    if (!payload) return null;
+    const json = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as { exp?: unknown };
+    return typeof json.exp === 'number' ? json.exp : null;
+  } catch {
+    return null;
+  }
+}
+
+function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return 'unknown';
+}
+
 function buildConfigs(input: {
   endpoint: string;
-  personalKey: string;
+  bearerToken: string;
   mcpApiSecret?: string;
 }): { cursorConfig: string; claudeConfig: string } {
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${input.personalKey}`,
+    Authorization: `Bearer ${input.bearerToken}`,
   };
   if (input.mcpApiSecret) {
     headers['X-MCP-API-Key'] = input.mcpApiSecret;
@@ -42,7 +69,7 @@ function buildConfigs(input: {
   if (input.mcpApiSecret) {
     claudeArgs.push('--header', `X-MCP-API-Key:${input.mcpApiSecret}`);
   }
-  claudeArgs.push('--header', `Authorization:Bearer ${input.personalKey}`);
+  claudeArgs.push('--header', `Authorization:Bearer ${input.bearerToken}`);
 
   const claudeConfig = JSON.stringify(
     {
@@ -83,41 +110,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       return;
     }
 
-    const service = createServiceRoleClient();
-    if (!service) {
-      res.status(503).json({
-        error: 'MCP key setup unavailable',
-        reason: 'service_role_not_configured',
-      });
-      return;
-    }
-
-    const rotate =
-      req.query.rotate === '1' ||
-      req.query.rotate === 'true' ||
-      String(req.query.rotate ?? '').toLowerCase() === 'yes';
-
-    let plainKey: string;
-    let keyPrefix: string;
-    let rotated: boolean;
-    try {
-      ({ plainKey, keyPrefix, rotated } = await resolvePlainMcpApiKey(service, auth.context.userId, {
-        rotate,
-      }));
-    } catch (error) {
-      console.error('mcp-setup key resolve error', error);
-      res.status(500).json({
-        error: 'Failed to issue MCP API key',
-        reason: error instanceof Error ? error.message : 'unknown',
-      });
+    const accessToken = extractBearerToken(req);
+    if (!accessToken) {
+      res.status(401).json({ error: 'Unauthorized', reason: 'missing_access_token' });
       return;
     }
 
     const endpoint = getMcpEndpointFromRequest(req);
     const mcpApiSecret = process.env.MCP_API_SECRET?.trim();
+    const rotate =
+      req.query.rotate === '1' ||
+      req.query.rotate === 'true' ||
+      String(req.query.rotate ?? '').toLowerCase() === 'yes';
+
+    const service = createServiceRoleClient();
+    if (service) {
+      try {
+        const { plainKey, keyPrefix, rotated } = await resolvePlainMcpApiKey(service, auth.context.userId, {
+          rotate,
+        });
+        const { cursorConfig, claudeConfig } = buildConfigs({
+          endpoint,
+          bearerToken: plainKey,
+          mcpApiSecret,
+        });
+        res.status(200);
+        res.setHeader('Cache-Control', 'no-store');
+        res.json({
+          endpoint,
+          cursorConfig,
+          claudeConfig,
+          keyPrefix,
+          rotated,
+          expiresAt: null,
+          authMode: 'personal_key',
+        });
+        return;
+      } catch (error) {
+        console.error('mcp-setup key resolve error; falling back to session JWT', error);
+        // Continue to session JWT fallback below (e.g. missing mcp_api_keys migration).
+        if (rotate) {
+          // Surface a clear reason when the user explicitly asked to rotate.
+          res.status(500).json({
+            error: 'Failed to issue MCP API key',
+            reason: errorMessage(error),
+          });
+          return;
+        }
+      }
+    } else {
+      console.warn('mcp-setup: SUPABASE_SERVICE_ROLE_KEY missing; using session JWT');
+    }
+
     const { cursorConfig, claudeConfig } = buildConfigs({
       endpoint,
-      personalKey: plainKey,
+      bearerToken: accessToken,
       mcpApiSecret,
     });
 
@@ -127,12 +174,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       endpoint,
       cursorConfig,
       claudeConfig,
-      keyPrefix,
-      rotated,
-      expiresAt: null,
+      keyPrefix: null,
+      rotated: false,
+      expiresAt: jwtExpiresAt(accessToken),
+      authMode: 'session_jwt',
     });
   } catch (error) {
     console.error('mcp-setup error', error);
-    res.status(500).json({ error: 'Failed to build MCP setup config' });
+    res.status(500).json({ error: 'Failed to build MCP setup config', reason: errorMessage(error) });
   }
 }

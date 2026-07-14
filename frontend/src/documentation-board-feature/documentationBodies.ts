@@ -48,18 +48,18 @@ export const bodyGuestVsAccount = `You can explore Kanban AI in **guest mode** o
 - Guest data can be **lost** if you clear site data or use private browsing only temporarily.
 - After sign-in, rely on exported backups or copies if you need long-term archives outside the app (features vary by deployment).`;
 
-export const bodyFirstProject = `The **new project** flow turns a short brief into a roadmap and starter backlog, then drops you on the board. There is no multi-step wizard and no “accept plan” gate.
+export const bodyFirstProject = `The **new project** flow can start blank or with the **AI project builder** — a full-height chat beside a live workspace that drafts your roadmap and starter tasks. Create the board when the workspace looks right.
 
 ## Before you start
 
-Have a one-paragraph answer ready to: **What are you building, who is it for, and what stack or constraints matter?** The more concrete you are, the more useful the first column of tasks will be.
+Have a rough answer ready to: **What are you building, who is it for, and what stack or constraints matter?** You can refine through chat; you do not need a perfect brief on the first message.
 
 ## Paths
 
 1. **Blank board** — Name the project (description optional) and open an empty kanban.
-2. **AI-assisted setup** (\`/new-project/ai\`) — Paste a brief (optional title). One **Create project** click drafts a phased roadmap and starter tasks, then opens the board.
+2. **AI project builder** (\`/new-project/ai\`) — Chat about the idea. The assistant asks follow-ups and updates title, roadmap, and starter tasks in the workspace. Click **Create board** when you are ready.
 
-## After generation
+## After creation
 
 - The **roadmap** appears under the project header; expand it to edit phase titles and descriptions (saved to \`master_plan\`).
 - Starter tasks land in **To do** for sprint 1 (or the sprint the model assigned).
@@ -70,7 +70,7 @@ Have a one-paragraph answer ready to: **What are you building, who is it for, an
 
 - Prefer **verbs and outcomes** in titles (“Ship OAuth callback URL” vs “Auth”).
 - Keep **one owner** per task when collaborating informally; the UI may not enforce strict assignment yet.
-- Mention stack and constraints in the brief so the first tasks match how you actually work.`;
+- Mention stack and constraints early so the first tasks match how you actually work.`;
 
 export const bodyBoardMechanics = `The kanban board is the operational heart of Kanban AI. This article explains columns, cards, and the interactions most people use daily.
 
@@ -127,7 +127,7 @@ It does **not** magically read private repos or tickets outside what you paste o
 - Treat prompts like **support tickets**: do not paste secrets, keys, or personal data you would not email to a vendor.
 - Product analytics may record **events** (clicks, task writes) separate from raw chat—see privacy policy for the deployment you use.`;
 
-export const bodyProjectTypes = `AI setup no longer asks you to pick a preset type. The model **infers domain from your brief** (SaaS, AI tool, content site, event, internal tool, and so on) and sizes the roadmap to the idea—typically a handful of phases, not a fixed ten-week template.
+export const bodyProjectTypes = `The AI project builder no longer asks you to pick a preset type. The model **infers domain from the chat** (SaaS, AI tool, content site, event, internal tool, and so on) and sizes the roadmap to the idea—typically a handful of phases, not a fixed ten-week template.
 
 ## What still gets stored
 
@@ -135,10 +135,11 @@ Projects still have a \`projectType\` field for older rows and analytics. New AI
 
 ## Steering the model
 
-Domain language comes from the **brief** and later from the **AI sidebar** context (title, description, roadmap, tasks). To change direction:
+Domain language comes from the **conversation** and later from the **AI sidebar** context (title, description, roadmap, tasks). To change direction:
 
-- Edit the project description and roadmap on the board.
-- Tell the assistant explicitly (“Treat this as a developer tool, not a marketing site”).
+- Ask in the builder chat (“Lean more toward a developer tool than a marketing site”).
+- Edit the project description and roadmap on the board after create.
+- Tell the board assistant explicitly.
 
 ## When suggestions feel wrong
 

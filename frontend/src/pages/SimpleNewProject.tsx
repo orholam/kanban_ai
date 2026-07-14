@@ -102,7 +102,7 @@ export default function SimpleNewProject({ isDarkMode, setProjects }: SimpleNewP
           How do you want to start?
         </h1>
         <p className={`mt-3 max-w-xl text-base leading-relaxed ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          Pick a blank board or paste a brief and let AI draft a roadmap plus starter tasks.
+          Pick a blank board, or open the AI builder and shape a roadmap in chat.
         </p>
       </header>
 
@@ -154,17 +154,17 @@ export default function SimpleNewProject({ isDarkMode, setProjects }: SimpleNewP
             </div>
             <div className="min-w-0 flex-1">
               <h2 className={`text-base font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                AI-assisted setup
+                AI project builder
               </h2>
               <p className={`mt-1 text-sm leading-snug ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Describe your project — get a roadmap and tasks in one step.
+                Chat through the idea while a live workspace fills in the plan.
               </p>
               <span
                 className={`mt-3 inline-flex items-center text-sm font-medium ${
                   isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
                 }`}
               >
-                Continue with AI
+                Open builder
                 <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </span>
             </div>
