@@ -102,7 +102,7 @@ export default function SimpleNewProject({ isDarkMode, setProjects }: SimpleNewP
           How do you want to start?
         </h1>
         <p className={`mt-3 max-w-xl text-base leading-relaxed ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          Pick a blank board or let AI draft a plan and starter tasks from your idea.
+          Pick a blank board or paste a brief and let AI draft a roadmap plus starter tasks.
         </p>
       </header>
 
@@ -157,7 +157,7 @@ export default function SimpleNewProject({ isDarkMode, setProjects }: SimpleNewP
                 AI-assisted setup
               </h2>
               <p className={`mt-1 text-sm leading-snug ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Describe your project — get a roadmap and suggested tasks.
+                Describe your project — get a roadmap and tasks in one step.
               </p>
               <span
                 className={`mt-3 inline-flex items-center text-sm font-medium ${

@@ -45,7 +45,7 @@ Open **http://localhost:5173**.
 | Feature | Local |
 |---|---|
 | Kanban board, sprints, tasks, comments | Yes |
-| AI project planning + board assistant | Yes (needs `OPENAI_API_KEY`) |
+| AI project setup (one brief → roadmap + tasks) + board assistant | Yes (needs `OPENAI_API_KEY`) |
 | Project members (invite by email) | Yes — invite `collaborator@dev.invalid` to try (seeded) |
 | Cloud auth / account / hosted analytics / feedback | No (needs Supabase) |
 | Remote MCP (`/api/mcp`) | No — use a hosted deploy or `vercel dev` with Supabase |

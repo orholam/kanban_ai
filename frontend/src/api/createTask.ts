@@ -17,19 +17,33 @@ export async function createTask(taskData: Task) {
       if (!res.ok) {
         throw new Error(j.error || res.statusText || 'Failed to create task');
       }
-      console.log('Task created successfully (local):', j);
       return;
     }
 
-    const { data, error } = await supabase.from('tasks').insert([payload]).select();
+    const { error } = await supabase.from('tasks').insert([payload]).select();
 
     if (error) {
       throw error;
     }
-
-    console.log('Task created successfully:', data);
   } catch (error) {
     console.error('Error creating task:', error);
+    throw error;
+  }
+}
+
+/** Insert many tasks in one round-trip (Supabase) or in parallel (local). */
+export async function createTasks(tasks: Task[]) {
+  if (tasks.length === 0) return;
+
+  if (isLocalAppMode()) {
+    await Promise.all(tasks.map((t) => createTask(t)));
+    return;
+  }
+
+  const payloads = tasks.map(taskInsertPayload);
+  const { error } = await supabase.from('tasks').insert(payloads).select();
+  if (error) {
+    console.error('Error creating tasks:', error);
     throw error;
   }
 }

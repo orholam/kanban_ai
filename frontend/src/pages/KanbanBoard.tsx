@@ -19,6 +19,7 @@ import { loadGuestDraft, saveGuestDraft } from '../lib/guestDraft';
 import { isLocalAppMode } from '../lib/localApp';
 import { useAuth } from '../contexts/AuthContext';
 import ProjectMembersPanel from '../components/ProjectMembersPanel';
+import ProjectRoadmapPanel from '../components/ProjectRoadmapPanel';
 import { listProjectCollaborators } from '../api/projectCollaborators';
 import { fetchProfileDisplayName } from '../lib/profileDisplayName';
 import { getDisplayName, getUserInitials } from '../lib/userUtils';
@@ -1190,6 +1191,18 @@ export default function KanbanBoard({
             </p>
           )}
         </header>
+
+        {currentProject && !guestMode ? (
+          <ProjectRoadmapPanel
+            isDarkMode={isDarkMode}
+            projectId={currentProject.id}
+            masterPlan={currentProject.master_plan ?? ''}
+            onMasterPlanChange={(next) =>
+              setCurrentProject((prev) => (prev ? { ...prev, master_plan: next } : null))
+            }
+            disabled={isSavingProjectMeta}
+          />
+        ) : null}
 
         <div
           className={`mb-3 flex min-h-[2.5rem] flex-wrap items-center gap-x-1 gap-y-1 rounded-xl border px-1 py-1 sm:mb-4 ${
