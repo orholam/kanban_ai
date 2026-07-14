@@ -40,8 +40,13 @@ export async function recordMcpAnalyticsEvent(
   const row =
     eventType === 'mcp_auth_failure'
       ? {
-          user_id: null,
-          guest_session_id: MCP_AUTH_FAILURE_SESSION,
+          user_id: userId ?? null,
+          guest_session_id:
+            userId
+              ? null
+              : typeof metadata.token_fingerprint === 'string'
+                ? metadata.token_fingerprint
+                : MCP_AUTH_FAILURE_SESSION,
           event_type: eventType,
           metadata,
         }
@@ -84,8 +89,23 @@ export async function recordMcpToolCall(input: {
   );
 }
 
-export function recordMcpAuthFailure(input: { reason: string }): void {
-  void recordMcpAnalyticsEvent('mcp_auth_failure', { reason: input.reason });
+export function recordMcpAuthFailure(input: {
+  reason: string;
+  attemptedUserId?: string;
+  attemptedEmail?: string;
+  tokenFingerprint?: string;
+  userAgent?: string;
+}): void {
+  void recordMcpAnalyticsEvent(
+    'mcp_auth_failure',
+    {
+      reason: input.reason,
+      ...(input.attemptedEmail ? { attempted_email: input.attemptedEmail } : {}),
+      ...(input.tokenFingerprint ? { token_fingerprint: input.tokenFingerprint } : {}),
+      ...(input.userAgent ? { user_agent: input.userAgent } : {}),
+    },
+    input.attemptedUserId ?? null
+  );
 }
 
 export function recordMcpSession(input: { userId: string; method: string }): void {

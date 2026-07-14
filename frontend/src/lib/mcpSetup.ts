@@ -121,11 +121,19 @@ export type McpSetupResponse = {
   endpoint: string;
   cursorConfig: string;
   claudeConfig: string;
+  keyPrefix?: string;
+  rotated?: boolean;
+  /** Personal MCP keys do not expire; null means no expiry. */
+  expiresAt?: number | null;
 };
 
-/** Load ready-to-paste MCP config from the server (includes API secret when configured). */
-export async function fetchMcpSetup(accessToken: string): Promise<McpSetupResponse> {
-  const res = await fetch('/api/mcp-setup', {
+/** Load ready-to-paste MCP config from the server (includes personal key + API secret when configured). */
+export async function fetchMcpSetup(
+  accessToken: string,
+  options: { rotate?: boolean } = {}
+): Promise<McpSetupResponse> {
+  const qs = options.rotate ? '?rotate=1' : '';
+  const res = await fetch(`/api/mcp-setup${qs}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
   if (!res.ok) {
@@ -146,5 +154,5 @@ export function mcpSetupFallbackMessage(): string {
   if (isLocalDevHost()) {
     return 'Running locally without the API. Use kanbanai.dev/connect, or run vercel dev alongside npm start.';
   }
-  return 'Server config is temporarily unavailable. Your token is included below — click Regenerate config to retry.';
+  return 'Server config is temporarily unavailable. Your token is included below — click Rotate key to retry.';
 }

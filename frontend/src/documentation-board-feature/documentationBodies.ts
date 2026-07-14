@@ -48,30 +48,29 @@ export const bodyGuestVsAccount = `You can explore Kanban AI in **guest mode** o
 - Guest data can be **lost** if you clear site data or use private browsing only temporarily.
 - After sign-in, rely on exported backups or copies if you need long-term archives outside the app (features vary by deployment).`;
 
-export const bodyFirstProject = `The **new project** flow turns a short description into a structured backlog. This document walks the happy path and calls out the choices that most affect the AI.
+export const bodyFirstProject = `The **new project** flow turns a short brief into a roadmap and starter backlog, then drops you on the board. There is no multi-step wizard and no “accept plan” gate.
 
 ## Before you start
 
 Have a one-paragraph answer ready to: **What are you building, who is it for, and what stack or constraints matter?** The more concrete you are, the more useful the first column of tasks will be.
 
-## Wizard surfaces
+## Paths
 
-1. **Basics** — Name and elevator pitch for the project.
-2. **Project type** — Categories such as SaaS, AI tooling, blog/site, events, etc. These map to **prompt packs** so the model speaks your domain language.
-3. **Tech stack** — Languages, frameworks, hosting hints. Used when proposing tasks and estimating complexity.
-4. **Review** — You confirm before generating the roadmap.
+1. **Blank board** — Name the project (description optional) and open an empty kanban.
+2. **AI-assisted setup** (\`/new-project/ai\`) — Paste a brief (optional title). One **Create project** click drafts a phased roadmap and starter tasks, then opens the board.
 
 ## After generation
 
-- Tasks land in **phased columns** aligned to how the app models your plan (for example week-based or stage-based columns).
+- The **roadmap** appears under the project header; expand it to edit phase titles and descriptions (saved to \`master_plan\`).
+- Starter tasks land in **To do** for sprint 1 (or the sprint the model assigned).
 - You can **rename, split, merge, or delete** tasks—plans are not contracts.
-- If something feels off, refine the description and use the **AI sidebar** to replan a slice of work rather than restarting from scratch.
+- If something feels off, refine via the **AI sidebar** rather than restarting from scratch.
 
 ## Tips
 
 - Prefer **verbs and outcomes** in titles (“Ship OAuth callback URL” vs “Auth”).
 - Keep **one owner** per task when collaborating informally; the UI may not enforce strict assignment yet.
-- Use **tags or descriptions** (when available) for cross-cutting concerns like “security” or “latency”.`;
+- Mention stack and constraints in the brief so the first tasks match how you actually work.`;
 
 export const bodyBoardMechanics = `The kanban board is the operational heart of Kanban AI. This article explains columns, cards, and the interactions most people use daily.
 
@@ -128,32 +127,27 @@ It does **not** magically read private repos or tickets outside what you paste o
 - Treat prompts like **support tickets**: do not paste secrets, keys, or personal data you would not email to a vendor.
 - Product analytics may record **events** (clicks, task writes) separate from raw chat—see privacy policy for the deployment you use.`;
 
-export const bodyProjectTypes = `Project **types** pick a **prompt profile** so the LLM adopts vocabulary and priorities that fit SaaS, AI tools, content sites, events, and more.
+export const bodyProjectTypes = `AI setup no longer asks you to pick a preset type. The model **infers domain from your brief** (SaaS, AI tool, content site, event, internal tool, and so on) and sizes the roadmap to the idea—typically a handful of phases, not a fixed ten-week template.
 
-## Why types exist
+## What still gets stored
 
-A marketing site roadmap and an ML training pipeline share kanban mechanics but not **risk profiles**. Types steer the assistant toward:
+Projects still have a \`projectType\` field for older rows and analytics. New AI setups store \`AI\`; blank boards store \`Manual\`. You do not need to manage this for good results.
 
-- Sensible **definition of done**
-- **Non-functional** concerns (SEO vs GPU cost)
-- **Launch constraints** (content calendar vs app store review)
+## Steering the model
 
-## Changing type after creation
+Domain language comes from the **brief** and later from the **AI sidebar** context (title, description, roadmap, tasks). To change direction:
 
-If you started under the wrong type, update project settings when the UI exposes that field, or describe the correction in AI chat (“Treat this as an AI developer tool, not a blog”). Long-lived projects benefit from **keeping metadata accurate**.
+- Edit the project description and roadmap on the board.
+- Tell the assistant explicitly (“Treat this as a developer tool, not a marketing site”).
 
-## When types are wrong
+## When suggestions feel wrong
 
 Symptoms:
 
 - Tasks are **too marketing-heavy** for a backend-heavy build, or vice versa.
 - Suggestions ignore **compliance or accessibility** when your domain needs them.
 
-Fix by editing description, nudging via chat, or recreating the project if metadata is locked.
-
-## Custom stacks
-
-Stack fields are **hints**, not validators. If you use niche frameworks, name them explicitly in both stack tags and the freeform description.`;
+Fix by editing the roadmap/description, nudging via chat, or adding a clearer constraint to the next prompt. Stack and constraints belong in the brief—they are hints, not validators.`;
 
 export const bodyAccountData = `Signed-in Kanban AI relies on **Supabase** for authentication and data storage. This article summarizes what that means for ownership, retention, and what you should back up.
 
@@ -313,7 +307,7 @@ export const bodyMcpConnect = `Connect **Claude Desktop**, **Cursor**, or any MC
 1. Sign in at Kanban AI.
 2. Open **Connect AI** from the sidebar.
 3. Choose **Cursor** or **Claude Desktop**.
-4. Click **Copy config** — credentials are filled in for you.
+4. Click **Copy config** — a long-lived personal MCP key and headers are filled in for you.
 5. Paste into your client’s MCP settings and restart.
 
 ### Cursor
@@ -332,9 +326,18 @@ https://kanbanai.dev/api/mcp
 
 Preview deployments use that deployment’s origin, e.g. \`https://your-preview.vercel.app/api/mcp\`.
 
+## Authentication
+
+Connect AI issues a **personal MCP key** (\`kai_…\`) that does **not** expire. Paste once; you only need to reconnect if you rotate the key.
+
+Requests send:
+
+- \`Authorization: Bearer kai_…\` (preferred) or a short-lived Supabase session JWT
+- \`X-MCP-API-Key\` when the deployment sets \`MCP_API_SECRET\` (Connect AI includes this automatically)
+
 ## When it stops working
 
-Session tokens expire. Return to **Connect AI**, click **Regenerate config**, copy again, and replace the JSON in your client.
+If you revoked the key or get \`401\`, return to **Connect AI**, click **Rotate key & regenerate config**, copy again, and replace the JSON in your client.
 
 ## Available tools
 
@@ -356,7 +359,7 @@ Session tokens expire. Return to **Connect AI**, click **Regenerate config**, co
 
 | Symptom | Fix |
 |---------|-----|
-| \`401 Unauthorized\` | Regenerate config on **Connect AI** and paste again |
+| \`401 Unauthorized\` | Rotate key on **Connect AI** and paste the new config |
 | MCP server not listed | Restart the client after editing config |
 | Tools run but no data | Ensure you are signed in as the same user whose projects you expect |
 | Local \`npm start\` only | MCP lives on the hosted API—use kanbanai.dev or \`vercel dev\` |

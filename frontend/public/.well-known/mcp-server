@@ -1,6 +1,6 @@
 {
   "mcp_version": "2025-06-18",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "Kanban AI",
   "description": "Remote MCP server for Kanban AI boards — list projects, read boards, and manage tasks and comments with the same operations as the web app.",
   "endpoint": "https://kanbanai.dev/api/mcp",
@@ -12,7 +12,8 @@
     "required": true,
     "methods": ["bearer", "apikey"],
     "endpoint": "https://kanbanai.dev/connect",
-    "apikey_header": "X-MCP-API-Key"
+    "apikey_header": "X-MCP-API-Key",
+    "bearer_description": "Personal MCP key (kai_…) from Connect AI, or a short-lived Supabase session JWT"
   },
   "docs": "https://kanbanai.dev/docs/connect-mcp-claude-cursor",
   "links": {
@@ -20,7 +21,7 @@
     "documentation": "https://kanbanai.dev/docs/connect-mcp-claude-cursor"
   },
   "repository": "https://github.com/orholam/kanban_ai",
-  "last_updated": "2026-07-10T00:00:00Z",
+  "last_updated": "2026-07-14T00:00:00Z",
   "cache_ttl": 3600,
   "crawl": true,
   "tools_preview": [

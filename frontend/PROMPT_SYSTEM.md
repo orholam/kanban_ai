@@ -1,88 +1,23 @@
-# Dynamic Prompt System
+# AI project setup
 
-This document explains how the dynamic prompt system works in the Kanban AI application.
+Single-shot setup from a freeform brief — no type picker, no multi-step wizard.
 
-## Overview
+## Flow
 
-The application now supports different project types (SaaS App, AI Tool, Blog/Website, Event Planning) with customized LLM prompts for each type. This allows the AI to provide more relevant and targeted guidance based on the specific type of project being built.
+1. User opens `/new-project/ai` and pastes a brief (optional title).
+2. Client calls `generateProjectSetup()` in [`src/lib/openai.ts`](src/lib/openai.ts) via `POST /api/openai`.
+3. Model (`gpt-4o-mini`) returns one tool call: `create_project_setup` with title, description, phases, and starter tasks.
+4. App creates the project + tasks and navigates to the board.
+5. Roadmap is editable under the project header ([`ProjectRoadmapPanel`](src/components/ProjectRoadmapPanel.tsx)); stored as JSON in `master_plan`.
 
-## Architecture
+## Prompt
 
-### 1. Project Type Selection
-- Users select a project type in the `ProjectDetails` component
-- The type is stored in the project data and flows through the entire creation process
+[`src/lib/prompts.ts`](src/lib/prompts.ts) exports `PROJECT_SETUP_SYSTEM_PROMPT`. Domain (SaaS, AI tool, content, etc.) is **inferred from the brief**, not selected by the user. Phase count is flexible (typically 4–8).
 
-### 2. Prompt Configuration (`src/lib/prompts.ts`)
-- **`PROJECT_TYPE_PROMPTS`**: Contains customized prompts for each project type
-- **`DEFAULT_PROMPTS`**: Fallback prompts for unknown project types
-- **`getPromptsForProjectType()`**: Function to retrieve the appropriate prompts
+## Helpers
 
-### 3. LLM Integration (`src/lib/openai.ts`)
-- All LLM functions now accept a `projectType` parameter
-- Prompts are dynamically selected based on the project type
-- Functions include:
-  - `generateProjectPlan()`: Creates 10-week development pipeline
-  - `generateFirstWeekTasks()`: Generates first week tasks
-  - `generateProjectOverview()`: Creates project overview
+[`src/lib/projectSetup.ts`](src/lib/projectSetup.ts) — `parseMasterPlan` / `serializeMasterPlan` / `titleFromBrief`.
 
-## Project Types and Their Focus
+## Board assistant
 
-### SaaS App
-- **Focus**: Scalable web applications with user authentication
-- **Emphasis**: Database design, deployment, user management
-- **First Week**: Development environment setup, project structure
-
-### AI Tool
-- **Focus**: AI-powered applications with model integration
-- **Emphasis**: API design, AI model selection, user interface for AI interactions
-- **First Week**: AI development environment, model research
-
-### Blog/Website
-- **Focus**: Content-focused websites with SEO optimization
-- **Emphasis**: Content management, user engagement, search optimization
-- **First Week**: Content planning, design mockups
-
-### Event Planning
-- **Focus**: Event management platforms with coordination features
-- **Emphasis**: Registration systems, scheduling, user experience
-- **First Week**: Requirements gathering, system architecture
-
-## Data Flow
-
-1. **Project Creation**: User selects type in `ProjectDetails`
-2. **Data Storage**: Type is stored in `projectData.type`
-3. **LLM Calls**: Type is passed to all LLM functions
-4. **Prompt Selection**: Appropriate prompts are selected based on type
-5. **Database**: Project type is stored in the database
-
-## Adding New Project Types
-
-To add a new project type:
-
-1. Add the type to the `TYPES` array in `ProjectDetails.tsx`
-2. Add corresponding prompts to `PROJECT_TYPE_PROMPTS` in `prompts.ts`
-3. Update the `RECOMMENDED_STACKS` object if needed
-4. Test the new type through the project creation flow
-
-## Benefits
-
-- **Relevant Guidance**: AI provides type-specific advice and planning
-- **Better User Experience**: Users get guidance tailored to their project type
-- **Scalable**: Easy to add new project types and prompts
-- **Consistent**: All LLM interactions use the same prompt structure
-- **Maintainable**: Prompts are centralized and easy to modify
-
-## Example Usage
-
-```typescript
-// Get prompts for a specific project type
-const prompts = getPromptsForProjectType("AI Tool");
-
-// Use in LLM function
-const projectPlan = await generateProjectPlan({
-  name: "My AI Chatbot",
-  description: "A conversational AI assistant",
-  keywords: ["Python", "OpenAI", "FastAPI"],
-  projectType: "AI Tool"
-});
-``` 
+Ongoing planning uses the project task chat (`runProjectTaskAssistant`), which still receives `master_plan` as context.

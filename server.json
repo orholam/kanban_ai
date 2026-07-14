@@ -3,7 +3,7 @@
   "name": "io.github.orholam/kanban-ai",
   "title": "Kanban AI",
   "description": "Remote MCP for Kanban AI boards—manage projects, tasks, and comments from AI tools.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "websiteUrl": "https://kanbanai.dev",
   "repository": {
     "url": "https://github.com/orholam/kanban_ai",
@@ -25,14 +25,14 @@
       "headers": [
         {
           "name": "Authorization",
-          "description": "Supabase access token for the signed-in Kanban AI user. Format: Bearer <access_token>. Obtain from the in-app Connect page (/connect) or GET /api/mcp-setup.",
+          "description": "Personal MCP key (kai_…) from Connect AI, or a Supabase session JWT. Format: Bearer <token>. Prefer the personal key — it does not expire.",
           "isRequired": true,
           "isSecret": true,
-          "placeholder": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          "placeholder": "Bearer kai_…"
         },
         {
           "name": "X-Supabase-Access-Token",
-          "description": "Alternative to Authorization when your MCP client cannot send a Bearer header. Same Supabase access token value.",
+          "description": "Alternative to Authorization when your MCP client cannot send a Bearer header. Same personal key or session token value.",
           "isRequired": false,
           "isSecret": true
         },

@@ -7,7 +7,7 @@ Registry metadata lives at the repository root: [`server.json`](../server.json).
 | Field | Value |
 | --- | --- |
 | Registry name | `io.github.orholam/kanban-ai` |
-| Version | `1.0.0` (matches `serverInfo.version` in `frontend/api/mcp.ts`) |
+| Version | `1.1.0` (matches `serverInfo.version` in `frontend/api/mcp.ts`) |
 | Transport | `streamable-http` |
 | Endpoint | `https://kanbanai.dev/api/mcp` |
 
@@ -25,11 +25,11 @@ Each MCP request must include:
 
 | Header | Required | Purpose |
 | --- | --- | --- |
-| `Authorization` | Yes | `Bearer <supabase_access_token>` for the signed-in user |
+| `Authorization` | Yes | `Bearer <kai_…>` personal key from Connect AI (does not expire), or a Supabase session JWT |
 | `X-MCP-API-Key` | Yes on production | Shared secret when `MCP_API_SECRET` is set on Vercel |
 | `X-Supabase-Access-Token` | No | Alternative to `Authorization` for clients that cannot send Bearer |
 
-End users obtain tokens and headers from **Connect AI** (`/connect`) or `GET /api/mcp-setup` while signed in. **Never commit tokens or `MCP_API_SECRET` to the repository.**
+End users obtain keys and headers from **Connect AI** (`/connect`) or `GET /api/mcp-setup` while signed in. **Never commit tokens or `MCP_API_SECRET` to the repository.**
 
 ## Install `mcp-publisher`
 

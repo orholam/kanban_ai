@@ -1,14 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { authenticateSupabaseAccessToken } from './_lib/mcp/auth.js';
+import { resolvePlainMcpApiKey } from './_lib/mcp/apiKeys.js';
+import { createServiceRoleClient } from './_lib/supabaseService.js';
 import { vercelRequestToWebRequest } from './_lib/mcp/vercelBridge.js';
-
-function extractBearerToken(req: VercelRequest): string | undefined {
-  const auth = req.headers.authorization?.trim();
-  if (auth?.toLowerCase().startsWith('bearer ')) {
-    return auth.slice(7).trim();
-  }
-  return undefined;
-}
 
 function getMcpEndpointFromRequest(req: VercelRequest): string {
   const host = (req.headers['x-forwarded-host'] as string | undefined) || req.headers.host;
@@ -17,6 +11,53 @@ function getMcpEndpointFromRequest(req: VercelRequest): string {
     return `${proto}://${host}/api/mcp`;
   }
   return 'https://kanbanai.dev/api/mcp';
+}
+
+function buildConfigs(input: {
+  endpoint: string;
+  personalKey: string;
+  mcpApiSecret?: string;
+}): { cursorConfig: string; claudeConfig: string } {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${input.personalKey}`,
+  };
+  if (input.mcpApiSecret) {
+    headers['X-MCP-API-Key'] = input.mcpApiSecret;
+  }
+
+  const cursorConfig = JSON.stringify(
+    {
+      mcpServers: {
+        'kanban-ai': {
+          url: input.endpoint,
+          headers,
+        },
+      },
+    },
+    null,
+    2
+  );
+
+  const claudeArgs = ['-y', 'mcp-remote', input.endpoint];
+  if (input.mcpApiSecret) {
+    claudeArgs.push('--header', `X-MCP-API-Key:${input.mcpApiSecret}`);
+  }
+  claudeArgs.push('--header', `Authorization:Bearer ${input.personalKey}`);
+
+  const claudeConfig = JSON.stringify(
+    {
+      mcpServers: {
+        'kanban-ai': {
+          command: 'npx',
+          args: claudeArgs,
+        },
+      },
+    },
+    null,
+    2
+  );
+
+  return { cursorConfig, claudeConfig };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
@@ -42,52 +83,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       return;
     }
 
-    const accessToken = extractBearerToken(req);
-    if (!accessToken) {
-      res.status(401).json({ error: 'Unauthorized' });
+    const service = createServiceRoleClient();
+    if (!service) {
+      res.status(503).json({
+        error: 'MCP key setup unavailable',
+        reason: 'service_role_not_configured',
+      });
+      return;
+    }
+
+    const rotate =
+      req.query.rotate === '1' ||
+      req.query.rotate === 'true' ||
+      String(req.query.rotate ?? '').toLowerCase() === 'yes';
+
+    let plainKey: string;
+    let keyPrefix: string;
+    let rotated: boolean;
+    try {
+      ({ plainKey, keyPrefix, rotated } = await resolvePlainMcpApiKey(service, auth.context.userId, {
+        rotate,
+      }));
+    } catch (error) {
+      console.error('mcp-setup key resolve error', error);
+      res.status(500).json({
+        error: 'Failed to issue MCP API key',
+        reason: error instanceof Error ? error.message : 'unknown',
+      });
       return;
     }
 
     const endpoint = getMcpEndpointFromRequest(req);
     const mcpApiSecret = process.env.MCP_API_SECRET?.trim();
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${accessToken}`,
-    };
-    if (mcpApiSecret) {
-      headers['X-MCP-API-Key'] = mcpApiSecret;
-    }
-
-    const cursorConfig = JSON.stringify(
-      {
-        mcpServers: {
-          'kanban-ai': {
-            url: endpoint,
-            headers,
-          },
-        },
-      },
-      null,
-      2
-    );
-
-    const claudeArgs = ['-y', 'mcp-remote', endpoint];
-    if (mcpApiSecret) {
-      claudeArgs.push('--header', `X-MCP-API-Key:${mcpApiSecret}`);
-    }
-    claudeArgs.push('--header', `Authorization:Bearer ${accessToken}`);
-
-    const claudeConfig = JSON.stringify(
-      {
-        mcpServers: {
-          'kanban-ai': {
-            command: 'npx',
-            args: claudeArgs,
-          },
-        },
-      },
-      null,
-      2
-    );
+    const { cursorConfig, claudeConfig } = buildConfigs({
+      endpoint,
+      personalKey: plainKey,
+      mcpApiSecret,
+    });
 
     res.status(200);
     res.setHeader('Cache-Control', 'no-store');
@@ -95,6 +127,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       endpoint,
       cursorConfig,
       claudeConfig,
+      keyPrefix,
+      rotated,
+      expiresAt: null,
     });
   } catch (error) {
     console.error('mcp-setup error', error);

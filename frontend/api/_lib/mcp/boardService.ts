@@ -1,6 +1,68 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getMcpContext } from './requestContext.js';
 
+/** Enforces project membership (needed when auth uses service-role for API keys). */
+async function assertProjectMember(projectId: string): Promise<{ ownerId: string }> {
+  const { supabase, userId } = getMcpContext();
+
+  const { data: collab, error: collabError } = await supabase
+    .from('project_collaborators')
+    .select('id, projects ( user_id )')
+    .eq('project_id', projectId)
+    .eq('user_id', userId)
+    .eq('accepted', true)
+    .maybeSingle();
+  if (collabError) throw collabError;
+
+  if (collab) {
+    const nested = collab.projects as { user_id: string } | { user_id: string }[] | null;
+    const owner =
+      (Array.isArray(nested) ? nested[0]?.user_id : nested?.user_id) != null
+        ? String(Array.isArray(nested) ? nested[0]?.user_id : nested?.user_id)
+        : userId;
+    return { ownerId: owner };
+  }
+
+  const { data: owned, error: ownedError } = await supabase
+    .from('projects')
+    .select('id, user_id')
+    .eq('id', projectId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (ownedError) throw ownedError;
+  if (owned) return { ownerId: userId };
+
+  throw new Error(`Project ${projectId} not found`);
+}
+
+async function assertTaskAccess(taskId: string): Promise<{ projectId: string }> {
+  const { supabase } = getMcpContext();
+  const { data: task, error } = await supabase
+    .from('tasks')
+    .select('id, project_id')
+    .eq('id', taskId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!task) throw new Error(`Task ${taskId} not found`);
+  await assertProjectMember(String(task.project_id));
+  return { projectId: String(task.project_id) };
+}
+
+async function assertCommentAccess(commentId: string): Promise<void> {
+  const { supabase, userId } = getMcpContext();
+  const { data: comment, error } = await supabase
+    .from('task_comments')
+    .select('id, task_id, user_id')
+    .eq('id', commentId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!comment) throw new Error(`Comment ${commentId} not found`);
+  if (String(comment.user_id) !== userId) {
+    throw new Error('Only the comment author can delete this comment');
+  }
+  await assertTaskAccess(String(comment.task_id));
+}
+
 export type BoardTask = {
   id: string;
   project_id: string;
@@ -103,6 +165,7 @@ export async function listProjects(): Promise<BoardProject[]> {
 }
 
 export async function getProject(projectId: string): Promise<BoardProject | null> {
+  await assertProjectMember(projectId);
   const { supabase } = getMcpContext();
   const { data, error } = await supabase.from('projects').select('*').eq('id', projectId).maybeSingle();
   if (error) throw error;
@@ -118,6 +181,7 @@ export async function getProjectWithTasks(projectId: string): Promise<{
 }
 
 export async function listTasks(projectId: string): Promise<BoardTask[]> {
+  await assertProjectMember(projectId);
   const { supabase } = getMcpContext();
   const { data, error } = await supabase
     .from('tasks')
@@ -205,6 +269,7 @@ export async function updateProject(
     >
   >
 ): Promise<BoardProject> {
+  await assertProjectMember(projectId);
   const { supabase } = getMcpContext();
   const { data, error } = await supabase.from('projects').update(updates).eq('id', projectId).select().single();
   if (error) throw error;
@@ -212,7 +277,11 @@ export async function updateProject(
 }
 
 export async function deleteProject(projectId: string): Promise<void> {
-  const { supabase } = getMcpContext();
+  const { ownerId } = await assertProjectMember(projectId);
+  const { supabase, userId } = getMcpContext();
+  if (ownerId !== userId) {
+    throw new Error('Only the project owner can delete this project');
+  }
   const { error: tasksErr } = await supabase.from('tasks').delete().eq('project_id', projectId);
   if (tasksErr) throw tasksErr;
   const { error: collabErr } = await supabase.from('project_collaborators').delete().eq('project_id', projectId);
@@ -231,6 +300,7 @@ export async function createTask(input: {
   sprint?: number;
   due_date?: string;
 }): Promise<BoardTask> {
+  await assertProjectMember(input.project_id);
   const { supabase, userId } = getMcpContext();
   const title = input.title.trim();
   if (!title) throw new Error('Task title is required');
@@ -263,6 +333,7 @@ export async function updateTask(
   taskId: string,
   patch: Partial<Pick<BoardTask, 'title' | 'description' | 'type' | 'priority' | 'status' | 'sprint' | 'due_date'>>
 ): Promise<BoardTask> {
+  await assertTaskAccess(taskId);
   const { supabase } = getMcpContext();
   const { data, error } = await supabase.from('tasks').update(patch).eq('id', taskId).select().single();
   if (error) throw error;
@@ -270,12 +341,14 @@ export async function updateTask(
 }
 
 export async function deleteTask(taskId: string): Promise<void> {
+  await assertTaskAccess(taskId);
   const { supabase } = getMcpContext();
   const { error } = await supabase.from('tasks').delete().eq('id', taskId);
   if (error) throw error;
 }
 
 export async function listTaskComments(taskId: string): Promise<BoardTaskComment[]> {
+  await assertTaskAccess(taskId);
   const { supabase } = getMcpContext();
   const { data, error } = await supabase
     .from('task_comments')
@@ -291,6 +364,7 @@ export async function addTaskComment(input: {
   body: string;
   author_display_name?: string | null;
 }): Promise<BoardTaskComment> {
+  await assertTaskAccess(input.task_id);
   const { supabase, userId } = getMcpContext();
   const body = input.body.trim();
   if (!body) throw new Error('Comment cannot be empty');
@@ -313,6 +387,7 @@ export async function addTaskComment(input: {
 }
 
 export async function deleteTaskComment(commentId: string): Promise<void> {
+  await assertCommentAccess(commentId);
   const { supabase } = getMcpContext();
   const { error } = await supabase.from('task_comments').delete().eq('id', commentId);
   if (error) throw error;

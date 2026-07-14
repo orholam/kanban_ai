@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { eachDayOfInterval, eachHourOfInterval, format, startOfHour, subDays, subHours } from 'date-fns';
+import { eachDayOfInterval, eachHourOfInterval, eachMonthOfInterval, eachYearOfInterval, format, startOfHour, startOfMonth, startOfYear, subDays, subHours } from 'date-fns';
 import { BarChart3, CalendarRange, Eye, MousePointerClick, Sparkles, LogIn, UserPlus, ListTodo, Plug, ShieldAlert, Activity } from 'lucide-react';
 import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
@@ -66,6 +66,84 @@ function dayKey(iso: string): string {
   return iso.slice(0, 10);
 }
 
+type AnalyticsRange = '24h' | '7d' | '30d' | 'all';
+type VolumeGranularity = 'day' | 'month' | 'year';
+
+function buildVolumeOverTimeSeries(
+  events: { created_at: string }[],
+  range: AnalyticsRange,
+  granularity: VolumeGranularity,
+): { day: string; label: string; count: number }[] {
+  const byBucket: Record<string, number> = {};
+
+  if (range === '24h') {
+    const end = startOfHour(new Date());
+    const start = subHours(end, 23);
+    const hours = eachHourOfInterval({ start, end });
+    for (const e of events) {
+      const ts = new Date(e.created_at);
+      ts.setMinutes(0, 0, 0);
+      const key = format(ts, "yyyy-MM-dd'T'HH:00");
+      byBucket[key] = (byBucket[key] ?? 0) + 1;
+    }
+    return hours.map((h) => {
+      const key = format(h, "yyyy-MM-dd'T'HH:00");
+      return { day: key, label: format(h, 'ha'), count: byBucket[key] ?? 0 };
+    });
+  }
+
+  const now = new Date();
+  const oldestInRange = events.length ? events[events.length - 1].created_at : now.toISOString();
+  const rangeStart =
+    range === 'all'
+      ? new Date(dayKey(oldestInRange))
+      : range === '7d'
+        ? subDays(now, 6)
+        : subDays(now, 29);
+
+  let bucketDates: Date[];
+  let bucketKey: (d: Date) => string;
+  let bucketLabel: (d: Date) => string;
+  let eventKey: (iso: string) => string;
+
+  if (granularity === 'day') {
+    const end = new Date(now);
+    end.setHours(0, 0, 0, 0);
+    const start = new Date(rangeStart);
+    start.setHours(0, 0, 0, 0);
+    bucketDates = eachDayOfInterval({ start, end });
+    bucketKey = (d) => format(d, 'yyyy-MM-dd');
+    bucketLabel = (d) => format(d, 'MMM d');
+    eventKey = (iso) => iso.slice(0, 10);
+  } else if (granularity === 'month') {
+    bucketDates = eachMonthOfInterval({ start: startOfMonth(rangeStart), end: startOfMonth(now) });
+    bucketKey = (d) => format(d, 'yyyy-MM');
+    bucketLabel = (d) => format(d, 'MMM yyyy');
+    eventKey = (iso) => iso.slice(0, 7);
+  } else {
+    bucketDates = eachYearOfInterval({ start: startOfYear(rangeStart), end: startOfYear(now) });
+    bucketKey = (d) => format(d, 'yyyy');
+    bucketLabel = (d) => format(d, 'yyyy');
+    eventKey = (iso) => iso.slice(0, 4);
+  }
+
+  for (const e of events) {
+    const k = eventKey(e.created_at);
+    byBucket[k] = (byBucket[k] ?? 0) + 1;
+  }
+
+  return bucketDates.map((d) => {
+    const key = bucketKey(d);
+    return { day: key, label: bucketLabel(d), count: byBucket[key] ?? 0 };
+  });
+}
+
+function volumeGranularityLabel(granularity: VolumeGranularity): string {
+  if (granularity === 'day') return 'day';
+  if (granularity === 'month') return 'month';
+  return 'year';
+}
+
 function labelForProfileRow(p: {
   display_name: string | null;
   full_name: string | null;
@@ -81,12 +159,37 @@ function labelForProfileRow(p: {
   return s || p.id.slice(0, 8);
 }
 
+function mcpEventUserLabel(
+  e: AnalyticsEventRow,
+  nameByUserId: Record<string, string>
+): string {
+  if (e.user_id) {
+    return nameByUserId[e.user_id] ?? e.user_id.slice(0, 8);
+  }
+
+  const attemptedEmail =
+    typeof e.metadata?.attempted_email === 'string' ? e.metadata.attempted_email.trim() : '';
+  if (attemptedEmail) return attemptedEmail;
+
+  const fingerprint =
+    typeof e.metadata?.token_fingerprint === 'string'
+      ? e.metadata.token_fingerprint
+      : e.guest_session_id && e.guest_session_id !== 'mcp_auth_failure'
+        ? e.guest_session_id
+        : null;
+  if (fingerprint) return `token:${fingerprint.slice(0, 8)}`;
+
+  return 'Unknown';
+}
+
 function DailyVolumeChart({
   series,
   isDarkMode,
+  granularityLabel = 'period',
 }: {
   series: { day: string; label: string; count: number }[];
   isDarkMode: boolean;
+  granularityLabel?: string;
 }) {
   const w = 480;
   const h = 160;
@@ -130,7 +233,7 @@ function DailyVolumeChart({
   if (n === 0) {
     return (
       <p className={`py-8 text-center text-sm ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>
-        No daily data in this range.
+        No {granularityLabel} data in this range.
       </p>
     );
   }
@@ -145,7 +248,7 @@ function DailyVolumeChart({
         className="h-44 w-full max-h-[11rem]"
         preserveAspectRatio="xMidYMid meet"
         role="img"
-        aria-label={`Daily event counts, max ${max} in this range`}
+        aria-label={`Event counts per ${granularityLabel}, max ${max} in this range`}
       >
         <line x1={padL} y1={padT + innerH} x2={w - padR} y2={padT + innerH} stroke={gridStroke} strokeWidth={1} />
         <line x1={padL} y1={padT + innerH * 0.5} x2={w - padR} y2={padT + innerH * 0.5} stroke={gridStroke} strokeDasharray="4 6" />
@@ -189,7 +292,8 @@ function DailyVolumeChart({
 
 export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
   const { user, accountProfile, profileLoading } = useAuth();
-  const [range, setRange] = useState<'24h' | '7d' | '30d' | 'all'>('7d');
+  const [range, setRange] = useState<AnalyticsRange>('7d');
+  const [volumeGranularity, setVolumeGranularity] = useState<VolumeGranularity>('day');
   const [selectedSubject, setSelectedSubject] = useState<{ kind: 'user' | 'guest'; id: string } | null>(null);
   const [events, setEvents] = useState<AnalyticsEventRow[]>([]);
   const [nameByUserId, setNameByUserId] = useState<Record<string, string>>({});
@@ -382,51 +486,10 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
     [topSubjects]
   );
 
-  const dailySeries = useMemo(() => {
-    const byBucket: Record<string, number> = {};
-    if (range === '24h') {
-      const end = startOfHour(new Date());
-      const start = subHours(end, 23);
-      const hours = eachHourOfInterval({ start, end });
-      for (const e of filteredEvents) {
-        const ts = new Date(e.created_at);
-        ts.setMinutes(0, 0, 0);
-        const key = format(ts, "yyyy-MM-dd'T'HH:00");
-        byBucket[key] = (byBucket[key] ?? 0) + 1;
-      }
-      return hours.map((h) => {
-        const key = format(h, "yyyy-MM-dd'T'HH:00");
-        return {
-          day: key,
-          label: format(h, 'ha'),
-          count: byBucket[key] ?? 0,
-        };
-      });
-    }
-
-    const end = new Date();
-    end.setHours(0, 0, 0, 0);
-
-    const inferredStart = range === 'all'
-      ? (filteredEvents.length ? new Date(dayKey(filteredEvents[filteredEvents.length - 1].created_at)) : end)
-      : range === '7d'
-        ? subDays(end, 6)
-        : subDays(end, 29);
-
-    const days = eachDayOfInterval({ start: inferredStart, end });
-    for (const e of filteredEvents) {
-      const k = dayKey(e.created_at);
-      byBucket[k] = (byBucket[k] ?? 0) + 1;
-    }
-    return days.map((d) => {
-      const day = format(d, 'yyyy-MM-dd');
-      return {
-        day,
-        label: format(d, 'MMM d'),
-        count: byBucket[day] ?? 0,
-      };
-    });
-  }, [filteredEvents, range]);
+  const dailySeries = useMemo(
+    () => buildVolumeOverTimeSeries(filteredEvents, range, volumeGranularity),
+    [filteredEvents, range, volumeGranularity],
+  );
 
   /** Non-zero segments with percentages that sum to 100% of activity (for donut). */
   const typeSegments = useMemo(() => {
@@ -572,7 +635,7 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
               <select
                 id="analytics-range"
                 value={range}
-                onChange={(e) => setRange(e.target.value as '24h' | '7d' | '30d' | 'all')}
+                onChange={(e) => setRange(e.target.value as AnalyticsRange)}
                 className={
                   isDarkMode
                     ? 'rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100'
@@ -930,7 +993,7 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                                   {isMcpEventType(e.event_type) ? MCP_EVENT_LABELS[e.event_type] : e.event_type}
                                 </td>
                                 <td className="px-3 py-2 font-mono">
-                                  {e.user_id ? nameByUserId[e.user_id] ?? e.user_id.slice(0, 8) : '—'}
+                                  {mcpEventUserLabel(e, nameByUserId)}
                                 </td>
                                 <td className={`px-3 py-2 ${muted}`}>
                                   {toolName ? (
@@ -941,7 +1004,17 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                                       {typeof e.metadata?.error === 'string' ? ` · ${e.metadata.error}` : ''}
                                     </>
                                   ) : reason ? (
-                                    <>reason: {reason}</>
+                                    <>
+                                      reason: {reason}
+                                      {typeof e.metadata?.token_fingerprint === 'string' &&
+                                      !e.user_id &&
+                                      !e.metadata?.attempted_email
+                                        ? ` · token:${e.metadata.token_fingerprint.slice(0, 8)}`
+                                        : ''}
+                                      {typeof e.metadata?.user_agent === 'string'
+                                        ? ` · ${e.metadata.user_agent.slice(0, 48)}`
+                                        : ''}
+                                    </>
                                   ) : typeof e.metadata?.method === 'string' ? (
                                     <>method: {e.metadata.method}</>
                                   ) : (
@@ -965,12 +1038,39 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                     <p className={`mt-1 text-xs ${muted}`}>
                       {range === '24h'
                         ? 'Events per hour (chronological). Hover points for exact counts.'
-                        : 'Events per day (chronological). Hover points for exact counts.'}
+                        : `Events per ${volumeGranularityLabel(volumeGranularity)} (chronological). Hover points for exact counts.`}
                     </p>
                   </div>
-                  <p className={`text-xs tabular-nums ${muted}`}>{totalEvents} events in range</p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <label className={`text-xs ${muted}`} htmlFor="analytics-volume-granularity">
+                        Break down by
+                      </label>
+                      <select
+                        id="analytics-volume-granularity"
+                        value={volumeGranularity}
+                        disabled={range === '24h'}
+                        onChange={(e) => setVolumeGranularity(e.target.value as VolumeGranularity)}
+                        title={range === '24h' ? 'Hourly buckets are used for the 24-hour range.' : undefined}
+                        className={
+                          isDarkMode
+                            ? 'rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-100 disabled:cursor-not-allowed disabled:opacity-50'
+                            : 'rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 disabled:cursor-not-allowed disabled:opacity-50'
+                        }
+                      >
+                        <option value="day">Day</option>
+                        <option value="month">Month</option>
+                        <option value="year">Year</option>
+                      </select>
+                    </div>
+                    <p className={`text-xs tabular-nums ${muted}`}>{totalEvents} events in range</p>
+                  </div>
                 </div>
-                <DailyVolumeChart series={dailySeries} isDarkMode={isDarkMode} />
+                <DailyVolumeChart
+                  series={dailySeries}
+                  isDarkMode={isDarkMode}
+                  granularityLabel={range === '24h' ? 'hour' : volumeGranularityLabel(volumeGranularity)}
+                />
               </section>
 
               <div className="grid gap-6 lg:grid-cols-2">

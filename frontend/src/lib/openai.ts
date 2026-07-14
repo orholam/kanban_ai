@@ -1,5 +1,7 @@
-import { getPromptsForProjectType } from './prompts';
 import type { Task } from '../types';
+import { PROJECT_SETUP_SYSTEM_PROMPT } from './prompts';
+import type { ProjectSetupResult } from './projectSetup';
+import { titleFromBrief } from './projectSetup';
 
 /** Browser calls this; Vercel serverless adds OPENAI_API_KEY and forwards to OpenAI. */
 const OPENAI_PROXY_URL = '/api/openai';
@@ -15,11 +17,12 @@ export async function getOpenAiProxyConfigured(): Promise<boolean> {
   }
 }
 
-async function postViaOpenAiProxy(body: object): Promise<Response> {
+async function postViaOpenAiProxy(body: object, signal?: AbortSignal): Promise<Response> {
   return fetch(OPENAI_PROXY_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    signal,
   });
 }
 
@@ -53,191 +56,177 @@ interface OpenAIResponse {
   }[];
 }
 
-const tools = [
-  {
-    type: 'function',
-    function: {
-      name: 'create_project_plan',
-      description: 'Create a detailed development plan for the project.',
-      parameters: {
-        type: 'object',
-        properties: {
-          weeks: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                title: { type: 'string' },
-                description: { type: 'string' },
-              },
-              required: ['title', 'description'],
-            },
-            minItems: 1,
-          },
-        },
-        required: ['weeks'],
-        additionalProperties: false,
-      },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'create_project_tasks',
-      description: 'Create a list of tasks for the first week of the project.',
-      parameters: {
-        type: 'object',
-        properties: {
-          tasks: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                title: { type: 'string' },
-                description: { type: 'string' },
-                priority: { type: 'string', enum: ['low', 'medium', 'high'] },
-                type: { type: 'string', enum: ['feature', 'scope', 'bug'] },
-              },
-              required: ['title', 'description', 'priority', 'type'],
-            },
-            minItems: 1,
-          },
-        },
-        required: ['tasks'],
-        additionalProperties: false,
-      },
-    },
-  },
-];
-const tools2 = [
-  {
-    type: 'function',
-    function: {
-      name: 'create_project_tasks',
-      description: 'Create a list of tasks for the first week of the project.',
-      parameters: {
-        type: 'object',
-        properties: {
-          tasks: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                title: { type: 'string' },
-                description: { type: 'string' },
-                priority: { type: 'string', enum: ['low', 'medium', 'high'] },
-                type: { type: 'string', enum: ['feature', 'scope', 'bug'] },
-              },
-              required: ['title', 'description', 'priority', 'type'],
-            },
-            minItems: 1,
-          },
-        },
-        required: ['tasks'],
-        additionalProperties: false,
-      },
-    },
-  },
-];
+const PROJECT_SETUP_MODEL = 'gpt-4o-mini' as const;
 
-export async function generateProjectPlan(
-  projectDetails: { name: string; keywords: string[]; description: string; projectType: string }
-): Promise<OpenAIResponse> {
-  const prompts = getPromptsForProjectType(projectDetails.projectType);
+const projectSetupTool = {
+  type: 'function',
+  function: {
+    name: 'create_project_setup',
+    description:
+      'Create a project title, short description, phased roadmap, and starter kanban tasks from a brief.',
+    parameters: {
+      type: 'object',
+      properties: {
+        title: {
+          type: 'string',
+          description: 'Short project name (max ~60 chars).',
+        },
+        description: {
+          type: 'string',
+          description: '1–2 sentence project description.',
+        },
+        phases: {
+          type: 'array',
+          description: 'Roadmap phases sized to the brief (typically 4–8, not a fixed 10).',
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string' },
+              description: { type: 'string' },
+            },
+            required: ['title', 'description'],
+          },
+          minItems: 3,
+          maxItems: 10,
+        },
+        tasks: {
+          type: 'array',
+          description: '4–8 concrete starter tasks for the first phase/sprint.',
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string' },
+              description: { type: 'string' },
+              priority: { type: 'string', enum: ['low', 'medium', 'high'] },
+              type: { type: 'string', enum: ['feature', 'scope', 'bug'] },
+              sprint: {
+                type: 'integer',
+                description: '1-based sprint matching a phase index; usually 1 for starters.',
+              },
+            },
+            required: ['title', 'description', 'priority', 'type'],
+          },
+          minItems: 3,
+          maxItems: 10,
+        },
+      },
+      required: ['title', 'description', 'phases', 'tasks'],
+      additionalProperties: false,
+    },
+  },
+} as const;
 
-  const prompt = `
-    ${prompts.projectPlan}
-    Project name: "${projectDetails.name}".
-    Selected dev tools: ${projectDetails.keywords.join(', ')}.
-    Web app description: ${projectDetails.description}.
-  `;
+function normalizeSetupResult(raw: unknown, brief: string, explicitTitle?: string): ProjectSetupResult {
+  const obj = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const phasesRaw = Array.isArray(obj.phases) ? obj.phases : [];
+  const tasksRaw = Array.isArray(obj.tasks) ? obj.tasks : [];
+
+  const phases = phasesRaw
+    .filter((p): p is Record<string, unknown> => p != null && typeof p === 'object')
+    .map((p) => ({
+      title: String(p.title ?? '').trim() || 'Phase',
+      description: String(p.description ?? '').trim(),
+    }))
+    .filter((p) => p.title.length > 0)
+    .slice(0, 10);
+
+  const tasks = tasksRaw
+    .filter((t): t is Record<string, unknown> => t != null && typeof t === 'object')
+    .map((t) => {
+      const priority = String(t.priority ?? 'medium');
+      const type = String(t.type ?? 'feature');
+      const sprintNum = Number(t.sprint);
+      return {
+        title: String(t.title ?? '').trim(),
+        description: String(t.description ?? '').trim(),
+        priority: (['low', 'medium', 'high'].includes(priority) ? priority : 'medium') as
+          | 'low'
+          | 'medium'
+          | 'high',
+        type: (['feature', 'scope', 'bug'].includes(type) ? type : 'feature') as
+          | 'feature'
+          | 'scope'
+          | 'bug',
+        sprint: Number.isFinite(sprintNum) && sprintNum >= 1 ? Math.floor(sprintNum) : 1,
+      };
+    })
+    .filter((t) => t.title.length > 0)
+    .slice(0, 10);
+
+  if (phases.length === 0) {
+    phases.push({
+      title: 'Get started',
+      description: 'Clarify scope, set up the workspace, and ship a thin vertical slice.',
+    });
+  }
+  if (tasks.length === 0) {
+    tasks.push({
+      title: 'Write a one-page brief',
+      description: 'Capture goals, users, and non-goals for the first milestone.',
+      priority: 'high',
+      type: 'scope',
+      sprint: 1,
+    });
+  }
+
+  const aiTitle = String(obj.title ?? '').trim();
+  const aiDescription = String(obj.description ?? '').trim();
+
+  return {
+    title: titleFromBrief(brief, explicitTitle || aiTitle || undefined),
+    description: aiDescription || brief.trim().slice(0, 400) || 'No description added.',
+    phases,
+    tasks,
+  };
+}
+
+/** Single-shot project setup: roadmap phases + starter tasks from a freeform brief. */
+export async function generateProjectSetup(input: {
+  brief: string;
+  title?: string;
+  signal?: AbortSignal;
+}): Promise<ProjectSetupResult> {
+  const brief = input.brief.trim();
+  if (!brief) {
+    throw new Error('Project brief is required');
+  }
+
+  const titleHint = input.title?.trim();
+  const userContent = titleHint
+    ? `Suggested title (use or improve): "${titleHint}"\n\nProject brief:\n${brief}`
+    : `Project brief:\n${brief}`;
 
   const requestBody: OpenAIRequest = {
-    model: 'gpt-4',
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7,
-    max_tokens: 1000,
-    tools,
+    model: PROJECT_SETUP_MODEL,
+    messages: [
+      { role: 'system', content: PROJECT_SETUP_SYSTEM_PROMPT },
+      { role: 'user', content: userContent },
+    ],
+    temperature: 0.6,
+    max_tokens: 1800,
+    tools: [projectSetupTool],
+    tool_choice: { type: 'function', function: { name: 'create_project_setup' } },
   };
 
-  const response = await postViaOpenAiProxy(requestBody);
-
+  const response = await postViaOpenAiProxy(requestBody, input.signal);
   if (!response.ok) {
     throw new Error(`OpenAI API error: ${response.status}`);
   }
 
   const data = (await response.json()) as OpenAIResponse;
-  return data;
-}
-
-export async function generateFirstWeekTasks(projectPlan: string, projectType: string): Promise<OpenAIResponse> {
-  const prompts = getPromptsForProjectType(projectType);
-
-  const prompt = `
-    ${prompts.firstWeekTasks}
-    ${projectPlan}
-  `;
-
-  const requestBody: OpenAIRequest = {
-    model: 'gpt-4',
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7,
-    max_tokens: 500,
-    tools: tools2,
-  };
-
-  const response = await postViaOpenAiProxy(requestBody);
-
-  if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.status}`);
-  }
-  const data = (await response.json()) as OpenAIResponse;
-  return data;
-}
-
-// Note: Should have an external memory store which cycles through tech information
-// Some should be sticky - the prompt should always include basic knowledge of LLMs, function calling, modern tools, etc.
-// Other information should cycle through - tech headlines, so users can take advantage of the cutting edge tools.
-
-export async function generateProjectOverview(
-  projectDetails: { name: string; keywords: string[]; description: string; projectType: string }
-): Promise<ReadableStream<Uint8Array> | null> {
-  const prompts = getPromptsForProjectType(projectDetails.projectType);
-
-  const prompt = `
-    ${prompts.projectOverview}
-    Create a high-level project overview for "${projectDetails.name}".
-    This project will use: ${projectDetails.keywords.join(', ')}.
-    Project description: ${projectDetails.description}
-
-    Some background information on vibe coding tools:
-    - All major LLMs now support function calling
-    - Bolt.new, Loveable, and V0 are the top new prompt -> app tools, which work well for frontend as a starting pointbut also integrate well with supabase for backend.
-    - Cursor and Windsurf are popular coding assistants (like Copilot) IDEs
-    - Supabase is a popular new database tool that supports Postgresql, storage, and auth.
-
-    Some recent developments from past month that may be useful - only include if relevant to the project!!!:
-    - Play AI, Hume and Elevenlabs best voice models
-    - Crew, MCP, OpenAI Agent SDK, and more - great agent frameworks
-
-    The total length of your response should be 1-2 paragraphs.
-  `;
-
-  const requestBody = {
-    model: 'gpt-4',
-    messages: [{ role: 'user', content: prompt }],
-    temperature: 0.7,
-    max_tokens: 1000,
-    stream: true,
-  };
-
-  const response = await postViaOpenAiProxy(requestBody);
-
-  if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.status}`);
+  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+  if (!toolCall?.function?.arguments) {
+    throw new Error('AI did not return a project setup');
   }
 
-  return response.body;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(toolCall.function.arguments);
+  } catch {
+    throw new Error('AI returned invalid project setup JSON');
+  }
+
+  return normalizeSetupResult(parsed, brief, titleHint);
 }
 
 const KANBAN_COMMENT_AI_MODEL = 'gpt-4o-mini' as const;

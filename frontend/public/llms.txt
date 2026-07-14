@@ -8,7 +8,7 @@ Kanban AI is an AI-powered kanban board and project companion for builders, entr
 
 **MCP endpoint:** `https://kanbanai.dev/api/mcp`
 
-**MCP authentication:** each request requires `Authorization: Bearer <supabase_access_token>`. When the deployment sets `MCP_API_SECRET`, also send `X-MCP-API-Key: <secret>`. End users get both pre-filled from Connect AI; operators set `MCP_API_SECRET` on Vercel.
+**MCP authentication:** each request requires `Authorization: Bearer <kai_… personal key>` from [Connect AI](https://kanbanai.dev/connect) (keys do not expire). Short-lived Supabase session JWTs still work. When the deployment sets `MCP_API_SECRET`, also send `X-MCP-API-Key: <secret>`. End users get both pre-filled from Connect AI; operators set `MCP_API_SECRET` on Vercel.
 
 **MCP tools (11):** `list_projects`, `get_board`, `create_project`, `update_project`, `delete_project`, `create_task`, `update_task`, `delete_task`, `list_task_comments`, `add_task_comment`, `delete_task_comment`.
 
