@@ -47,7 +47,7 @@ Kanban AI exposes a **remote MCP server** at `https://kanbanai.dev/api/mcp`. It 
 
 1. Sign in at Kanban AI.
 2. Open **Connect AI** (`/connect`).
-3. Click **Copy config** — credentials are filled in server-side.
+3. Click **Copy config** — a long-lived personal MCP key is filled in server-side.
 4. Paste into Cursor or Claude Desktop MCP settings and restart.
 
 For stdio-only clients, the Connect page provides a Claude Desktop JSON block using `mcp-remote`.
@@ -56,10 +56,10 @@ For stdio-only clients, the Connect page provides a Claude Desktop JSON block us
 
 Each MCP request must include:
 
-1. `Authorization: Bearer <supabase_access_token>` — the signed-in user's Supabase session access token (required).
+1. `Authorization: Bearer <kai_…>` — personal MCP key from Connect AI (does not expire). A short-lived Supabase session JWT still works.
 2. `X-MCP-API-Key: <MCP_API_SECRET>` — when `MCP_API_SECRET` is configured on the deployment (optional per deployment; required on kanbanai.dev production).
 
-Authenticated users fetch full config from `GET /api/mcp-setup` with their session bearer token.
+Authenticated users fetch full config from `GET /api/mcp-setup` with their session bearer token. Use `?rotate=1` to revoke and issue a new personal key.
 
 ### MCP Tools
 

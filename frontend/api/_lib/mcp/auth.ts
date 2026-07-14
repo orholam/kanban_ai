@@ -1,10 +1,19 @@
 import { createHash } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import {
+  findActiveKeyByHash,
+  hashMcpApiKey,
+  isMcpPersonalApiKey,
+  touchKeyLastUsed,
+} from './apiKeys.js';
+import { createServiceRoleClient } from '../supabaseService.js';
 
 export type McpAuthContext = {
   supabase: SupabaseClient;
   userId: string;
   userEmail?: string;
+  /** session = short-lived Supabase JWT; api_key = long-lived kai_ token */
+  authMethod: 'session' | 'api_key';
 };
 
 export type McpAuthFailure = {
@@ -68,22 +77,9 @@ function authFailure(reason: string, accessToken?: string): McpAuthFailure {
   };
 }
 
-/** Validates only the Supabase session — used for in-app setup config, not MCP tool calls. */
-export async function authenticateSupabaseAccessToken(request: Request): Promise<McpAuthResult> {
-  const accessToken = extractBearerToken(request);
-  if (!accessToken) {
-    return authFailure('missing_access_token');
-  }
-
-  let url: string;
-  let anonKey: string;
-  try {
-    ({ url, anonKey } = readSupabaseConfig());
-  } catch {
-    return authFailure('supabase_not_configured', accessToken);
-  }
-
-  const supabase = createClient(url, anonKey, {
+function createUserScopedClient(accessToken: string): SupabaseClient {
+  const { url, anonKey } = readSupabaseConfig();
+  return createClient(url, anonKey, {
     global: {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -95,6 +91,24 @@ export async function authenticateSupabaseAccessToken(request: Request): Promise
       detectSessionInUrl: false,
     },
   });
+}
+
+/** Validates only the Supabase session — used for in-app setup config, not MCP tool calls. */
+export async function authenticateSupabaseAccessToken(request: Request): Promise<McpAuthResult> {
+  const accessToken = extractBearerToken(request);
+  if (!accessToken) {
+    return authFailure('missing_access_token');
+  }
+  if (isMcpPersonalApiKey(accessToken)) {
+    return authFailure('session_required', accessToken);
+  }
+
+  let supabase: SupabaseClient;
+  try {
+    supabase = createUserScopedClient(accessToken);
+  } catch {
+    return authFailure('supabase_not_configured', accessToken);
+  }
 
   const {
     data: { user },
@@ -111,12 +125,69 @@ export async function authenticateSupabaseAccessToken(request: Request): Promise
       supabase,
       userId: user.id,
       userEmail: user.email,
+      authMethod: 'session',
     },
   };
 }
 
 function extractMcpApiKey(request: Request): string | undefined {
   return request.headers.get('x-mcp-api-key')?.trim();
+}
+
+async function authenticatePersonalApiKey(plainKey: string): Promise<McpAuthResult> {
+  const service = createServiceRoleClient();
+  if (!service) {
+    return authFailure('service_role_not_configured', plainKey);
+  }
+
+  try {
+    const row = await findActiveKeyByHash(service, hashMcpApiKey(plainKey));
+    if (!row) {
+      return authFailure('invalid_mcp_personal_key', plainKey);
+    }
+
+    void touchKeyLastUsed(service, row.id);
+
+    return {
+      ok: true,
+      context: {
+        supabase: service,
+        userId: row.user_id,
+        authMethod: 'api_key',
+      },
+    };
+  } catch (error) {
+    console.error('[mcp-auth] personal key lookup failed', error);
+    return authFailure('mcp_personal_key_lookup_failed', plainKey);
+  }
+}
+
+async function authenticateSessionAccessToken(accessToken: string): Promise<McpAuthResult> {
+  let supabase: SupabaseClient;
+  try {
+    supabase = createUserScopedClient(accessToken);
+  } catch {
+    return authFailure('supabase_not_configured', accessToken);
+  }
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser(accessToken);
+
+  if (error || !user) {
+    return authFailure('invalid_access_token', accessToken);
+  }
+
+  return {
+    ok: true,
+    context: {
+      supabase,
+      userId: user.id,
+      userEmail: user.email,
+      authMethod: 'session',
+    },
+  };
 }
 
 export async function authenticateMcpRequest(request: Request): Promise<McpAuthResult> {
@@ -134,42 +205,9 @@ export async function authenticateMcpRequest(request: Request): Promise<McpAuthR
     return authFailure('missing_access_token');
   }
 
-  let url: string;
-  let anonKey: string;
-  try {
-    ({ url, anonKey } = readSupabaseConfig());
-  } catch {
-    return authFailure('supabase_not_configured', accessToken);
+  if (isMcpPersonalApiKey(accessToken)) {
+    return authenticatePersonalApiKey(accessToken);
   }
 
-  const supabase = createClient(url, anonKey, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    },
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-    },
-  });
-
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser(accessToken);
-
-  if (error || !user) {
-    return authFailure('invalid_access_token', accessToken);
-  }
-
-  return {
-    ok: true,
-    context: {
-      supabase,
-      userId: user.id,
-      userEmail: user.email,
-    },
-  };
+  return authenticateSessionAccessToken(accessToken);
 }

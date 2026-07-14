@@ -81,7 +81,7 @@ Set `OPENAI_API_KEY` (and Supabase / MCP vars below) in the Vercel project. The 
 
 On a **hosted** deployment, Kanban AI exposes a remote MCP server at `/api/mcp` with the same board operations as the web app.
 
-- **End users:** sign in → **Connect AI** (`/connect`) → copy the generated config into Cursor or Claude Desktop.
+- **End users:** sign in → **Connect AI** (`/connect`) → copy the generated config into Cursor or Claude Desktop. Config uses a long-lived personal MCP key (`kai_…`) so you do not need to reconnect hourly.
 - **Operators:** see [`docs/MCP_REGISTRY.md`](docs/MCP_REGISTRY.md) and the env table below.
 - **Discovery:** [`/.well-known/mcp-server`](https://kanbanai.dev/.well-known/mcp-server) · OpenAPI: [`/openapi/mcp.json`](https://kanbanai.dev/openapi/mcp.json) · AI index: [`/llms.txt`](https://kanbanai.dev/llms.txt)
 
@@ -89,8 +89,9 @@ On a **hosted** deployment, Kanban AI exposes a remote MCP server at `/api/mcp` 
 |---|---|
 | `SUPABASE_URL` | Same as `VITE_SUPABASE_URL` |
 | `SUPABASE_ANON_KEY` | Same as `VITE_SUPABASE_ANON_KEY` |
-| `SUPABASE_SERVICE_ROLE_KEY` | MCP analytics + member invites |
-| `MCP_API_SECRET` | Shared secret for `X-MCP-API-Key` |
+| `SUPABASE_SERVICE_ROLE_KEY` | MCP analytics, member invites, personal MCP keys |
+| `MCP_API_SECRET` | Shared secret for `X-MCP-API-Key` (also used to encrypt personal keys at rest) |
+| `MCP_KEY_ENCRYPTION_SECRET` | Optional dedicated secret for encrypting personal MCP keys (falls back to `MCP_API_SECRET` / service role) |
 | `OPENAI_API_KEY` | In-app AI (optional for MCP CRUD tools) |
 
 **Tools:** `list_projects`, `get_board`, `create_project`, `update_project`, `delete_project`, `create_task`, `update_task`, `delete_task`, `list_task_comments`, `add_task_comment`, `delete_task_comment`.

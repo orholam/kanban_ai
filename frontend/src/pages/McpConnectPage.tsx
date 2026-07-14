@@ -37,7 +37,7 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
   const [copied, setCopied] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const loadSetup = useCallback(async () => {
+  const loadSetup = useCallback(async (options: { rotate?: boolean } = {}) => {
     setLoading(true);
     setLoadError(null);
     const { data, error } = await supabase.auth.getSession();
@@ -50,8 +50,11 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
 
     const token = data.session.access_token;
     try {
-      const remote = await fetchMcpSetup(token);
+      const remote = await fetchMcpSetup(token, options);
       setSetup(remote);
+      if (options.rotate) {
+        toast.success('New MCP key issued — paste the updated config into your client');
+      }
     } catch (err) {
       setSetup(
         buildMcpClientSetup({
@@ -149,7 +152,8 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
             </div>
             <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Hook up Cursor or Claude in one copy</h1>
             <p className={`mt-2 text-sm leading-relaxed ${muted}`}>
-              We fill in your credentials automatically. Copy the config, paste it into your editor, restart — done.
+              We issue a long-lived personal MCP key and fill in your config. Copy once, paste into your editor,
+              restart — no hourly reconnects.
             </p>
           </div>
 
@@ -185,7 +189,16 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold">Copy your config</p>
-                  <p className={`mt-0.5 text-sm ${muted}`}>Everything is pre-filled — no tokens or secrets to hunt down.</p>
+                  <p className={`mt-0.5 text-sm ${muted}`}>
+                    Includes a personal key that does not expire
+                    {setup?.keyPrefix ? (
+                      <>
+                        {' '}
+                        (<code className="font-mono text-xs">{setup.keyPrefix}…</code>)
+                      </>
+                    ) : null}
+                    .
+                  </p>
                   <button
                     type="button"
                     disabled={loading || !activeConfig}
@@ -224,10 +237,10 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
 
             <button
               type="button"
-              onClick={() => void loadSetup()}
+              onClick={() => void loadSetup({ rotate: true })}
               className={`mt-4 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400`}
             >
-              Regenerate config
+              Rotate key &amp; regenerate config
             </button>
           </section>
 
@@ -244,8 +257,9 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
           {showAdvanced ? (
             <div className={`mt-2 rounded-xl border p-4 text-sm ${isDarkMode ? 'border-zinc-800 text-zinc-400' : 'border-zinc-200 text-zinc-600'}`}>
               <p>
-                Access tokens expire after a while. If MCP returns <code className="font-mono text-xs">401</code>, come
-                back here and click <strong>Regenerate config</strong>, then paste the new JSON into your client again.
+                Personal MCP keys do not expire. If you get <code className="font-mono text-xs">401</code>, someone
+                may have revoked the key, or the deployment secret changed — click{' '}
+                <strong>Rotate key &amp; regenerate config</strong> and paste the new JSON into your client.
               </p>
               {setup?.endpoint ? (
                 <p className="mt-2">

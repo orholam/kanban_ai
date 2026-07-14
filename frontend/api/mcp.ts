@@ -13,7 +13,7 @@ const mcpHandler = createMcpHandler(
   {
     serverInfo: {
       name: 'kanban-ai',
-      version: '1.0.0',
+      version: '1.1.0',
     },
   },
   {
@@ -46,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     });
     res.status(401).json({
       error: 'Unauthorized',
-      hint: 'Send Authorization: Bearer <supabase_access_token> and, if configured, X-MCP-API-Key.',
+      hint: 'Send Authorization: Bearer <kai_… personal key from /connect> (or a session JWT). If MCP_API_SECRET is set, also send X-MCP-API-Key.',
     });
     return;
   }

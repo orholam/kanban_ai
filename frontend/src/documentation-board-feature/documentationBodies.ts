@@ -307,7 +307,7 @@ export const bodyMcpConnect = `Connect **Claude Desktop**, **Cursor**, or any MC
 1. Sign in at Kanban AI.
 2. Open **Connect AI** from the sidebar.
 3. Choose **Cursor** or **Claude Desktop**.
-4. Click **Copy config** — credentials are filled in for you.
+4. Click **Copy config** — a long-lived personal MCP key and headers are filled in for you.
 5. Paste into your client’s MCP settings and restart.
 
 ### Cursor
@@ -326,9 +326,18 @@ https://kanbanai.dev/api/mcp
 
 Preview deployments use that deployment’s origin, e.g. \`https://your-preview.vercel.app/api/mcp\`.
 
+## Authentication
+
+Connect AI issues a **personal MCP key** (\`kai_…\`) that does **not** expire. Paste once; you only need to reconnect if you rotate the key.
+
+Requests send:
+
+- \`Authorization: Bearer kai_…\` (preferred) or a short-lived Supabase session JWT
+- \`X-MCP-API-Key\` when the deployment sets \`MCP_API_SECRET\` (Connect AI includes this automatically)
+
 ## When it stops working
 
-Session tokens expire. Return to **Connect AI**, click **Regenerate config**, copy again, and replace the JSON in your client.
+If you revoked the key or get \`401\`, return to **Connect AI**, click **Rotate key & regenerate config**, copy again, and replace the JSON in your client.
 
 ## Available tools
 
@@ -350,7 +359,7 @@ Session tokens expire. Return to **Connect AI**, click **Regenerate config**, co
 
 | Symptom | Fix |
 |---------|-----|
-| \`401 Unauthorized\` | Regenerate config on **Connect AI** and paste again |
+| \`401 Unauthorized\` | Rotate key on **Connect AI** and paste the new config |
 | MCP server not listed | Restart the client after editing config |
 | Tools run but no data | Ensure you are signed in as the same user whose projects you expect |
 | Local \`npm start\` only | MCP lives on the hosted API—use kanbanai.dev or \`vercel dev\` |
