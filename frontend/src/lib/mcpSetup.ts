@@ -121,10 +121,11 @@ export type McpSetupResponse = {
   endpoint: string;
   cursorConfig: string;
   claudeConfig: string;
-  keyPrefix?: string;
+  keyPrefix?: string | null;
   rotated?: boolean;
-  /** Personal MCP keys do not expire; null means no expiry. */
+  /** Personal MCP keys do not expire; session JWT fallback may include an exp. */
   expiresAt?: number | null;
+  authMode?: 'personal_key' | 'session_jwt';
 };
 
 /** Load ready-to-paste MCP config from the server (includes personal key + API secret when configured). */

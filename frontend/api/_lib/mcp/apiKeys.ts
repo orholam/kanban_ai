@@ -15,6 +15,19 @@ type McpApiKeyRow = {
   revoked_at: string | null;
 };
 
+function asError(error: unknown, fallback: string): Error {
+  if (error instanceof Error) return error;
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = String((error as { message: unknown }).message || fallback);
+    const code =
+      'code' in error && (error as { code?: unknown }).code != null
+        ? ` [${String((error as { code: unknown }).code)}]`
+        : '';
+    return new Error(`${message}${code}`);
+  }
+  return new Error(fallback);
+}
+
 function requireEncryptionSecret(): string {
   const secret =
     process.env.MCP_KEY_ENCRYPTION_SECRET?.trim() ||
@@ -72,7 +85,7 @@ export async function findActiveKeyByHash(
     .eq('key_hash', keyHash)
     .is('revoked_at', null)
     .maybeSingle();
-  if (error) throw error;
+  if (error) throw asError(error, 'MCP API key lookup failed');
   return (data as McpApiKeyRow | null) ?? null;
 }
 
@@ -98,7 +111,7 @@ export async function getActiveKeyForUser(
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (error) throw error;
+  if (error) throw asError(error, 'Failed to load MCP API key');
   return (data as McpApiKeyRow | null) ?? null;
 }
 
@@ -108,7 +121,7 @@ export async function revokeActiveKeysForUser(service: SupabaseClient, userId: s
     .update({ revoked_at: new Date().toISOString() })
     .eq('user_id', userId)
     .is('revoked_at', null);
-  if (error) throw error;
+  if (error) throw asError(error, 'Failed to revoke MCP API keys');
 }
 
 export async function createMcpApiKey(
@@ -125,7 +138,7 @@ export async function createMcpApiKey(
     key_encrypted: encryptKey(plainKey),
   };
   const { data, error } = await service.from('mcp_api_keys').insert([row]).select('*').single();
-  if (error) throw error;
+  if (error) throw asError(error, 'Failed to create MCP API key');
   return { plainKey, row: data as McpApiKeyRow };
 }
 

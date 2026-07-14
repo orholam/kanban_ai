@@ -11,9 +11,11 @@ interface NewProjectProps {
 
 export default function NewProject({ isDarkMode, setProjects }: NewProjectProps) {
   return (
-    <Routes>
-      <Route index element={<SimpleNewProject isDarkMode={isDarkMode} setProjects={setProjects} />} />
-      <Route path="ai" element={<NewProjectAiWizard isDarkMode={isDarkMode} setProjects={setProjects} />} />
-    </Routes>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <Routes>
+        <Route index element={<SimpleNewProject isDarkMode={isDarkMode} setProjects={setProjects} />} />
+        <Route path="ai" element={<NewProjectAiWizard isDarkMode={isDarkMode} setProjects={setProjects} />} />
+      </Routes>
+    </div>
   );
 }

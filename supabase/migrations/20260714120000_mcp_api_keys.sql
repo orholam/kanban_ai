@@ -23,7 +23,7 @@ CREATE INDEX IF NOT EXISTS mcp_api_keys_user_active_idx
 ALTER TABLE public.mcp_api_keys ENABLE ROW LEVEL SECURITY;
 
 REVOKE ALL ON public.mcp_api_keys FROM anon, authenticated;
-GRANT ALL ON public.mcp_api_keys TO service_role;
+GRANT ALL ON public.mcp_api_keys TO postgres, service_role;
 
 COMMENT ON TABLE public.mcp_api_keys IS
   'MCP personal access keys for Cursor/Claude. Plaintext never stored; encrypted blob is for Connect AI config rebuild only.';

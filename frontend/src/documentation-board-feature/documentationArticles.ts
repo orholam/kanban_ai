@@ -31,7 +31,7 @@ export const DOCUMENTATION_ARTICLES: DocumentationArticle[] = [
     categoryId: 'getting-started',
     navOrder: 2,
     title: 'Creating your first project',
-    excerpt: 'Blank board or one-brief AI setup: roadmap, starter tasks, then edit on the board.',
+    excerpt: 'Blank board or AI chat builder: live workspace, then create the board when ready.',
     estimatedMinutes: 5,
     tags: ['setup', 'roadmap', 'AI'],
     date: '2026-04-03',

@@ -190,14 +190,35 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold">Copy your config</p>
                   <p className={`mt-0.5 text-sm ${muted}`}>
-                    Includes a personal key that does not expire
-                    {setup?.keyPrefix ? (
+                    {setup?.authMode === 'session_jwt' ? (
                       <>
-                        {' '}
-                        (<code className="font-mono text-xs">{setup.keyPrefix}…</code>)
+                        Temporary session token included — it expires in about an hour. After we finish MCP key setup,
+                        regenerate for a long-lived key
+                        {setup.expiresAt ? (
+                          <>
+                            {' '}
+                            (expires{' '}
+                            {new Date(setup.expiresAt * 1000).toLocaleString(undefined, {
+                              dateStyle: 'short',
+                              timeStyle: 'short',
+                            })}
+                            )
+                          </>
+                        ) : null}
+                        .
                       </>
-                    ) : null}
-                    .
+                    ) : (
+                      <>
+                        Includes a personal key that does not expire
+                        {setup?.keyPrefix ? (
+                          <>
+                            {' '}
+                            (<code className="font-mono text-xs">{setup.keyPrefix}…</code>)
+                          </>
+                        ) : null}
+                        .
+                      </>
+                    )}
                   </p>
                   <button
                     type="button"
