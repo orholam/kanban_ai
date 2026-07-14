@@ -53,15 +53,26 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
       const remote = await fetchMcpSetup(token, options);
       setSetup(remote);
       if (options.rotate) {
-        toast.success('New MCP key issued — paste the updated config into your client');
+        if (remote.authMode === 'personal_key') {
+          toast.success('New MCP key issued — paste the updated config into your client');
+        } else {
+          toast.info('Config refreshed with your current session token');
+        }
       }
     } catch (err) {
-      setSetup(
-        buildMcpClientSetup({
-          accessToken: token,
-          endpointUrl: getMcpEndpointUrl(),
-        })
-      );
+      const fallback = buildMcpClientSetup({
+        accessToken: token,
+        endpointUrl: getMcpEndpointUrl(),
+      });
+      setSetup({
+        endpoint: fallback.endpoint,
+        cursorConfig: fallback.cursorConfig,
+        claudeConfig: fallback.claudeConfig,
+        keyPrefix: null,
+        expiresAt: fallback.tokenExpiresAt,
+        authMode: 'session_jwt',
+        setupNotice: null,
+      });
       const detail = err instanceof Error ? err.message : 'Unknown error';
       setLoadError(`${mcpSetupFallbackMessage()} (${detail})`);
     }
@@ -152,8 +163,17 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
             </div>
             <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Hook up Cursor or Claude in one copy</h1>
             <p className={`mt-2 text-sm leading-relaxed ${muted}`}>
-              We issue a long-lived personal MCP key and fill in your config. Copy once, paste into your editor,
-              restart — no hourly reconnects.
+              {setup?.authMode === 'session_jwt' ? (
+                <>
+                  Copy the config below to connect now. Long-lived personal keys require a one-time database setup on
+                  our side — until then your session token works for about an hour.
+                </>
+              ) : (
+                <>
+                  We issue a long-lived personal MCP key and fill in your config. Copy once, paste into your editor,
+                  restart — no hourly reconnects.
+                </>
+              )}
             </p>
           </div>
 
@@ -229,7 +249,10 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
                     {copied ? <ClipboardCheck className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
                     {copied ? 'Copied!' : 'Copy config'}
                   </button>
-                  {loadError ? <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">{loadError}</p> : null}
+                  {setup?.setupNotice ? (
+                    <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">{setup.setupNotice}</p>
+                  ) : null}
+                  {loadError ? <p className="mt-2 text-xs text-red-600 dark:text-red-400">{loadError}</p> : null}
                 </div>
               </li>
               <li className="flex gap-3">

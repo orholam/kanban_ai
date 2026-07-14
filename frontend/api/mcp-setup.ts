@@ -40,6 +40,11 @@ function errorMessage(error: unknown): string {
   return 'unknown';
 }
 
+function isMissingMcpKeysTable(error: unknown): boolean {
+  const msg = errorMessage(error);
+  return msg.includes('mcp_api_keys') || msg.includes('PGRST205');
+}
+
 function buildConfigs(input: {
   endpoint: string;
   bearerToken: string;
@@ -85,6 +90,34 @@ function buildConfigs(input: {
   );
 
   return { cursorConfig, claudeConfig };
+}
+
+function respondSessionJwt(
+  res: VercelResponse,
+  input: {
+    endpoint: string;
+    accessToken: string;
+    mcpApiSecret?: string;
+    setupNotice?: string;
+  }
+): void {
+  const { cursorConfig, claudeConfig } = buildConfigs({
+    endpoint: input.endpoint,
+    bearerToken: input.accessToken,
+    mcpApiSecret: input.mcpApiSecret,
+  });
+  res.status(200);
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({
+    endpoint: input.endpoint,
+    cursorConfig,
+    claudeConfig,
+    keyPrefix: null,
+    rotated: false,
+    expiresAt: jwtExpiresAt(input.accessToken),
+    authMode: 'session_jwt',
+    setupNotice: input.setupNotice,
+  });
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
@@ -148,36 +181,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         return;
       } catch (error) {
         console.error('mcp-setup key resolve error; falling back to session JWT', error);
-        // Continue to session JWT fallback below (e.g. missing mcp_api_keys migration).
-        if (rotate) {
-          // Surface a clear reason when the user explicitly asked to rotate.
-          res.status(500).json({
-            error: 'Failed to issue MCP API key',
-            reason: errorMessage(error),
-          });
-          return;
-        }
+        const notice = isMissingMcpKeysTable(error)
+          ? 'Long-lived MCP keys are not enabled on this database yet — using your session token (~1 hour). Run the mcp_api_keys migration on the Kanban Supabase project.'
+          : `Personal MCP keys unavailable (${errorMessage(error)}). Using your session token (~1 hour).`;
+        respondSessionJwt(res, {
+          endpoint,
+          accessToken,
+          mcpApiSecret,
+          setupNotice: notice,
+        });
+        return;
       }
-    } else {
-      console.warn('mcp-setup: SUPABASE_SERVICE_ROLE_KEY missing; using session JWT');
     }
 
-    const { cursorConfig, claudeConfig } = buildConfigs({
+    console.warn('mcp-setup: SUPABASE_SERVICE_ROLE_KEY missing; using session JWT');
+    respondSessionJwt(res, {
       endpoint,
-      bearerToken: accessToken,
+      accessToken,
       mcpApiSecret,
-    });
-
-    res.status(200);
-    res.setHeader('Cache-Control', 'no-store');
-    res.json({
-      endpoint,
-      cursorConfig,
-      claudeConfig,
-      keyPrefix: null,
-      rotated: false,
-      expiresAt: jwtExpiresAt(accessToken),
-      authMode: 'session_jwt',
+      setupNotice: 'Using your session token (~1 hour). Set SUPABASE_SERVICE_ROLE_KEY on Vercel for long-lived keys.',
     });
   } catch (error) {
     console.error('mcp-setup error', error);
