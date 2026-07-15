@@ -697,13 +697,19 @@ export default function KanbanBoard({
     }
   };
 
-  const persistProjectMeta = async (updates: { title?: string; description?: string }) => {
-    if (!currentProject) return;
+  const persistProjectMeta = async (updates: {
+    title?: string;
+    description?: string;
+    master_plan?: string;
+  }): Promise<boolean> => {
+    if (!currentProject) return false;
 
     if (guestMode) {
       setCurrentProject((prev) => (prev ? { ...prev, ...updates } : null));
+      if (updates.title !== undefined) setProjectTitleDraft(updates.title);
+      if (updates.description !== undefined) setProjectDescDraft(updates.description);
       toast.success('Project updated');
-      return;
+      return true;
     }
 
     try {
@@ -711,19 +717,38 @@ export default function KanbanBoard({
       const data = await updateProjectRow(currentProject.id, updates);
 
       setCurrentProject((prev) => (prev ? { ...prev, ...data } : null));
+      if (updates.title !== undefined || typeof data.title === 'string') {
+        setProjectTitleDraft(String(data.title ?? updates.title ?? currentProject.title));
+      }
+      if (updates.description !== undefined || typeof data.description === 'string') {
+        setProjectDescDraft(
+          String(data.description ?? updates.description ?? currentProject.description ?? '')
+        );
+      }
       if (setProjects) {
         const pid = String(data.id ?? currentProject.id);
         setProjects(projects.map((p) => (p.id === pid ? { ...p, ...data } : p)));
       }
       toast.success('Project updated');
+      return true;
     } catch (err) {
       console.error('Error updating project:', err);
       toast.error('Could not save project');
       setProjectTitleDraft(currentProject.title);
       setProjectDescDraft(currentProject.description ?? '');
+      return false;
     } finally {
       setIsSavingProjectMeta(false);
     }
+  };
+
+  const handleUpdateProjectFromChat = async (patch: {
+    title?: string;
+    description?: string;
+    master_plan?: string;
+  }) => {
+    const ok = await persistProjectMeta(patch);
+    if (!ok) throw new Error('Could not save project');
   };
 
   const handleProjectTitleCommit = async () => {
@@ -1616,6 +1641,7 @@ export default function KanbanBoard({
           boardLoading={isLoading}
           guestMode={guestMode}
           chatOpenRequest={chatOpenRequest}
+          onUpdateProject={handleUpdateProjectFromChat}
           onCreateTask={handleCreateTaskFromChat}
           onUpdateTask={handleTaskUpdateFromChat}
           onDeleteTask={handleDeleteTaskFromChat}

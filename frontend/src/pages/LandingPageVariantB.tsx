@@ -28,7 +28,11 @@ import taskManagement from '../assets/undraw_join_re_w1lh.svg'
 import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
 import { McpHeroInline } from '../components/McpHeroInline'
 import { TrustedBy } from '../components/TrustedBy'
-import { DOCUMENTATION_BOARD_BASE_PATH, documentationBoardArticlePath } from '../documentation-board-feature/integration'
+import {
+  DOCUMENTATION_BOARD_BASE_PATH,
+  RELEASE_UPDATES_SLUG,
+  documentationBoardArticlePath,
+} from '../documentation-board-feature/integration'
 import { MCP_DOCS_SLUG } from '../lib/mcpSetup'
 import { formatPublicUserCountLabel, usePublicUserCount } from '../hooks/usePublicUserCount'
 const FEATURE_PILLS = [
@@ -746,6 +750,14 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
                       className={`text-sm font-medium ${textMuted} transition hover:text-zinc-900 dark:hover:text-zinc-100`}
                     >
                       Documentation
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to={documentationBoardArticlePath(RELEASE_UPDATES_SLUG)}
+                      className={`text-sm font-medium ${textMuted} transition hover:text-zinc-900 dark:hover:text-zinc-100`}
+                    >
+                      Release updates
                     </Link>
                   </li>
                   <li>

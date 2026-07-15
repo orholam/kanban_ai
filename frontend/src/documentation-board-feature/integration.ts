@@ -6,6 +6,9 @@
  */
 export const DOCUMENTATION_BOARD_BASE_PATH = '/docs';
 
+/** Canonical slug for the Release updates article (footer + cross-links). */
+export const RELEASE_UPDATES_SLUG = 'release-updates';
+
 export function documentationBoardArticlePath(slug: string): string {
   return `${DOCUMENTATION_BOARD_BASE_PATH}/${encodeURIComponent(slug)}`;
 }

@@ -2,6 +2,11 @@ import type { DocumentationCategoryMeta } from './types';
 
 export const DOCUMENTATION_CATEGORIES: DocumentationCategoryMeta[] = [
   {
+    id: 'updates',
+    title: 'Release updates',
+    description: 'What shipped recently and what we are working on next.',
+  },
+  {
     id: 'getting-started',
     title: 'Getting started',
     description: 'First session, guest mode, and orientation.',

@@ -19,6 +19,7 @@ import {
   MessageSquarePlus,
   Repeat2,
   Undo2,
+  Map,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -31,6 +32,7 @@ import {
   type ProjectTaskChatMessage,
   type ProjectTaskAssistantProgress,
 } from '../lib/openai';
+import { serializeMasterPlan, type RoadmapPhase } from '../lib/projectSetup';
 import { KANBAN_TASK_DRAG_MIME, parseTaskFromDataTransfer } from '../lib/taskDnD';
 import { parseDbTimestamp } from '../lib/taskDb';
 import { toast } from 'sonner';
@@ -38,6 +40,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { recordAnalyticsEvent } from '../lib/analyticsEvents';
 import { createTaskComment, deleteTaskComment, listTaskCommentsForTasks } from '../api/taskComments';
 import { KANBAN_AI_COMMENT_AUTHOR } from '../lib/kanbanAiComment';
+
+/** Fields the board assistant may change on the open project. */
+export type ProjectMetaPatch = Partial<Pick<Project, 'title' | 'description' | 'master_plan'>>;
 
 function sliceText(s: string | undefined, max: number): string {
   if (!s) return '';
@@ -381,6 +386,7 @@ type AgentTaskPatch = Partial<
 >;
 
 type AgentUndoEntry =
+  | { kind: 'project'; patch: ProjectMetaPatch }
   | { kind: 'create'; taskId: string }
   | { kind: 'update'; taskId: string; patch: AgentTaskPatch }
   | { kind: 'delete'; task: Task }
@@ -405,6 +411,8 @@ function taskRowForPersistence(t: Task): Task {
 
 function toolProgressLabel(toolName: string): string {
   switch (toolName) {
+    case 'update_project':
+      return 'Saving project description or roadmap…';
     case 'create_task':
       return 'Saving a new task to your board…';
     case 'update_task':
@@ -422,6 +430,8 @@ function toolProgressLabel(toolName: string): string {
 
 function toolProgressHeadline(toolName: string): string {
   switch (toolName) {
+    case 'update_project':
+      return 'Updating project';
     case 'create_task':
       return 'Adding a task';
     case 'update_task':
@@ -437,6 +447,24 @@ function toolProgressHeadline(toolName: string): string {
   }
 }
 
+function parseRoadmapPhasesArg(raw: unknown): RoadmapPhase[] | { error: string } {
+  if (!Array.isArray(raw)) return { error: 'phases must be an array of { title, description }' };
+  if (raw.length < 1) return { error: 'phases must include at least one phase' };
+  if (raw.length > 12) return { error: 'phases is capped at 12 phases' };
+  const phases: RoadmapPhase[] = [];
+  for (const item of raw) {
+    if (item == null || typeof item !== 'object') {
+      return { error: 'each phase must be an object with title and description' };
+    }
+    const row = item as Record<string, unknown>;
+    const title = typeof row.title === 'string' ? row.title.trim() : '';
+    const description = typeof row.description === 'string' ? row.description.trim() : '';
+    if (!title) return { error: 'each phase needs a non-empty title' };
+    phases.push({ title: title.slice(0, 120), description: description.slice(0, 2_000) });
+  }
+  return phases;
+}
+
 interface ProjectTaskChatProps {
   isDarkMode: boolean;
   project: Project | null;
@@ -446,6 +474,7 @@ interface ProjectTaskChatProps {
   guestMode?: boolean;
   /** Increment to programmatically expand the assistant panel (e.g. from empty-board CTA). */
   chatOpenRequest?: number;
+  onUpdateProject: (patch: ProjectMetaPatch) => Promise<void>;
   onCreateTask: (task: Task) => Promise<void>;
   onUpdateTask: (
     taskId: string,
@@ -480,6 +509,7 @@ export default function ProjectTaskChat({
   boardLoading,
   guestMode = false,
   chatOpenRequest = 0,
+  onUpdateProject,
   onCreateTask,
   onUpdateTask,
   onDeleteTask,
@@ -489,6 +519,11 @@ export default function ProjectTaskChat({
   useEffect(() => {
     tasksRef.current = tasks;
   }, [tasks]);
+
+  const projectRef = useRef<Project | null>(project);
+  useEffect(() => {
+    projectRef.current = project;
+  }, [project]);
 
   /** Fresh snapshot for each assistant request (includes comments added in the task modal). */
   const commentsForContextRef = useRef<Record<string, TaskComment[]>>({});
@@ -665,8 +700,65 @@ export default function ProjectTaskChat({
 
   const executeTool = useCallback(
     async (name: string, args: Record<string, unknown>): Promise<string> => {
-      const p = project;
+      const p = projectRef.current;
       if (!p) return JSON.stringify({ error: 'No project loaded' });
+
+      if (name === 'update_project') {
+        const patch: ProjectMetaPatch = {};
+        const undoPatch: ProjectMetaPatch = {};
+
+        if (typeof args.title === 'string') {
+          const title = args.title.trim().slice(0, 80);
+          if (!title) return JSON.stringify({ error: 'title cannot be empty' });
+          if (title !== p.title) {
+            patch.title = title;
+            undoPatch.title = p.title;
+          }
+        }
+        if (typeof args.description === 'string') {
+          const description = args.description.trim().slice(0, 2_000);
+          if (description !== (p.description ?? '')) {
+            patch.description = description;
+            undoPatch.description = p.description ?? '';
+          }
+        }
+        if (args.phases !== undefined) {
+          const parsed = parseRoadmapPhasesArg(args.phases);
+          if ('error' in parsed) return JSON.stringify({ error: parsed.error });
+          const master_plan = serializeMasterPlan(parsed);
+          if (master_plan !== (p.master_plan ?? '')) {
+            patch.master_plan = master_plan;
+            undoPatch.master_plan = p.master_plan ?? '';
+          }
+        }
+
+        if (Object.keys(patch).length === 0) {
+          return JSON.stringify({
+            error:
+              'No valid project fields to update; provide at least one of title, description, or phases',
+          });
+        }
+
+        try {
+          await onUpdateProject(patch);
+          const next = { ...p, ...patch };
+          projectRef.current = next;
+          agentUndoStackRef.current.push({ kind: 'project', patch: undoPatch });
+          return JSON.stringify({
+            success: true,
+            updated: {
+              ...(patch.title !== undefined ? { title: patch.title } : {}),
+              ...(patch.description !== undefined ? { description: patch.description } : {}),
+              ...(patch.master_plan !== undefined
+                ? { phases: JSON.parse(patch.master_plan) as RoadmapPhase[] }
+                : {}),
+            },
+          });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'update project failed';
+          return JSON.stringify({ error: message });
+        }
+      }
 
       if (name === 'create_task') {
         const title = typeof args.title === 'string' ? args.title.trim() : '';
@@ -857,6 +949,16 @@ export default function ProjectTaskChat({
         };
         try {
           switch (entry.kind) {
+            case 'project': {
+              await onUpdateProject(entry.patch);
+              const cur = projectRef.current;
+              if (cur) projectRef.current = { ...cur, ...entry.patch };
+              return JSON.stringify({
+                success: true,
+                undone: 'update_project',
+                restored: entry.patch,
+              });
+            }
             case 'create': {
               await onDeleteTask(entry.taskId);
               tasksRef.current = tasksRef.current.filter((t) => t.id !== entry.taskId);
@@ -923,7 +1025,7 @@ export default function ProjectTaskChat({
 
       return JSON.stringify({ error: `Unknown tool: ${name}` });
     },
-    [project, guestMode, onCreateTask, onUpdateTask, onDeleteTask, user]
+    [guestMode, onUpdateProject, onCreateTask, onUpdateTask, onDeleteTask, user]
   );
 
   const submitUserMessage = useCallback(
@@ -952,13 +1054,15 @@ export default function ProjectTaskChat({
         skip: guestMode,
       });
 
-      const getContextJsonForRequest = () =>
-        augmentProjectContextJson(
-          project,
+      const getContextJsonForRequest = () => {
+        const liveProject = projectRef.current ?? project;
+        return augmentProjectContextJson(
+          liveProject,
           tasksRef.current,
           attachSnap,
           commentsForContextRef.current
         );
+      };
 
       try {
         const reply = await runProjectTaskAssistant(
@@ -1385,7 +1489,11 @@ export default function ProjectTaskChat({
                           animate={{ scale: 1 }}
                           transition={activitySpring}
                           className={`mt-0.5 flex h-7 w-7 shrink-0 animate-pulse items-center justify-center rounded-lg ${
-                            liveProgress.toolName === 'create_task'
+                            liveProgress.toolName === 'update_project'
+                              ? isDarkMode
+                                ? 'bg-teal-500/15 text-teal-300'
+                                : 'bg-teal-50 text-teal-800'
+                              : liveProgress.toolName === 'create_task'
                               ? isDarkMode
                                 ? 'bg-emerald-500/15 text-emerald-400'
                                 : 'bg-emerald-50 text-emerald-700'
@@ -1411,7 +1519,9 @@ export default function ProjectTaskChat({
                           }`}
                           aria-hidden
                         >
-                          {liveProgress.toolName === 'create_task' ? (
+                          {liveProgress.toolName === 'update_project' ? (
+                            <Map className="h-4 w-4" />
+                          ) : liveProgress.toolName === 'create_task' ? (
                             <ListPlus className="h-4 w-4" />
                           ) : liveProgress.toolName === 'update_task' ? (
                             <PencilLine className="h-4 w-4" />

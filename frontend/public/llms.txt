@@ -17,6 +17,7 @@ Kanban AI is an AI-powered kanban board and project companion for builders, entr
 - [Home](https://kanbanai.dev/): Landing page; try a guest board with no signup.
 - [Connect AI](https://kanbanai.dev/connect): Sign in and copy a ready-to-paste MCP config for Cursor or Claude Desktop.
 - [Documentation](https://kanbanai.dev/docs): Product guides, setup, and troubleshooting.
+- [Release updates](https://kanbanai.dev/docs/release-updates): Recent shipping notes and work in progress.
 - [Blog](https://kanbanai.dev/blog): Articles on kanban, AI workflows, and project management.
 - [GitHub](https://github.com/orholam/kanban_ai): Source code, issues, and discussions.
 
