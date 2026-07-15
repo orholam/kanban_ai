@@ -174,6 +174,16 @@
         <a href="https://kanbanai.dev/docs">Docs</a>
         <a href="https://kanbanai.dev/blog">Blog</a>
         <a href="https://kanbanai.dev/llms.txt">llms.txt (AI site summary)</a>
+        <!-- Exact Smol Launch embed — present in static HTML for their verification crawler -->
+        <a href="https://smollaunch.com" target="_blank" rel="noopener">
+          <img
+            src="https://smollaunch.com/badges/featured.svg"
+            alt="Kanban AI — Featured on Smol Launch"
+            loading="lazy"
+            width="250"
+            height="60"
+          />
+        </a>
         <a href="https://kanbanai.dev/blog/top-5-free-kanban-boards">Top 5 Free Kanban Boards</a>
         <a href="https://kanbanai.dev/blog/best-kanban-tools-for-small-teams">Best Kanban Tools for Small Teams</a>
         <a href="https://kanbanai.dev/blog/kanban-vs-scrum-tools">Kanban vs Scrum Tools</a>
@@ -199,6 +209,17 @@
       </nav>
     </noscript>
     <div id="root"></div>
+    <!-- Smol Launch verification: exact embed must appear in static HTML (crawlers do not run React). -->
+    <div hidden aria-hidden="true">
+      <a href="https://smollaunch.com" target="_blank" rel="noopener">
+        <img
+          src="https://smollaunch.com/badges/featured.svg"
+          alt="Kanban AI — Featured on Smol Launch"
+          width="250"
+          height="60"
+        />
+      </a>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
