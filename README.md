@@ -58,7 +58,7 @@ First run applies [`frontend/scripts/local-schema.sql`](frontend/scripts/local-s
 |---|---|
 | `npm run dev:local` | Local SQLite API + Vite (default for contributors) |
 | `npm start` | Vite only (pair with Supabase / `vercel dev`) |
-| `npm run build` | Production build (+ SEO prerender; skip with `SKIP_PRERENDER=1`) |
+| `npm run build` | Production build + static SEO prerender (unique HTML per public route; skip with `SKIP_PRERENDER=1`) |
 | `npm run build:no-prerender` | Faster local production build |
 
 ---
