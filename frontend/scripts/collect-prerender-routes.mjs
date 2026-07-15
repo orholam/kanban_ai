@@ -16,6 +16,7 @@ const STATIC_PUBLIC_ROUTES = [
   '/blog',
   '/docs',
   '/contact',
+  '/connect',
   '/privacy-policy',
   '/terms-of-service',
 ];

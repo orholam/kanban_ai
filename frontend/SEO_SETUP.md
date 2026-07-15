@@ -10,7 +10,7 @@
 6. **Dynamic SEO**: Created SEO component for page-specific meta tags
 7. **Public Content SEO**: SEO tags are applied to landing, docs, blog, login, contact, privacy, and terms pages
 8. **Docs + Blog Discovery**: Sitemap includes docs/articles + blog/posts, and `index.html` includes a noscript crawlable link hub
-9. **Post-build prerender**: `npm run build` runs `scripts/prerender.mjs` after Vite to write static HTML for public routes (`/`, `/blog/*`, `/docs/*`, `/contact`, etc.). Set `SKIP_PRERENDER=1` to skip (e.g. fast local builds). Failures log a warning and do not fail the deploy.
+9. **Post-build prerender**: `npm run build` runs `scripts/prerender.mjs` after Vite to write static HTML for public routes (`/`, `/blog/*`, `/docs/*`, `/contact`, `/connect`, etc.) with correct canonical/OG tags and crawlable body copy (no Puppeteer). Set `SKIP_PRERENDER=1` to skip (e.g. fast local builds). Failures fail the build so deploys never ship a single SPA shell for every URL.
 10. **LLMO / AI discoverability**: `llms.txt`, `llms-full.txt`, `openapi/mcp.json`, and `/.well-known/mcp-server` in `public/`; `robots.txt` includes Cloudflare `Content-Signal` and explicit AI crawler rules
 
 ## 🖼️ Open Graph Image Setup

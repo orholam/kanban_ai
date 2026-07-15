@@ -126,6 +126,8 @@ export type McpSetupResponse = {
   /** Personal MCP keys do not expire; session JWT fallback may include an exp. */
   expiresAt?: number | null;
   authMode?: 'personal_key' | 'session_jwt';
+  /** Shown when authMode is session_jwt because personal keys are unavailable. */
+  setupNotice?: string | null;
 };
 
 /** Load ready-to-paste MCP config from the server (includes personal key + API secret when configured). */
@@ -155,5 +157,5 @@ export function mcpSetupFallbackMessage(): string {
   if (isLocalDevHost()) {
     return 'Running locally without the API. Use kanbanai.dev/connect, or run vercel dev alongside npm start.';
   }
-  return 'Server config is temporarily unavailable. Your token is included below — click Rotate key to retry.';
+  return 'Could not reach the MCP setup API. Your session token is included below so you can connect anyway.';
 }

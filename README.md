@@ -58,7 +58,7 @@ First run applies [`frontend/scripts/local-schema.sql`](frontend/scripts/local-s
 |---|---|
 | `npm run dev:local` | Local SQLite API + Vite (default for contributors) |
 | `npm start` | Vite only (pair with Supabase / `vercel dev`) |
-| `npm run build` | Production build (+ SEO prerender; skip with `SKIP_PRERENDER=1`) |
+| `npm run build` | Production build + static SEO prerender (unique HTML per public route; skip with `SKIP_PRERENDER=1`) |
 | `npm run build:no-prerender` | Faster local production build |
 
 ---
@@ -82,6 +82,7 @@ Set `OPENAI_API_KEY` (and Supabase / MCP vars below) in the Vercel project. The 
 On a **hosted** deployment, Kanban AI exposes a remote MCP server at `/api/mcp` with the same board operations as the web app.
 
 - **End users:** sign in → **Connect AI** (`/connect`) → copy the generated config into Cursor or Claude Desktop. Config uses a long-lived personal MCP key (`kai_…`) so you do not need to reconnect hourly.
+- **Operators:** before Connect AI can issue `kai_…` keys in production, apply `supabase/migrations/20260714120000_mcp_api_keys.sql` on the **Kanban** Supabase project (`mruhzlixrwsgwqaodviy`). Run `./scripts/apply-mcp-api-keys-migration.sh` for the SQL editor link, or `supabase db push` after linking that project.
 - **Operators:** see [`docs/MCP_REGISTRY.md`](docs/MCP_REGISTRY.md) and the env table below.
 - **Discovery:** [`/.well-known/mcp-server`](https://kanbanai.dev/.well-known/mcp-server) · OpenAPI: [`/openapi/mcp.json`](https://kanbanai.dev/openapi/mcp.json) · AI index: [`/llms.txt`](https://kanbanai.dev/llms.txt)
 
