@@ -5,7 +5,8 @@ export type DocumentationCategoryId =
   | 'workspace'
   | 'ai'
   | 'account'
-  | 'developers';
+  | 'developers'
+  | 'updates';
 
 export interface DocumentationArticle {
   id: string;

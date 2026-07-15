@@ -122,11 +122,11 @@ export default function ProjectRoadmapPanel({
             phases.map((phase, index) => (
               <div
                 key={`phase-${index}`}
-                className={`rounded-lg border p-2.5 ${
+                className={`overflow-hidden rounded-lg border p-2.5 ${
                   isDarkMode ? 'border-zinc-800 bg-zinc-950/50' : 'border-zinc-200/80 bg-white/70'
                 }`}
               >
-                <div className="mb-1.5 flex items-start gap-2">
+                <div className="flex items-start gap-2">
                   <span
                     className={`mt-1.5 w-5 shrink-0 text-center text-[10px] font-semibold tabular-nums ${
                       isDarkMode ? 'text-zinc-600' : 'text-zinc-400'
@@ -134,40 +134,44 @@ export default function ProjectRoadmapPanel({
                   >
                     {index + 1}
                   </span>
-                  <input
-                    type="text"
-                    value={phase.title}
-                    disabled={disabled || saving}
-                    onChange={(e) => updatePhase(index, { title: e.target.value })}
-                    onBlur={commitPhases}
-                    className={`${field} font-medium`}
-                    aria-label={`Phase ${index + 1} title`}
-                    placeholder="Phase title"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removePhase(index)}
-                    disabled={disabled || saving}
-                    className={`mt-0.5 rounded-md p-1.5 transition-colors disabled:opacity-50 ${
-                      isDarkMode
-                        ? 'text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300'
-                        : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
-                    }`}
-                    aria-label={`Remove phase ${index + 1}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                  </button>
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex items-start gap-2">
+                      <input
+                        type="text"
+                        value={phase.title}
+                        disabled={disabled || saving}
+                        onChange={(e) => updatePhase(index, { title: e.target.value })}
+                        onBlur={commitPhases}
+                        className={`${field} min-w-0 flex-1 font-medium`}
+                        aria-label={`Phase ${index + 1} title`}
+                        placeholder="Phase title"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePhase(index)}
+                        disabled={disabled || saving}
+                        className={`mt-0.5 shrink-0 rounded-md p-1.5 transition-colors disabled:opacity-50 ${
+                          isDarkMode
+                            ? 'text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300'
+                            : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700'
+                        }`}
+                        aria-label={`Remove phase ${index + 1}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                    </div>
+                    <textarea
+                      value={phase.description}
+                      disabled={disabled || saving}
+                      onChange={(e) => updatePhase(index, { description: e.target.value })}
+                      onBlur={commitPhases}
+                      rows={2}
+                      className={`${field} max-w-full resize-y text-xs leading-relaxed`}
+                      aria-label={`Phase ${index + 1} description`}
+                      placeholder="What should be true when this phase is done?"
+                    />
+                  </div>
                 </div>
-                <textarea
-                  value={phase.description}
-                  disabled={disabled || saving}
-                  onChange={(e) => updatePhase(index, { description: e.target.value })}
-                  onBlur={commitPhases}
-                  rows={2}
-                  className={`${field} ml-7 w-[calc(100%-1.75rem)] resize-y text-xs leading-relaxed`}
-                  aria-label={`Phase ${index + 1} description`}
-                  placeholder="What should be true when this phase is done?"
-                />
               </div>
             ))
           )}

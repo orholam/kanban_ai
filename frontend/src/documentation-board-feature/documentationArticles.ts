@@ -3,6 +3,18 @@ import * as bodies from './documentationBodies';
 
 export const DOCUMENTATION_ARTICLES: DocumentationArticle[] = [
   {
+    id: 'release-updates',
+    categoryId: 'updates',
+    navOrder: 0,
+    title: 'Release updates',
+    excerpt: 'Recent shipping notes: MCP for Cursor & Claude, and the new project experience revamp.',
+    estimatedMinutes: 3,
+    tags: ['changelog', 'MCP', 'releases'],
+    date: '2026-07-15',
+    author: 'Kanban AI',
+    body: bodies.bodyReleaseUpdates,
+  },
+  {
     id: 'overview',
     categoryId: 'getting-started',
     navOrder: 0,

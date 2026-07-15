@@ -6,7 +6,7 @@
 
 Open-source AI kanban for side projects. Plan with AI, manage a board in the browser, and (optionally) drive the same board from Cursor or Claude via MCP.
 
-**Try the hosted app:** [kanbanai.dev](https://kanbanai.dev) · **Docs:** [kanbanai.dev/docs](https://kanbanai.dev/docs)
+**Try the hosted app:** [kanbanai.dev](https://kanbanai.dev) · **Docs:** [kanbanai.dev/docs](https://kanbanai.dev/docs) · **Release updates:** [kanbanai.dev/docs/release-updates](https://kanbanai.dev/docs/release-updates)
 
 Most people cloning this repo want the **local** app. That path is first below.
 

@@ -12,7 +12,11 @@ import { McpHeroInline } from '../components/McpHeroInline'
 import { TrustedBy } from '../components/TrustedBy'
 import SEO from '../components/SEO'
 import { DEFAULT_DESCRIPTION, DEFAULT_KEYWORDS, DEFAULT_TITLE } from '../lib/siteMeta'
-import { DOCUMENTATION_BOARD_BASE_PATH } from '../documentation-board-feature/integration'
+import {
+  DOCUMENTATION_BOARD_BASE_PATH,
+  RELEASE_UPDATES_SLUG,
+  documentationBoardArticlePath,
+} from '../documentation-board-feature/integration'
 import { useLandingVariant } from '../hooks/useLandingVariant'
 
 const LandingPageVariantB = lazy(() => import('./LandingPageVariantB'))
@@ -326,6 +330,14 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
                       className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
                     >
                       Documentation
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      to={documentationBoardArticlePath(RELEASE_UPDATES_SLUG)}
+                      className={`text-base ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                    >
+                      Release updates
                     </Link>
                   </li>
                   <li>

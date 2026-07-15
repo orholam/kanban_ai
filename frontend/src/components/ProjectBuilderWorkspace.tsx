@@ -1,4 +1,4 @@
-import { Flag, ListTodo, Map, Sparkles, Target } from 'lucide-react';
+import { Flag, ListTodo, Map } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { ProjectBuilderDraft } from '../lib/projectSetup';
 
@@ -7,24 +7,6 @@ interface ProjectBuilderWorkspaceProps {
   draft: ProjectBuilderDraft;
   lastToolLabel: string | null;
 }
-
-const PHASE_COLORS = [
-  { bar: 'from-sky-500 to-cyan-400', glow: 'bg-sky-500', soft: 'bg-sky-500/15 text-sky-300' },
-  { bar: 'from-violet-500 to-fuchsia-400', glow: 'bg-violet-500', soft: 'bg-violet-500/15 text-violet-300' },
-  { bar: 'from-amber-500 to-orange-400', glow: 'bg-amber-500', soft: 'bg-amber-500/15 text-amber-300' },
-  { bar: 'from-emerald-500 to-teal-400', glow: 'bg-emerald-500', soft: 'bg-emerald-500/15 text-emerald-300' },
-  { bar: 'from-rose-500 to-pink-400', glow: 'bg-rose-500', soft: 'bg-rose-500/15 text-rose-300' },
-  { bar: 'from-indigo-500 to-blue-400', glow: 'bg-indigo-500', soft: 'bg-indigo-500/15 text-indigo-300' },
-];
-
-const PHASE_COLORS_LIGHT = [
-  { bar: 'from-sky-500 to-cyan-400', glow: 'bg-sky-500', soft: 'bg-sky-100 text-sky-800' },
-  { bar: 'from-violet-500 to-fuchsia-400', glow: 'bg-violet-500', soft: 'bg-violet-100 text-violet-800' },
-  { bar: 'from-amber-500 to-orange-400', glow: 'bg-amber-500', soft: 'bg-amber-100 text-amber-900' },
-  { bar: 'from-emerald-500 to-teal-400', glow: 'bg-emerald-500', soft: 'bg-emerald-100 text-emerald-800' },
-  { bar: 'from-rose-500 to-pink-400', glow: 'bg-rose-500', soft: 'bg-rose-100 text-rose-800' },
-  { bar: 'from-indigo-500 to-blue-400', glow: 'bg-indigo-500', soft: 'bg-indigo-100 text-indigo-800' },
-];
 
 function priorityTone(priority: string, isDarkMode: boolean): string {
   if (priority === 'high') {
@@ -43,11 +25,9 @@ export default function ProjectBuilderWorkspace({
 }: ProjectBuilderWorkspaceProps) {
   const muted = isDarkMode ? 'text-zinc-500' : 'text-zinc-500';
   const border = isDarkMode ? 'border-zinc-800' : 'border-zinc-200';
-  const panel = isDarkMode
-    ? 'bg-[radial-gradient(120%_80%_at_10%_0%,rgba(99,102,241,0.18),transparent_50%),radial-gradient(90%_60%_at_100%_20%,rgba(16,185,129,0.12),transparent_45%),#09090b]'
-    : 'bg-[radial-gradient(120%_80%_at_10%_0%,rgba(99,102,241,0.12),transparent_50%),radial-gradient(90%_60%_at_100%_20%,rgba(14,165,233,0.1),transparent_45%),#f8fafc]';
-  const colors = isDarkMode ? PHASE_COLORS : PHASE_COLORS_LIGHT;
+  const panel = isDarkMode ? 'bg-zinc-950' : 'bg-zinc-50';
   const empty = !draft.title && draft.phases.length === 0 && draft.tasks.length === 0;
+  const ease = [0.22, 1, 0.36, 1] as const;
 
   const completeness =
     (draft.title.trim() ? 1 : 0) +
@@ -57,26 +37,28 @@ export default function ProjectBuilderWorkspace({
   const progressPct = (completeness / 4) * 100;
 
   return (
-    <aside className={`flex h-full min-h-0 flex-col border-t lg:border-l lg:border-t-0 ${border} ${panel}`}>
-      <div className={`relative overflow-hidden border-b px-4 py-4 ${border}`}>
-        <div
-          className={`pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full blur-3xl ${
-            isDarkMode ? 'bg-indigo-500/30' : 'bg-indigo-400/25'
-          }`}
-          aria-hidden
-        />
-        <div className="relative flex items-start justify-between gap-3">
+    <motion.aside
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.08, ease }}
+      className={`relative flex h-full min-h-0 flex-col border-t lg:border-l lg:border-t-0 ${border} ${panel}`}
+    >
+      <div
+        className={`pointer-events-none absolute inset-x-0 top-0 h-36 ${
+          isDarkMode
+            ? 'bg-[radial-gradient(55%_90%_at_80%_0%,rgba(63,63,70,0.5),transparent_70%)]'
+            : 'bg-[radial-gradient(55%_90%_at_80%_0%,rgba(255,255,255,0.95),transparent_70%)]'
+        }`}
+        aria-hidden
+      />
+
+      <div className={`relative border-b px-4 py-4 ${border}`}>
+        <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p
-              className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${
-                isDarkMode ? 'text-indigo-300' : 'text-indigo-600'
-              }`}
-            >
-              Workspace
-            </p>
+            <p className={`text-xs font-medium ${muted}`}>Workspace</p>
             <h2
-              className={`mt-1 truncate text-xl font-bold tracking-tight ${
-                isDarkMode ? 'text-white' : 'text-zinc-900'
+              className={`mt-1 truncate text-xl font-semibold tracking-tight ${
+                isDarkMode ? 'text-white' : 'text-zinc-950'
               }`}
             >
               {draft.title.trim() || 'Your project takes shape here'}
@@ -84,98 +66,94 @@ export default function ProjectBuilderWorkspace({
             {draft.description.trim() ? (
               <p className={`mt-1.5 line-clamp-2 text-sm leading-relaxed ${muted}`}>{draft.description}</p>
             ) : (
-              <p className={`mt-1.5 text-sm ${muted}`}>Pitch + roadmap appear as we chat.</p>
+              <p className={`mt-1.5 text-sm ${muted}`}>Pitch and roadmap appear as we chat.</p>
             )}
           </div>
           <AnimatePresence mode="wait">
             {lastToolLabel ? (
               <motion.span
                 key={lastToolLabel}
-                initial={{ opacity: 0, y: -4, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 4 }}
-                className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                  isDarkMode ? 'bg-emerald-500/15 text-emerald-300' : 'bg-emerald-100 text-emerald-800'
+                className={`shrink-0 pt-0.5 text-xs font-medium ${
+                  isDarkMode ? 'text-indigo-300' : 'text-indigo-600'
                 }`}
               >
-                <Sparkles className="h-3 w-3" aria-hidden />
                 {lastToolLabel}
               </motion.span>
             ) : null}
           </AnimatePresence>
         </div>
 
-        <div className="relative mt-4">
-          <div className="mb-1.5 flex items-center justify-between text-[11px]">
+        <div className="mt-4">
+          <div className="mb-1.5 flex items-center justify-between text-xs">
             <span className={muted}>Build readiness</span>
             <span className={isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}>{completeness}/4</span>
           </div>
           <div className={`h-1.5 overflow-hidden rounded-full ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-200'}`}>
             <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-violet-500 to-emerald-400"
+              className="h-full rounded-full bg-indigo-500"
               initial={false}
               animate={{ width: `${progressPct}%` }}
               transition={{ type: 'spring', stiffness: 120, damping: 20 }}
             />
           </div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
             {[
               { ok: Boolean(draft.title.trim()), label: 'Title' },
               { ok: Boolean(draft.description.trim()), label: 'Pitch' },
               { ok: draft.phases.length >= 3, label: 'Roadmap' },
               { ok: draft.tasks.length >= 3, label: 'Tasks' },
-            ].map((chip) => (
+            ].map((item) => (
               <span
-                key={chip.label}
-                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                  chip.ok
-                    ? isDarkMode
-                      ? 'bg-emerald-500/15 text-emerald-300'
-                      : 'bg-emerald-100 text-emerald-800'
-                    : isDarkMode
-                      ? 'bg-zinc-800 text-zinc-500'
-                      : 'bg-zinc-200 text-zinc-500'
-                }`}
+                key={item.label}
+                className={item.ok ? (isDarkMode ? 'text-zinc-200' : 'text-zinc-800') : muted}
               >
-                {chip.label}
+                {item.ok ? '✓ ' : ''}
+                {item.label}
               </span>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-4">
+      <div className="relative min-h-0 flex-1 space-y-6 overflow-y-auto px-4 py-4">
         {empty ? (
-          <div
-            className={`relative overflow-hidden rounded-2xl border border-dashed p-6 ${border} ${
-              isDarkMode ? 'bg-zinc-900/40' : 'bg-white/70'
-            }`}
-          >
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,transparent_40%,rgba(99,102,241,0.08)_100%)]" />
-            <div className="relative space-y-3">
-              <div className="flex items-center gap-2">
-                <Target className={`h-4 w-4 ${isDarkMode ? 'text-indigo-300' : 'text-indigo-600'}`} />
-                <p className={`text-sm font-semibold ${isDarkMode ? 'text-zinc-100' : 'text-zinc-900'}`}>
-                  Waiting for your pitch
-                </p>
-              </div>
-              <p className={`text-sm leading-relaxed ${muted}`}>
-                Send what you want to build. I&apos;ll drop a title, timeline, and first tasks here in the first
-                reply — then you can tweak.
+          <div className={`overflow-hidden rounded-2xl border ${border} ${isDarkMode ? 'bg-zinc-900' : 'bg-white'}`}>
+            <div
+              className={`border-b px-4 py-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}
+            >
+              <p className={`text-sm font-semibold ${isDarkMode ? 'text-zinc-50' : 'text-zinc-950'}`}>
+                Waiting for your pitch
               </p>
-              <div className="grid grid-cols-3 gap-2 pt-1">
-                {['Identity', 'Timeline', 'Backlog'].map((label, i) => (
+              <p className={`mt-0.5 text-xs ${muted}`}>
+                Title, timeline, and first tasks land here after the first reply.
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2 p-3">
+              {['Identity', 'Timeline', 'Backlog'].map((label, index) => (
+                <motion.div
+                  key={label}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.18 + index * 0.06, duration: 0.3, ease }}
+                  className={`min-h-[5.5rem] rounded-xl p-2.5 ${
+                    isDarkMode ? 'bg-zinc-950/80' : 'bg-zinc-50'
+                  }`}
+                >
+                  <span className={`text-[11px] font-semibold ${muted}`}>{label}</span>
                   <div
-                    key={label}
-                    className={`rounded-xl border px-2 py-3 text-center text-[11px] font-medium ${border} ${muted}`}
+                    className={`mt-3 rounded-lg border border-dashed px-2 py-4 text-center text-[10px] ${
+                      isDarkMode
+                        ? 'border-zinc-800 text-zinc-600'
+                        : 'border-zinc-200 text-zinc-400'
+                    }`}
                   >
-                    <div
-                      className={`mx-auto mb-2 h-1.5 w-8 rounded-full bg-gradient-to-r ${colors[i].bar}`}
-                    />
-                    {label}
+                    Empty
                   </div>
-                ))}
-              </div>
+                </motion.div>
+              ))}
             </div>
           </div>
         ) : null}
@@ -191,9 +169,9 @@ export default function ProjectBuilderWorkspace({
               className={`relative ml-2 space-y-0 border-l-2 border-dashed pl-5 ${
                 isDarkMode ? 'border-zinc-700' : 'border-zinc-300'
               }`}
-            >              {draft.phases.map((phase, index) => {
+            >
+              {draft.phases.map((phase, index) => {
                 const focused = draft.focusPhaseIndex === index;
-                const tone = colors[index % colors.length];
                 return (
                   <motion.li
                     key={`${phase.title}-${index}`}
@@ -204,40 +182,41 @@ export default function ProjectBuilderWorkspace({
                     className="relative pb-5 last:pb-0"
                   >
                     <span
-                      className={`absolute -left-[1.55rem] top-1.5 flex h-4 w-4 items-center justify-center rounded-full ring-4 ${
+                      className={`absolute -left-[1.55rem] top-1.5 h-3.5 w-3.5 rounded-full ring-4 ${
                         isDarkMode ? 'ring-zinc-950' : 'ring-zinc-50'
-                      } ${tone.glow} ${focused ? 'scale-125' : ''}`}
+                      } ${
+                        focused
+                          ? 'bg-indigo-500'
+                          : isDarkMode
+                            ? 'bg-zinc-600'
+                            : 'bg-zinc-400'
+                      }`}
                       aria-hidden
                     />
                     <div
-                      className={`overflow-hidden rounded-2xl border ${
-                        isDarkMode ? 'border-zinc-800 bg-zinc-900/70' : 'border-zinc-200 bg-white shadow-sm'
+                      className={`rounded-xl border px-3 py-2.5 ${
+                        isDarkMode ? 'border-zinc-800 bg-zinc-900/70' : 'border-zinc-200 bg-white'
                       } ${focused ? (isDarkMode ? 'ring-1 ring-indigo-400/40' : 'ring-1 ring-indigo-300') : ''}`}
                     >
-                      <div className={`h-1 w-full bg-gradient-to-r ${tone.bar}`} />
-                      <div className="px-3 py-2.5">
-                        <div className="flex items-center gap-2">
-                          <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${tone.soft}`}>
-                            Phase {index + 1}
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium ${muted}`}>Phase {index + 1}</span>
+                        {focused ? (
+                          <span
+                            className={`inline-flex items-center gap-1 text-xs font-medium ${
+                              isDarkMode ? 'text-indigo-300' : 'text-indigo-600'
+                            }`}
+                          >
+                            <Flag className="h-3 w-3" />
+                            Focus
                           </span>
-                          {focused ? (
-                            <span
-                              className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide ${
-                                isDarkMode ? 'text-indigo-300' : 'text-indigo-600'
-                              }`}
-                            >
-                              <Flag className="h-3 w-3" />
-                              Focus
-                            </span>
-                          ) : null}
-                        </div>
-                        <p className={`mt-1 text-sm font-semibold ${isDarkMode ? 'text-zinc-50' : 'text-zinc-900'}`}>
-                          {phase.title}
-                        </p>
-                        {phase.description ? (
-                          <p className={`mt-1 text-xs leading-relaxed ${muted}`}>{phase.description}</p>
                         ) : null}
                       </div>
+                      <p className={`mt-1 text-sm font-semibold ${isDarkMode ? 'text-zinc-50' : 'text-zinc-900'}`}>
+                        {phase.title}
+                      </p>
+                      {phase.description ? (
+                        <p className={`mt-1 text-xs leading-relaxed ${muted}`}>{phase.description}</p>
+                      ) : null}
                     </div>
                   </motion.li>
                 );
@@ -254,19 +233,13 @@ export default function ProjectBuilderWorkspace({
               <span className="font-normal normal-case tracking-normal">· {draft.tasks.length} cards</span>
             </h3>
             <div
-              className={`rounded-2xl border p-3 ${
-                isDarkMode ? 'border-zinc-800 bg-zinc-900/40' : 'border-zinc-200 bg-white/80'
+              className={`rounded-xl border p-3 ${
+                isDarkMode ? 'border-zinc-800 bg-zinc-900/40' : 'border-zinc-200 bg-white'
               }`}
             >
               <div className="mb-2 flex items-center justify-between">
-                <span
-                  className={`text-[11px] font-semibold uppercase tracking-wide ${
-                    isDarkMode ? 'text-zinc-400' : 'text-zinc-500'
-                  }`}
-                >
-                  To do
-                </span>
-                <span className={`text-[11px] ${muted}`}>{draft.tasks.length}</span>
+                <span className={`text-xs font-medium ${muted}`}>To do</span>
+                <span className={`text-xs ${muted}`}>{draft.tasks.length}</span>
               </div>
               <ul className="space-y-2">
                 {draft.tasks.map((task, index) => (
@@ -276,10 +249,8 @@ export default function ProjectBuilderWorkspace({
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.03 }}
-                    className={`rounded-xl border px-3 py-2.5 ${
-                      isDarkMode
-                        ? 'border-zinc-700/80 bg-gradient-to-br from-zinc-900 to-zinc-950'
-                        : 'border-zinc-200 bg-gradient-to-br from-white to-zinc-50 shadow-sm'
+                    className={`rounded-lg border px-3 py-2.5 ${
+                      isDarkMode ? 'border-zinc-800 bg-zinc-900' : 'border-zinc-200 bg-white'
                     }`}
                   >
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -312,7 +283,7 @@ export default function ProjectBuilderWorkspace({
           </section>
         ) : null}
       </div>
-    </aside>
+    </motion.aside>
   );
 }
 
@@ -326,6 +297,8 @@ export function toolLabelForUi(toolName: string): string {
       return 'Updated tasks';
     case 'set_focus_phase':
       return 'Focused phase';
+    case 'request_create_board':
+      return 'Creating board';
     default:
       return toolName;
   }
@@ -336,7 +309,7 @@ export function describeBuilderAction(
   toolName: string,
   args: Record<string, unknown>,
   draft: ProjectBuilderDraft
-): { title: string; detail: string; icon: 'identity' | 'roadmap' | 'tasks' | 'focus' | 'generic' } {
+): { title: string; detail: string; icon: 'identity' | 'roadmap' | 'tasks' | 'focus' | 'create' | 'generic' } {
   switch (toolName) {
     case 'update_project_identity': {
       const title = String(args.title ?? draft.title).trim() || 'Untitled';
@@ -385,6 +358,12 @@ export function describeBuilderAction(
         detail: 'Highlighted in the timeline',
       };
     }
+    case 'request_create_board':
+      return {
+        icon: 'create',
+        title: 'Creating your board',
+        detail: String(args.reason ?? '').trim() || 'Taking you to the kanban',
+      };
     default:
       return {
         icon: 'generic',

@@ -1,15 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import {
-  ChevronDown,
-  Clipboard,
-  ClipboardCheck,
-  ExternalLink,
-  Plug,
-  Sparkles,
-  Wrench,
-} from 'lucide-react';
+import { ChevronDown, Clipboard, ClipboardCheck, ExternalLink, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { AppPageShell } from '../components/AppPageShell';
 import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -27,6 +21,8 @@ import {
 import { documentationBoardArticlePath } from '../documentation-board-feature/integration';
 
 type ClientTab = 'cursor' | 'claude';
+
+const ease = [0.22, 1, 0.36, 1] as const;
 
 export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) {
   const { user } = useAuth();
@@ -54,7 +50,7 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
       setSetup(remote);
       if (options.rotate) {
         if (remote.authMode === 'personal_key') {
-          toast.success('New MCP key issued — paste the updated config into your client');
+          toast.success('New MCP key issued. Paste the updated config into your client.');
         } else {
           toast.info('Config refreshed with your current session token');
         }
@@ -91,10 +87,10 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
     try {
       await navigator.clipboard.writeText(activeConfig);
       setCopied(true);
-      toast.success('Config copied — paste into your MCP settings');
+      toast.success('Config copied. Paste it into your MCP settings.');
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      toast.error('Copy failed — select the config and copy manually');
+      toast.error('Copy failed. Select the config and copy manually.');
     }
   };
 
@@ -102,37 +98,40 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
     return <Navigate to="/login?next=/connect" replace />;
   }
 
+  const muted = isDarkMode ? 'text-zinc-400' : 'text-zinc-600';
+  const ink = isDarkMode ? 'text-zinc-50' : 'text-zinc-950';
+  const previewSurface = isDarkMode
+    ? 'border-zinc-800 bg-zinc-900'
+    : 'border-zinc-200 bg-white';
+  const codeBlock = isDarkMode
+    ? 'rounded-xl border border-zinc-800 bg-zinc-950 p-4 font-mono text-xs leading-relaxed text-zinc-300'
+    : 'rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-xs leading-relaxed text-zinc-800';
+  const sideItem = isDarkMode ? 'bg-zinc-950/80' : 'bg-zinc-50';
+
   if (isLocalAppMode()) {
     return (
       <>
         <SEO title="Connect AI — Kanban AI" description="MCP setup for Claude and Cursor." noindex />
-        <div
-          className={`flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8 text-center ${
-            isDarkMode ? 'bg-zinc-950 text-zinc-200' : 'bg-zinc-50 text-zinc-800'
-          }`}
-        >
-          <Plug className={`h-10 w-10 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
-          <h1 className="text-xl font-semibold">Connect on kanbanai.dev</h1>
-          <p className="max-w-md text-sm leading-relaxed text-zinc-500">
-            MCP runs on the hosted API. Sign in at{' '}
-            <a href="https://kanbanai.dev/connect" className="font-semibold text-indigo-600 underline-offset-2 hover:underline">
-              kanbanai.dev/connect
-            </a>{' '}
-            for one-click config, or run <code className="rounded bg-black/10 px-1">vercel dev</code> locally.
-          </p>
-        </div>
+        <AppPageShell isDarkMode={isDarkMode} maxWidth="2xl">
+          <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
+            <h1 className={`text-xl font-semibold ${ink}`}>Connect on kanbanai.dev</h1>
+            <p className={`max-w-md text-sm leading-relaxed ${muted}`}>
+              MCP runs on the hosted API. Sign in at{' '}
+              <a
+                href="https://kanbanai.dev/connect"
+                className={`font-semibold underline-offset-4 hover:underline ${
+                  isDarkMode ? 'text-zinc-200' : 'text-zinc-800'
+                }`}
+              >
+                kanbanai.dev/connect
+              </a>{' '}
+              for one-click config, or run <code className="rounded bg-black/10 px-1">vercel dev</code> locally.
+            </p>
+          </div>
+        </AppPageShell>
       </>
     );
   }
-
-  const shell = isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-50 text-zinc-900';
-  const panel = isDarkMode
-    ? 'rounded-2xl border border-zinc-800/80 bg-zinc-900/50'
-    : 'rounded-2xl border border-zinc-200/90 bg-white shadow-sm';
-  const muted = isDarkMode ? 'text-zinc-400' : 'text-zinc-600';
-  const codeBlock = isDarkMode
-    ? 'rounded-xl border border-zinc-700/80 bg-zinc-950 p-4 font-mono text-xs leading-relaxed text-zinc-300'
-    : 'rounded-xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-xs leading-relaxed text-zinc-800';
 
   const pasteSteps =
     clientTab === 'cursor'
@@ -154,31 +153,32 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
         description="Set up Kanban AI with Claude Desktop, Cursor, and other MCP clients."
         noindex
       />
-      <div className={`min-h-0 flex-1 overflow-y-auto ${shell}`}>
-        <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-          <div className={`p-6 sm:p-8 ${panel}`}>
-            <div className="mb-1 inline-flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-600 dark:text-indigo-300">
-              <Plug className="h-3.5 w-3.5" />
-              Connect AI
-            </div>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Hook up Cursor or Claude in one copy</h1>
-            <p className={`mt-2 text-sm leading-relaxed ${muted}`}>
+      <AppPageShell isDarkMode={isDarkMode} maxWidth="5xl">
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,1fr)] lg:gap-14">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease }}
+          >
+            <h1 className={`text-4xl font-semibold tracking-tight sm:text-5xl ${ink}`}>Connect AI</h1>
+            <p className={`mt-3 max-w-md text-base leading-relaxed ${muted}`}>
               {setup?.authMode === 'session_jwt' ? (
                 <>
-                  Copy the config below to connect now. Long-lived personal keys require a one-time database setup on
-                  our side — until then your session token works for about an hour.
+                  Copy the config below to hook up Cursor or Claude. Session tokens last about an hour until
+                  long-lived keys are ready on our side.
                 </>
               ) : (
                 <>
-                  We issue a long-lived personal MCP key and fill in your config. Copy once, paste into your editor,
-                  restart — no hourly reconnects.
+                  We fill in a long-lived personal MCP key for you. Copy once, paste into your editor, restart.
                 </>
               )}
             </p>
-          </div>
 
-          <section className={`mt-6 p-6 sm:p-8 ${panel}`}>
-            <div className="flex gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800/80">
+            <div
+              className={`mt-8 inline-flex rounded-lg p-1 ${
+                isDarkMode ? 'bg-zinc-900' : 'bg-zinc-200/80'
+              }`}
+            >
               {(
                 [
                   { id: 'cursor' as const, label: 'Cursor' },
@@ -189,10 +189,10 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
                   key={id}
                   type="button"
                   onClick={() => setClientTab(id)}
-                  className={`flex-1 rounded-md px-3 py-2 text-sm font-semibold transition ${
+                  className={`rounded-md px-3.5 py-1.5 text-sm font-medium transition ${
                     clientTab === id
                       ? isDarkMode
-                        ? 'bg-zinc-700 text-white shadow-sm'
+                        ? 'bg-zinc-700 text-white'
                         : 'bg-white text-zinc-900 shadow-sm'
                       : muted
                   }`}
@@ -202,157 +202,204 @@ export default function McpConnectPage({ isDarkMode }: { isDarkMode: boolean }) 
               ))}
             </div>
 
-            <ol className="mt-6 space-y-4">
-              <li className="flex gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/15 text-sm font-bold text-indigo-600 dark:text-indigo-300">
-                  1
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold">Copy your config</p>
-                  <p className={`mt-0.5 text-sm ${muted}`}>
-                    {setup?.authMode === 'session_jwt' ? (
-                      <>
-                        Temporary session token included — it expires in about an hour. After we finish MCP key setup,
-                        regenerate for a long-lived key
-                        {setup.expiresAt ? (
-                          <>
-                            {' '}
-                            (expires{' '}
-                            {new Date(setup.expiresAt * 1000).toLocaleString(undefined, {
-                              dateStyle: 'short',
-                              timeStyle: 'short',
-                            })}
-                            )
-                          </>
-                        ) : null}
-                        .
-                      </>
-                    ) : (
-                      <>
-                        Includes a personal key that does not expire
-                        {setup?.keyPrefix ? (
-                          <>
-                            {' '}
-                            (<code className="font-mono text-xs">{setup.keyPrefix}…</code>)
-                          </>
-                        ) : null}
-                        .
-                      </>
-                    )}
-                  </p>
-                  <button
-                    type="button"
-                    disabled={loading || !activeConfig}
-                    onClick={() => void copyConfig()}
-                    className="mt-3 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
-                  >
-                    {copied ? <ClipboardCheck className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
-                    {copied ? 'Copied!' : 'Copy config'}
-                  </button>
-                  {setup?.setupNotice ? (
-                    <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">{setup.setupNotice}</p>
-                  ) : null}
-                  {loadError ? <p className="mt-2 text-xs text-red-600 dark:text-red-400">{loadError}</p> : null}
-                </div>
+            <ol className="mt-8 space-y-6">
+              <li>
+                <p className={`text-xs font-medium tabular-nums ${muted}`}>01</p>
+                <p className={`mt-1 text-base font-semibold ${ink}`}>Copy your config</p>
+                <p className={`mt-1 text-sm leading-relaxed ${muted}`}>
+                  {setup?.authMode === 'session_jwt' ? (
+                    <>
+                      Temporary session token included. It expires in about an hour
+                      {setup.expiresAt ? (
+                        <>
+                          {' '}
+                          (
+                          {new Date(setup.expiresAt * 1000).toLocaleString(undefined, {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          })}
+                          )
+                        </>
+                      ) : null}
+                      .
+                    </>
+                  ) : (
+                    <>
+                      Includes a personal key that does not expire
+                      {setup?.keyPrefix ? (
+                        <>
+                          {' '}
+                          (<code className="font-mono text-xs">{setup.keyPrefix}…</code>)
+                        </>
+                      ) : null}
+                      .
+                    </>
+                  )}
+                </p>
+                <button
+                  type="button"
+                  disabled={loading || !activeConfig}
+                  onClick={() => void copyConfig()}
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:pointer-events-none disabled:opacity-40"
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  ) : copied ? (
+                    <ClipboardCheck className="h-4 w-4" aria-hidden />
+                  ) : (
+                    <Clipboard className="h-4 w-4" aria-hidden />
+                  )}
+                  {copied ? 'Copied' : 'Copy config'}
+                </button>
+                {setup?.setupNotice ? (
+                  <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">{setup.setupNotice}</p>
+                ) : null}
+                {loadError ? <p className="mt-2 text-xs text-red-600 dark:text-red-400">{loadError}</p> : null}
               </li>
-              <li className="flex gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/15 text-sm font-bold text-indigo-600 dark:text-indigo-300">
-                  2
-                </span>
-                <div>
-                  <p className="font-semibold">Paste into {clientTab === 'cursor' ? 'Cursor' : 'Claude'}</p>
-                  <ul className={`mt-2 list-inside list-decimal space-y-1.5 text-sm ${muted}`}>
-                    {pasteSteps.map((step) => (
-                      <li key={step}>{step}</li>
-                    ))}
-                  </ul>
-                </div>
+
+              <li>
+                <p className={`text-xs font-medium tabular-nums ${muted}`}>02</p>
+                <p className={`mt-1 text-base font-semibold ${ink}`}>
+                  Paste into {clientTab === 'cursor' ? 'Cursor' : 'Claude'}
+                </p>
+                <ol className={`mt-2 list-decimal space-y-1.5 pl-4 text-sm ${muted}`}>
+                  {pasteSteps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ol>
               </li>
             </ol>
-
-            {!loading && activeConfig ? (
-              <details className="mt-6">
-                <summary className={`cursor-pointer text-sm font-medium ${muted}`}>Preview config</summary>
-                <pre className={`mt-3 max-h-48 overflow-auto whitespace-pre-wrap ${codeBlock}`}>{activeConfig}</pre>
-              </details>
-            ) : loading ? (
-              <p className={`mt-6 text-sm ${muted}`}>Preparing your config…</p>
-            ) : null}
 
             <button
               type="button"
               onClick={() => void loadSetup({ rotate: true })}
-              className={`mt-4 text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400`}
+              className={`mt-6 text-sm font-medium underline-offset-4 hover:underline ${
+                isDarkMode ? 'text-zinc-200' : 'text-zinc-800'
+              }`}
             >
-              Rotate key &amp; regenerate config
+              Rotate key and regenerate config
             </button>
-          </section>
 
-          <button
-            type="button"
-            onClick={() => setShowAdvanced((v) => !v)}
-            className={`mt-4 flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium ${
-              isDarkMode ? 'border-zinc-800 text-zinc-300' : 'border-zinc-200 text-zinc-700'
-            }`}
-          >
-            When connection stops working
-            <ChevronDown className={`h-4 w-4 transition ${showAdvanced ? 'rotate-180' : ''}`} />
-          </button>
-          {showAdvanced ? (
-            <div className={`mt-2 rounded-xl border p-4 text-sm ${isDarkMode ? 'border-zinc-800 text-zinc-400' : 'border-zinc-200 text-zinc-600'}`}>
-              <p>
-                Personal MCP keys do not expire. If you get <code className="font-mono text-xs">401</code>, someone
-                may have revoked the key, or the deployment secret changed — click{' '}
-                <strong>Rotate key &amp; regenerate config</strong> and paste the new JSON into your client.
-              </p>
-              {setup?.endpoint ? (
-                <p className="mt-2">
-                  Endpoint: <code className="font-mono text-xs">{setup.endpoint}</code>
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <section className={`p-5 ${panel}`}>
-              <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
-                <Wrench className="h-4 w-4 text-indigo-500" />
-                {MCP_TOOLS.length} tools
-              </h2>
-              <ul className={`space-y-1.5 text-xs ${muted}`}>
-                {MCP_TOOLS.slice(0, 5).map((t) => (
-                  <li key={t.name}>
-                    <code className={isDarkMode ? 'text-indigo-300' : 'text-indigo-700'}>{t.name}</code>
-                  </li>
-                ))}
-                <li className="pt-1 italic">+ {MCP_TOOLS.length - 5} more</li>
-              </ul>
-            </section>
-            <section className={`p-5 ${panel}`}>
-              <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide">
-                <Sparkles className="h-4 w-4 text-indigo-500" />
-                Try asking
-              </h2>
-              <p className={`text-xs italic ${muted}`}>&ldquo;{MCP_EXAMPLE_PROMPTS[0]}&rdquo;</p>
-            </section>
-          </div>
-
-          <div
-            className={`mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${
-              isDarkMode ? 'border-indigo-500/30 bg-indigo-950/20' : 'border-indigo-200 bg-indigo-50/50'
-            }`}
-          >
-            <p className={`text-sm ${muted}`}>Troubleshooting and security notes</p>
-            <Link
-              to={documentationBoardArticlePath(MCP_DOCS_SLUG)}
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 dark:text-indigo-400"
+            <button
+              type="button"
+              onClick={() => setShowAdvanced((v) => !v)}
+              className={`mt-8 flex w-full items-center justify-between border-t pt-5 text-left text-sm font-medium ${
+                isDarkMode ? 'border-zinc-800 text-zinc-300' : 'border-zinc-300 text-zinc-700'
+              }`}
             >
-              MCP docs
-              <ExternalLink className="h-3.5 w-3.5" />
-            </Link>
-          </div>
+              When connection stops working
+              <ChevronDown className={`h-4 w-4 transition ${showAdvanced ? 'rotate-180' : ''}`} />
+            </button>
+            {showAdvanced ? (
+              <div className={`mt-3 text-sm leading-relaxed ${muted}`}>
+                <p>
+                  Personal MCP keys do not expire. If you get <code className="font-mono text-xs">401</code>, the key
+                  may have been revoked or the deployment secret changed. Rotate the key and paste the new JSON into
+                  your client.
+                </p>
+                {setup?.endpoint ? (
+                  <p className="mt-2">
+                    Endpoint: <code className="font-mono text-xs">{setup.endpoint}</code>
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            <p className={`mt-8 text-sm ${muted}`}>
+              Troubleshooting and security notes live in the{' '}
+              <Link
+                to={documentationBoardArticlePath(MCP_DOCS_SLUG)}
+                className={`inline-flex items-center gap-1 font-medium underline-offset-4 hover:underline ${
+                  isDarkMode ? 'text-zinc-200' : 'text-zinc-800'
+                }`}
+              >
+                MCP docs
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              </Link>
+              .
+            </p>
+          </motion.div>
+
+          <motion.aside
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.08, ease }}
+            className="space-y-4"
+          >
+            <div className={`overflow-hidden rounded-2xl border ${previewSurface}`}>
+              <div
+                className={`flex items-center justify-between border-b px-4 py-3 ${
+                  isDarkMode ? 'border-zinc-800' : 'border-zinc-200'
+                }`}
+              >
+                <div>
+                  <p className={`text-sm font-semibold ${ink}`}>
+                    {clientTab === 'cursor' ? 'Cursor' : 'Claude'} config
+                  </p>
+                  <p className={`mt-0.5 text-xs ${muted}`}>
+                    {loading ? 'Preparing…' : 'Ready to paste'}
+                  </p>
+                </div>
+                <span className={`text-[11px] font-medium ${muted}`}>Preview</span>
+              </div>
+              <div className="p-3">
+                {loading ? (
+                  <div className={`flex items-center gap-2 px-1 py-8 text-sm ${muted}`}>
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    Preparing your config…
+                  </div>
+                ) : activeConfig ? (
+                  <pre className={`max-h-64 overflow-auto whitespace-pre-wrap ${codeBlock}`}>{activeConfig}</pre>
+                ) : (
+                  <p className={`px-1 py-8 text-sm ${muted}`}>No config yet.</p>
+                )}
+              </div>
+            </div>
+
+            <div className={`overflow-hidden rounded-2xl border ${previewSurface}`}>
+              <div
+                className={`border-b px-4 py-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}
+              >
+                <p className={`text-sm font-semibold ${ink}`}>What you get</p>
+                <p className={`mt-0.5 text-xs ${muted}`}>{MCP_TOOLS.length} tools on your boards</p>
+              </div>
+              <ul className="space-y-2 p-3">
+                <motion.li
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.16, duration: 0.3, ease }}
+                  className={`rounded-xl px-3 py-3 ${sideItem}`}
+                >
+                  <p className={`text-xs font-medium ${muted}`}>Tools</p>
+                  <ul className="mt-1.5 space-y-1">
+                    {MCP_TOOLS.slice(0, 5).map((t) => (
+                      <li key={t.name}>
+                        <code
+                          className={`font-mono text-xs ${
+                            isDarkMode ? 'text-zinc-200' : 'text-zinc-800'
+                          }`}
+                        >
+                          {t.name}
+                        </code>
+                      </li>
+                    ))}
+                    <li className={`text-xs ${muted}`}>+ {MCP_TOOLS.length - 5} more</li>
+                  </ul>
+                </motion.li>
+                <motion.li
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.22, duration: 0.3, ease }}
+                  className={`rounded-xl px-3 py-3 ${sideItem}`}
+                >
+                  <p className={`text-xs font-medium ${muted}`}>Try asking</p>
+                  <p className={`mt-1.5 text-sm leading-relaxed ${ink}`}>{MCP_EXAMPLE_PROMPTS[0]}</p>
+                </motion.li>
+              </ul>
+            </div>
+          </motion.aside>
         </div>
-      </div>
+      </AppPageShell>
     </>
   );
 }
