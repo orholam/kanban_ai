@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, LayoutGrid, Loader2, Sparkles } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { createProject } from '../api/createProject';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,6 +13,8 @@ interface SimpleNewProjectProps {
   isDarkMode: boolean;
   setProjects: React.Dispatch<React.SetStateAction<Project[]>>;
 }
+
+const COLUMNS = ['To do', 'In progress', 'Done'] as const;
 
 export default function SimpleNewProject({ isDarkMode, setProjects }: SimpleNewProjectProps) {
   const { user } = useAuth();
@@ -50,7 +53,7 @@ export default function SimpleNewProject({ isDarkMode, setProjects }: SimpleNewP
       achievements: '',
       user_id: user.id,
       private: true,
-      notes: ''
+      notes: '',
     };
 
     const collaborator = {
@@ -59,12 +62,12 @@ export default function SimpleNewProject({ isDarkMode, setProjects }: SimpleNewP
       user_id: user.id,
       invited_at: now,
       accepted: true,
-      role: 'owner'
+      role: 'owner',
     };
 
     try {
       await createProject(newProject, collaborator);
-      setProjects(prev => [...prev, { ...newProject, tasks: [] }]);
+      setProjects((prev) => [...prev, { ...newProject, tasks: [] }]);
       navigate(`/project/${project_id}`);
     } catch (err) {
       console.error('Failed to create project:', err);
@@ -74,168 +77,156 @@ export default function SimpleNewProject({ isDarkMode, setProjects }: SimpleNewP
     }
   };
 
-  const cardBase = isDarkMode
-    ? 'border-gray-700/80 bg-gray-900/80 shadow-gray-950/40'
-    : 'border-gray-200/90 bg-white/90 shadow-gray-900/[0.04]';
+  const muted = isDarkMode ? 'text-zinc-400' : 'text-zinc-600';
+  const ink = isDarkMode ? 'text-zinc-50' : 'text-zinc-950';
+  const fieldBorder = isDarkMode ? 'border-zinc-700' : 'border-zinc-300';
+  const fieldBg = isDarkMode ? 'bg-zinc-950' : 'bg-white';
+  const previewSurface = isDarkMode
+    ? 'border-zinc-800 bg-zinc-900'
+    : 'border-zinc-200 bg-white';
+  const columnSurface = isDarkMode ? 'bg-zinc-950/80' : 'bg-zinc-50';
+  const displayTitle = title.trim() || 'Untitled board';
 
-  const inputClass = `w-full rounded-xl border px-3.5 py-2.5 text-sm transition-shadow ${
-    isDarkMode
-      ? 'border-gray-600 bg-gray-800/80 text-white placeholder:text-gray-500'
-      : 'border-gray-300 bg-white text-gray-900 placeholder:text-gray-400'
-  } focus:outline-none focus:ring-2 focus:ring-indigo-500/80 focus:border-indigo-500`;
+  const inputClass = `w-full border-0 border-b bg-transparent px-0 py-3 text-base outline-none transition-colors ${fieldBorder} ${
+    isDarkMode ? 'text-zinc-100 placeholder:text-zinc-600' : 'text-zinc-900 placeholder:text-zinc-400'
+  } focus:border-indigo-500`;
 
   return (
     <NewProjectPageLayout isDarkMode={isDarkMode}>
-      <header className="mb-10 text-center sm:mb-12 sm:text-left">
-        <p
-          className={`mb-2 text-xs font-semibold uppercase tracking-[0.2em] ${
-            isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
-          }`}
+      <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,1.05fr)] lg:gap-14">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         >
-          New project
-        </p>
-        <h1
-          className={`text-3xl font-bold tracking-tight sm:text-4xl ${
-            isDarkMode ? 'text-white' : 'text-gray-900'
-          }`}
-        >
-          How do you want to start?
-        </h1>
-        <p className={`mt-3 max-w-xl text-base leading-relaxed ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          Pick a blank board, or open the AI builder and shape a roadmap in chat.
-        </p>
-      </header>
+          <h1 className={`text-4xl font-semibold tracking-tight sm:text-5xl ${ink}`}>
+            Blank board
+          </h1>
+          <p className={`mt-3 max-w-md text-base leading-relaxed ${muted}`}>
+            Name it and open an empty kanban. Add columns and tasks when you are ready.
+          </p>
 
-      <div className="mb-10 grid gap-4 sm:grid-cols-2">
-        <div
-          className={`relative rounded-2xl border-2 border-indigo-500/70 p-5 shadow-lg backdrop-blur-sm ${cardBase} ring-1 ring-indigo-500/20`}
-        >
-          <div className="flex items-start gap-4">
-            <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
-                isDarkMode ? 'bg-indigo-500/20 text-indigo-300' : 'bg-indigo-100 text-indigo-600'
-              }`}
-            >
-              <LayoutGrid className="h-5 w-5" strokeWidth={2} />
+          <form onSubmit={handleSubmit} className="mt-10 space-y-8">
+            <div>
+              <label
+                htmlFor="project-title"
+                className={`mb-1 block text-sm font-medium ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}
+              >
+                Title
+              </label>
+              <input
+                id="project-title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className={inputClass}
+                placeholder="Weekend shipping tool"
+                autoComplete="off"
+                autoFocus
+              />
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className={`text-base font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Blank board
-                </h2>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                    isDarkMode ? 'bg-indigo-500/25 text-indigo-200' : 'bg-indigo-100 text-indigo-700'
+
+            <div>
+              <label
+                htmlFor="project-description"
+                className={`mb-1 block text-sm font-medium ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}
+              >
+                Notes <span className={`font-normal ${muted}`}>(optional)</span>
+              </label>
+              <textarea
+                id="project-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+                className={`${inputClass} min-h-[5.5rem] resize-y`}
+                placeholder="What is this for?"
+              />
+            </div>
+
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="submit"
+                disabled={isLoading || !title.trim()}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:pointer-events-none disabled:opacity-40"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    Creating…
+                  </>
+                ) : (
+                  'Create board'
+                )}
+              </button>
+
+              <p className={`text-sm ${muted}`}>
+                Want a roadmap drafted?{' '}
+                <Link
+                  to="ai"
+                  className={`font-medium underline-offset-4 hover:underline ${
+                    isDarkMode ? 'text-zinc-200' : 'text-zinc-800'
                   }`}
                 >
-                  Selected
-                </span>
-              </div>
-              <p className={`mt-1 text-sm leading-snug ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Empty kanban — add columns and tasks when you are ready.
+                  AI builder
+                </Link>
               </p>
             </div>
-          </div>
-        </div>
+          </form>
+        </motion.div>
 
-        <Link
-          to="ai"
-          className={`group rounded-2xl border p-5 shadow-md backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-indigo-400/50 hover:shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${cardBase} ${
-            isDarkMode
-              ? 'border-gray-600 hover:bg-gray-800/90'
-              : 'border-gray-200 hover:bg-white hover:shadow-indigo-500/10'
-          }`}
+        <motion.aside
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+          className={`overflow-hidden rounded-2xl border ${previewSurface}`}
+          aria-hidden
         >
-          <div className="flex items-start gap-4">
-            <div
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-md`}
-            >
-              <Sparkles className="h-5 w-5" strokeWidth={2} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2 className={`text-base font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                AI project builder
-              </h2>
-              <p className={`mt-1 text-sm leading-snug ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                Chat through the idea while a live workspace fills in the plan.
-              </p>
-              <span
-                className={`mt-3 inline-flex items-center text-sm font-medium ${
-                  isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
-                }`}
-              >
-                Open builder
-                <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </span>
-            </div>
-          </div>
-        </Link>
-      </div>
-
-      <section
-        className={`rounded-2xl border p-6 shadow-xl backdrop-blur-md sm:p-8 ${cardBase}`}
-      >
-        <h2 className={`mb-1 text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-          Project details
-        </h2>
-        <p className={`mb-8 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          Name your board — you can change everything later on the project page.
-        </p>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label
-              htmlFor="project-title"
-              className={`mb-2 block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}
-            >
-              Title
-            </label>
-            <input
-              id="project-title"
-              type="text"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              required
-              className={inputClass}
-              placeholder="My side project"
-              autoComplete="off"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="project-description"
-              className={`mb-2 block text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}
-            >
-              Description <span className="font-normal opacity-70">(optional)</span>
-            </label>
-            <textarea
-              id="project-description"
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              rows={4}
-              className={`${inputClass} resize-y min-h-[6rem]`}
-              placeholder="What are you building?"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:pointer-events-none disabled:opacity-50"
+          <div
+            className={`flex items-center justify-between border-b px-4 py-3 ${
+              isDarkMode ? 'border-zinc-800' : 'border-zinc-200'
+            }`}
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                Creating…
-              </>
-            ) : (
-              <>
-                Create blank project
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </>
-            )}
-          </button>
-        </form>
-      </section>
+            <div className="min-w-0">
+              <p className={`truncate text-sm font-semibold ${ink}`}>{displayTitle}</p>
+              <p className={`mt-0.5 text-xs ${muted}`}>Sprint 1 · empty</p>
+            </div>
+            <span
+              className={`shrink-0 text-[11px] font-medium ${
+                isDarkMode ? 'text-zinc-500' : 'text-zinc-400'
+              }`}
+            >
+              Preview
+            </span>
+          </div>
+
+          <div className={`grid grid-cols-3 gap-2 p-3 sm:gap-3 sm:p-4 ${fieldBg}`}>
+            {COLUMNS.map((label, index) => (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.16 + index * 0.06, duration: 0.3 }}
+                className={`min-h-[11rem] rounded-xl p-2.5 sm:min-h-[14rem] sm:p-3 ${columnSurface}`}
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <span className={`text-[11px] font-semibold ${muted}`}>{label}</span>
+                  <span className={`text-[11px] tabular-nums ${muted}`}>0</span>
+                </div>
+                <div
+                  className={`rounded-lg border border-dashed px-2 py-6 text-center text-[11px] leading-snug ${
+                    isDarkMode
+                      ? 'border-zinc-800 text-zinc-600'
+                      : 'border-zinc-200 text-zinc-400'
+                  }`}
+                >
+                  {index === 0 ? 'Tasks land here' : ' '}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.aside>
+      </div>
     </NewProjectPageLayout>
   );
 }

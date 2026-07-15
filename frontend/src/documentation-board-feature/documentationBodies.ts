@@ -1,5 +1,27 @@
 /** Markdown bodies for documentation articles — kept separate from metadata for readability. */
 
+export const bodyReleaseUpdates = `Short notes on what recently shipped and what is in progress. For how-to detail, follow the links into the rest of the docs.
+
+## July 2026
+
+### MCP: drive your board from Cursor & Claude
+
+Kanban AI now exposes a **remote MCP server** so coding agents can list projects, create and update tasks, and read board context without leaving your editor.
+
+- Sign in → open **Connect AI** (\`/connect\`) → copy the generated config into Cursor or Claude Desktop.
+- Setup walkthrough: [Connect Claude & Cursor (MCP)](/docs/connect-mcp-claude-cursor).
+- Personal MCP keys (\`kai_…\`) do not expire; rotate from Connect AI if a key is compromised or you get \`401\`.
+
+### In progress: new project experience
+
+We are **revamping how you start a project**—both the blank board path and the AI project builder. Expect clearer first-run flows, a tighter brief → board handoff, and more polish around creating and refining the initial workspace.
+
+The current paths still work today (\`/new-project\` and \`/new-project/ai\`). See [Creating your first project](/docs/creating-your-first-project) for the existing behavior while we ship the redesign.
+
+## How we write these notes
+
+We keep this page focused on user-visible changes. Operator details (env vars, registry) stay in the README and MCP registry docs.`;
+
 export const bodyOverview = `Kanban AI is a web app for **planning and shipping** side projects: classic kanban columns, tasks you can move as work progresses, and an **AI sidebar** that understands your project so it can suggest breakdowns, next steps, and answers in context.
 
 ## What you are looking at
@@ -48,7 +70,7 @@ export const bodyGuestVsAccount = `You can explore Kanban AI in **guest mode** o
 - Guest data can be **lost** if you clear site data or use private browsing only temporarily.
 - After sign-in, rely on exported backups or copies if you need long-term archives outside the app (features vary by deployment).`;
 
-export const bodyFirstProject = `The **new project** flow can start blank or with the **AI project builder** — a full-height chat beside a live workspace that drafts your roadmap and starter tasks. Create the board when the workspace looks right.
+export const bodyFirstProject = `The **new project** page opens a blank board form. Prefer a drafted roadmap? Open the **AI project builder**: a full-height chat beside a live workspace that fills in title, phases, and starter tasks. Create the board when the workspace looks right.
 
 ## Before you start
 
@@ -56,8 +78,8 @@ Have a rough answer ready to: **What are you building, who is it for, and what s
 
 ## Paths
 
-1. **Blank board** — Name the project (description optional) and open an empty kanban.
-2. **AI project builder** (\`/new-project/ai\`) — Chat about the idea. The assistant asks follow-ups and updates title, roadmap, and starter tasks in the workspace. Click **Create board** when you are ready.
+1. **Blank board** (\`/new-project\`) — Name the project (description optional) and open an empty kanban. A link below the form opens the AI builder.
+2. **AI project builder** (\`/new-project/ai\`) — Chat about the idea. The first reply usually fills title, roadmap, and starter tasks. Later replies should refine selectively or ask a clarifying question. Create the board with **Create board**, or say something like “let’s go” / “create it” when the workspace looks right.
 
 ## After creation
 
@@ -100,18 +122,26 @@ export const bodyBoardMechanics = `The kanban board is the operational heart of 
 - **Small tasks** serialize work and reduce thrash; if a card is more than a few sessions of effort, split it.
 - End each session by **pulling the next card** to the top of “Doing” so you never cold-start planning.`;
 
-export const bodyAiChat = `The AI sidebar (task chat) is a **project-aware assistant**. It can answer questions, propose task breakdowns, and in many flows help mutate the board through tools wired to your tasks API.
+export const bodyAiChat = `The AI sidebar (task chat) is a **project-aware assistant**. It can answer questions, propose task breakdowns, and mutate the board through tools: project metadata/roadmap, tasks, and comments.
 
 ## What context the model sees
 
-- **Active project** metadata—name, type, stack, and high-level description when available.
+- **Active project** metadata—name, type, description, roadmap (\`master_plan\`), notes, and related fields when available.
 - **Tasks** in the current board—titles, columns, and fields exposed to the tool layer.
 - **Your messages** in the thread (and any system instructions the product adds for safety and product behavior).
 
 It does **not** magically read private repos or tickets outside what you paste or what the app stores.
 
+## What it can change
+
+- **Project** — title, short description, and roadmap phases (\`update_project\`). Providing phases replaces the whole roadmap.
+- **Tasks** — create, update, delete, and undo the last assistant mutation in the session.
+- **Comments** — add a note on a card (signed-in boards).
+
 ## Good prompts
 
+- “Rewrite the project description to emphasize LLM/GEO search, not classic SEO.”
+- “Replace the roadmap with 5 milestones through MVP and GTM.”
 - “Break card X into 3–5 smaller tasks and suggest column placement.”
 - “I’m blocked on Y—what are two concrete next steps a solo dev could finish today?”
 - “Summarize risks for launch based on tasks still in **Backlog**.”
@@ -139,7 +169,7 @@ Domain language comes from the **conversation** and later from the **AI sidebar*
 
 - Ask in the builder chat (“Lean more toward a developer tool than a marketing site”).
 - Edit the project description and roadmap on the board after create.
-- Tell the board assistant explicitly.
+- Tell the board assistant explicitly (it can call \`update_project\` for title, description, and roadmap phases).
 
 ## When suggestions feel wrong
 

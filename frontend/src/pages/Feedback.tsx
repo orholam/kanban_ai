@@ -1,95 +1,42 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bug, Inbox, Lightbulb, MessageCircle, SendHorizontal, Sparkles } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { toast } from 'sonner';
 import { createFeedback } from '../api/createFeedback';
+import { AppPageShell } from '../components/AppPageShell';
 import SEO from '../components/SEO';
 import { isLocalAppMode } from '../lib/localApp';
 
 type FeedbackKind = 'bug' | 'idea' | 'general';
 
-const KINDS: { id: FeedbackKind; label: string; icon: React.ElementType }[] = [
-  { id: 'bug', label: 'Bug', icon: Bug },
-  { id: 'idea', label: 'Idea', icon: Lightbulb },
-  { id: 'general', label: 'Note', icon: MessageCircle },
+const KINDS: { id: FeedbackKind; label: string }[] = [
+  { id: 'bug', label: 'Bug' },
+  { id: 'idea', label: 'Idea' },
+  { id: 'general', label: 'Note' },
 ];
+
+const ease = [0.22, 1, 0.36, 1] as const;
 
 export default function Feedback({ isDarkMode }: { isDarkMode: boolean }) {
   const [comment, setComment] = useState('');
   const [kind, setKind] = useState<FeedbackKind | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const pageShell = isDarkMode
-    ? 'bg-zinc-950 text-zinc-100'
-    : 'bg-[#fafafa] text-zinc-900';
-
-  const mesh = (
-    <>
-      <div
-        className={`pointer-events-none absolute inset-0 overflow-hidden ${
-          isDarkMode ? 'opacity-90' : 'opacity-70'
-        }`}
-        aria-hidden
-      >
-        <div
-          className={`absolute -left-[20%] top-[-25%] h-[55vmin] w-[55vmin] rounded-full blur-[100px] ${
-            isDarkMode ? 'bg-violet-600/25' : 'bg-violet-400/35'
-          }`}
-        />
-        <div
-          className={`absolute -right-[15%] top-[10%] h-[45vmin] w-[45vmin] rounded-full blur-[90px] ${
-            isDarkMode ? 'bg-indigo-600/20' : 'bg-indigo-400/30'
-          }`}
-        />
-        <div
-          className={`absolute bottom-[-20%] left-[25%] h-[40vmin] w-[40vmin] rounded-full blur-[100px] ${
-            isDarkMode ? 'bg-fuchsia-600/15' : 'bg-fuchsia-300/25'
-          }`}
-        />
-      </div>
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <svg className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="feedback-grid" width="32" height="32" patternUnits="userSpaceOnUse">
-              <path
-                d="M0 32V0h32"
-                fill="none"
-                className={isDarkMode ? 'stroke-white/[0.06]' : 'stroke-zinc-950/[0.06]'}
-              />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#feedback-grid)" style={{ maskImage: 'radial-gradient(ellipse 70% 55% at 50% 0%, black, transparent)' }} />
-        </svg>
-      </div>
-    </>
-  );
-
-  const panel = isDarkMode
-    ? 'rounded-[1.75rem] border border-zinc-800/80 bg-zinc-900/40 shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_80px_-24px_rgba(0,0,0,0.65)] backdrop-blur-xl'
-    : 'rounded-[1.75rem] border border-zinc-200/90 bg-white/70 shadow-[0_0_0_1px_rgba(24,24,27,0.04),0_24px_64px_-20px_rgba(24,24,27,0.12)] backdrop-blur-xl';
-
-  const pillBase =
-    'inline-flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-medium transition-[background,box-shadow,color,border-color] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2';
-
-  const pillIdle = isDarkMode
-    ? 'border-zinc-700/80 bg-zinc-950/50 text-zinc-400 hover:border-zinc-600 hover:bg-zinc-800/40 hover:text-zinc-200 focus-visible:ring-offset-zinc-950'
-    : 'border-zinc-200 bg-white/80 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 focus-visible:ring-offset-white';
-
-  const pillActive = isDarkMode
-    ? 'border-indigo-400/40 bg-indigo-500/15 text-indigo-100 shadow-[0_0_0_1px_rgba(129,140,248,0.2)] focus-visible:ring-offset-zinc-950'
-    : 'border-indigo-300/90 bg-indigo-50 text-indigo-900 shadow-[0_0_0_1px_rgba(99,102,241,0.12)] focus-visible:ring-offset-white';
-
-  const inputSurface = isDarkMode
-    ? 'border-zinc-800/90 bg-zinc-950/60 text-zinc-100 placeholder:text-zinc-600 focus:border-indigo-500/50 focus:ring-indigo-500/20'
-    : 'border-zinc-200/90 bg-white/90 text-zinc-900 placeholder:text-zinc-400 focus:border-indigo-400 focus:ring-indigo-500/15';
+  const muted = isDarkMode ? 'text-zinc-400' : 'text-zinc-600';
+  const ink = isDarkMode ? 'text-zinc-50' : 'text-zinc-950';
+  const fieldBorder = isDarkMode ? 'border-zinc-700' : 'border-zinc-300';
+  const previewSurface = isDarkMode
+    ? 'border-zinc-800 bg-zinc-900'
+    : 'border-zinc-200 bg-white';
+  const sideItem = isDarkMode ? 'bg-zinc-950/80' : 'bg-zinc-50';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = comment.trim();
     if (!trimmed) {
-      toast.error("Write something first—we can't send an empty note.");
+      toast.error("Write something first; we can't send an empty note.");
       return;
     }
 
@@ -101,7 +48,7 @@ export default function Feedback({ isDarkMode }: { isDarkMode: boolean }) {
       await createFeedback({ comment: body });
       setComment('');
       setKind(null);
-      toast.success('Thanks—we read every message.');
+      toast.success('Thanks. We read every message.');
     } catch (error) {
       console.error('Error submitting feedback:', error);
       toast.error(error instanceof Error ? error.message : 'Could not send. Try again in a moment.');
@@ -109,8 +56,6 @@ export default function Feedback({ isDarkMode }: { isDarkMode: boolean }) {
       setIsSubmitting(false);
     }
   };
-
-  const hintClass = isDarkMode ? 'text-zinc-500' : 'text-zinc-500';
 
   if (isLocalAppMode()) {
     return (
@@ -121,22 +66,21 @@ export default function Feedback({ isDarkMode }: { isDarkMode: boolean }) {
           url={`${typeof window !== 'undefined' ? window.location.origin : ''}/feedback`}
           noindex
         />
-        <div
-          className={`relative flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8 text-center ${pageShell}`}
-        >
-          {mesh}
-          <p className="relative z-[1] max-w-md text-sm leading-relaxed">
-            In-app feedback is sent to the hosted Supabase database. Use GitHub issues while running in local mode.
-          </p>
-          <Link
-            to="/kanban"
-            className={`relative z-[1] text-sm font-medium underline underline-offset-2 ${
-              isDarkMode ? 'text-indigo-400' : 'text-indigo-600'
-            }`}
-          >
-            Back to boards
-          </Link>
-        </div>
+        <AppPageShell isDarkMode={isDarkMode} maxWidth="2xl">
+          <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
+            <p className={`max-w-md text-sm leading-relaxed ${muted}`}>
+              In-app feedback is sent to the hosted Supabase database. Use GitHub issues while running in local mode.
+            </p>
+            <Link
+              to="/kanban"
+              className={`text-sm font-medium underline-offset-4 hover:underline ${
+                isDarkMode ? 'text-zinc-200' : 'text-zinc-800'
+              }`}
+            >
+              Back to boards
+            </Link>
+          </div>
+        </AppPageShell>
       </>
     );
   }
@@ -150,60 +94,43 @@ export default function Feedback({ isDarkMode }: { isDarkMode: boolean }) {
         url="https://kanbanai.dev/feedback"
         noindex
       />
-      <div className={`relative min-h-0 flex-1 overflow-y-auto ${pageShell}`}>
-        {mesh}
-        <div className="relative mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-          <motion.header
-            className="mb-10 sm:mb-12"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <p
-              className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${
-                isDarkMode ? 'text-indigo-400/90' : 'text-indigo-600'
-              }`}
-            >
-              Product input
-            </p>
-            <h1
-              className={`mt-3 max-w-xl text-[2rem] font-semibold leading-[1.08] tracking-tight sm:text-[2.75rem] sm:leading-[1.05] ${
-                isDarkMode
-                  ? 'bg-gradient-to-br from-white via-zinc-100 to-zinc-400 bg-clip-text text-transparent'
-                  : 'bg-gradient-to-br from-zinc-900 via-indigo-900 to-violet-800 bg-clip-text text-transparent'
-              }`}
-            >
-              Shape what we ship next.
-            </h1>
-            <p className={`mt-4 max-w-lg text-base leading-relaxed sm:text-[1.05rem] ${hintClass}`}>
-              Loose thoughts are fine. The more context—what you were doing, what you expected—the faster we can act
-              on it.
-            </p>
-          </motion.header>
-
+      <AppPageShell isDarkMode={isDarkMode} maxWidth="5xl">
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,0.9fr)] lg:gap-14">
           <motion.div
-            className={`${panel} p-6 sm:p-8`}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.35, ease }}
           >
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <h1 className={`text-4xl font-semibold tracking-tight sm:text-5xl ${ink}`}>Feedback</h1>
+            <p className={`mt-3 max-w-md text-base leading-relaxed ${muted}`}>
+              Bugs, ideas, or loose notes. Context about what you were doing helps us act faster.
+            </p>
+
+            <form onSubmit={handleSubmit} className="mt-10 space-y-8">
               <div>
-                <span className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                  What kind of feedback?
-                </span>
-                <p className={`mt-1 text-xs ${hintClass}`}>Optional—helps us route it internally.</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {KINDS.map(({ id, label, icon: Icon }) => {
+                <p className={`mb-2 text-sm font-medium ${isDarkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                  Type <span className={`font-normal ${muted}`}>(optional)</span>
+                </p>
+                <div
+                  className={`inline-flex rounded-lg p-1 ${
+                    isDarkMode ? 'bg-zinc-900' : 'bg-zinc-200/80'
+                  }`}
+                >
+                  {KINDS.map(({ id, label }) => {
                     const on = kind === id;
                     return (
                       <button
                         key={id}
                         type="button"
                         onClick={() => setKind(on ? null : id)}
-                        className={`${pillBase} ${on ? pillActive : pillIdle}`}
+                        className={`rounded-md px-3.5 py-1.5 text-sm font-medium transition ${
+                          on
+                            ? isDarkMode
+                              ? 'bg-zinc-700 text-white'
+                              : 'bg-white text-zinc-900 shadow-sm'
+                            : muted
+                        }`}
                       >
-                        <Icon className="h-3.5 w-3.5 opacity-80" strokeWidth={2} aria-hidden />
                         {label}
                       </button>
                     );
@@ -214,129 +141,93 @@ export default function Feedback({ isDarkMode }: { isDarkMode: boolean }) {
               <div>
                 <label
                   htmlFor="feedback-body"
-                  className={`text-xs font-medium ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}
+                  className={`mb-1 block text-sm font-medium ${
+                    isDarkMode ? 'text-zinc-300' : 'text-zinc-700'
+                  }`}
                 >
-                  Your message
+                  Message
                 </label>
-                <div
-                  className={`mt-2 overflow-hidden rounded-2xl border shadow-inner transition-colors focus-within:ring-2 ${
-                    isDarkMode ? 'focus-within:ring-indigo-500/25' : 'focus-within:ring-indigo-500/20'
-                  } ${inputSurface}`}
-                >
-                  <TextareaAutosize
-                    id="feedback-body"
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Repro steps, mockups, wild ideas, typos you noticed—anything."
-                    disabled={isSubmitting}
-                    minRows={5}
-                    maxRows={16}
-                    className="w-full resize-none bg-transparent px-4 py-3.5 text-[15px] leading-relaxed placeholder:text-[15px] focus:outline-none disabled:opacity-50"
-                  />
-                </div>
+                <TextareaAutosize
+                  id="feedback-body"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Repro steps, ideas, typos you noticed…"
+                  disabled={isSubmitting}
+                  minRows={5}
+                  maxRows={16}
+                  className={`w-full resize-none border-0 border-b bg-transparent px-0 py-3 text-base leading-relaxed outline-none transition-colors focus:border-indigo-500 disabled:opacity-50 ${fieldBorder} ${
+                    isDarkMode
+                      ? 'text-zinc-100 placeholder:text-zinc-600'
+                      : 'text-zinc-900 placeholder:text-zinc-400'
+                  }`}
+                />
               </div>
 
-              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className={`text-xs leading-snug sm:max-w-[14rem] ${hintClass}`}>
-                  Roadmap voting is on the way—until then, this inbox is the fastest line to the builders.
-                </p>
-                <motion.button
-                  type="submit"
-                  disabled={isSubmitting || !comment.trim()}
-                  whileTap={{ scale: comment.trim() && !isSubmitting ? 0.98 : 1 }}
-                  className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-[opacity,box-shadow] disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none sm:w-auto sm:min-w-[10.5rem] bg-gradient-to-r from-indigo-600 via-violet-600 to-violet-600 bg-[length:200%_100%] hover:bg-[position:100%_0] hover:shadow-indigo-500/35 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:bg-gradient-to-r"
-                  style={{ transitionDuration: '380ms' }}
-                >
-                  <AnimatePresence mode="wait" initial={false}>
-                    {isSubmitting ? (
-                      <motion.span
-                        key="sending"
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        className="flex items-center gap-2"
-                      >
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                        Sending
-                      </motion.span>
-                    ) : (
-                      <motion.span
-                        key="send"
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        className="flex items-center gap-2"
-                      >
-                        Send
-                        <SendHorizontal className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </motion.button>
-              </div>
+              <button
+                type="submit"
+                disabled={isSubmitting || !comment.trim()}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:pointer-events-none disabled:opacity-40"
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  {isSubmitting ? (
+                    <motion.span
+                      key="sending"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="inline-flex items-center gap-2"
+                    >
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      Sending…
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="send"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      Send feedback
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
             </form>
           </motion.div>
 
-          <motion.ul
-            className="mt-10 grid gap-4 sm:grid-cols-3 sm:gap-5"
-            initial="hidden"
-            animate="show"
-            variants={{
-              hidden: {},
-              show: { transition: { staggerChildren: 0.08, delayChildren: 0.15 } },
-            }}
+          <motion.aside
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.08, ease }}
+            className={`overflow-hidden rounded-2xl border ${previewSurface}`}
           >
-            {[
-              {
-                icon: Inbox,
-                title: 'Human inbox',
-                body: 'No bots filing your note into the void.',
-              },
-              {
-                icon: Sparkles,
-                title: 'Build priorities',
-                body: 'Your reports directly inform what we tackle.',
-              },
-              {
-                icon: Lightbulb,
-                title: 'Voting soon',
-                body: 'Public board + upvotes are on the roadmap.',
-              },
-            ].map(({ icon: Icon, title, body }) => (
-              <motion.li
-                key={title}
-                variants={{
-                  hidden: { opacity: 0, y: 12 },
-                  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
-                }}
-                className={`rounded-2xl border px-4 py-4 sm:px-5 sm:py-5 ${
-                  isDarkMode
-                    ? 'border-zinc-800/80 bg-zinc-900/30'
-                    : 'border-zinc-200/80 bg-white/50'
-                }`}
-              >
-                <span
-                  className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${
-                    isDarkMode
-                      ? 'bg-zinc-800/80 text-indigo-300'
-                      : 'bg-indigo-50 text-indigo-600'
-                  }`}
+            <div
+              className={`border-b px-4 py-3 ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}
+            >
+              <p className={`text-sm font-semibold ${ink}`}>What happens next</p>
+              <p className={`mt-0.5 text-xs ${muted}`}>A human reads every note.</p>
+            </div>
+            <ul className="space-y-2 p-3">
+              {[
+                { title: 'Inbox', body: 'Goes straight to the builders.' },
+                { title: 'Priorities', body: 'Shapes what we tackle next.' },
+                { title: 'Voting soon', body: 'Public board and upvotes are planned.' },
+              ].map((item, index) => (
+                <motion.li
+                  key={item.title}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.16 + index * 0.06, duration: 0.3, ease }}
+                  className={`rounded-xl px-3 py-3 ${sideItem}`}
                 >
-                  <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
-                </span>
-                <h2
-                  className={`mt-3 text-sm font-semibold tracking-tight ${
-                    isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
-                  }`}
-                >
-                  {title}
-                </h2>
-                <p className={`mt-1.5 text-xs leading-relaxed ${hintClass}`}>{body}</p>
-              </motion.li>
-            ))}
-          </motion.ul>
+                  <p className={`text-sm font-medium ${ink}`}>{item.title}</p>
+                  <p className={`mt-0.5 text-xs leading-relaxed ${muted}`}>{item.body}</p>
+                </motion.li>
+              ))}
+            </ul>
+          </motion.aside>
         </div>
-      </div>
+      </AppPageShell>
     </>
   );
 }

@@ -78,6 +78,19 @@ export function isDraftReadyToCreate(draft: ProjectBuilderDraft): boolean {
   return draft.title.trim().length > 0 && draft.phases.length > 0;
 }
 
+/** Short affirmations / “ship it” that should create when the draft is ready. */
+export function looksLikeCreateBoardIntent(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  if (!t || t.length > 96) return false;
+  return (
+    /^(ok|okay|yes|yep|ready|ship\s*it|go\s*ahead|create(\s+it|\s+the\s+board)?|start(\s+building)?|looks\s+good|i'?m\s+ready|do\s+it)\b[!?.]*$/i.test(
+      t
+    ) ||
+    /^(ready[,!.]?\s+)?let'?s\s+go\b/i.test(t) ||
+    /^let'?s\s+(create|ship|build|start)\b/i.test(t)
+  );
+}
+
 export function serializeMasterPlan(phases: RoadmapPhase[]): string {
   return JSON.stringify(phases);
 }

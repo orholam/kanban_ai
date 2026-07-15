@@ -1,5 +1,5 @@
 import type { Task } from '../types';
-import { PROJECT_BUILDER_CHAT_SYSTEM_PROMPT, PROJECT_SETUP_SYSTEM_PROMPT } from './prompts';
+import { PROJECT_BUILDER_CHAT_SYSTEM_PROMPT, PROJECT_BUILDER_REPLY_HINT, PROJECT_BUILDER_TOOLS_HINT, PROJECT_SETUP_SYSTEM_PROMPT } from './prompts';
 import type { ProjectBuilderDraft, ProjectSetupResult, GeneratedSetupTask, RoadmapPhase } from './projectSetup';
 import { titleFromBrief } from './projectSetup';
 
@@ -236,7 +236,8 @@ const projectBuilderTools = [
     type: 'function',
     function: {
       name: 'update_project_identity',
-      description: 'Set or refine the project title and short description shown in the workspace.',
+      description:
+        'Set title and description ONLY if they differ from the current workspace. Skip if unchanged.',
       parameters: {
         type: 'object',
         properties: {
@@ -252,7 +253,8 @@ const projectBuilderTools = [
     type: 'function',
     function: {
       name: 'set_roadmap',
-      description: 'Replace the workspace roadmap with 3–8 milestone phases.',
+      description:
+        'Replace roadmap phases ONLY if the plan should change. Skip if phases would be the same.',
       parameters: {
         type: 'object',
         properties: {
@@ -279,7 +281,8 @@ const projectBuilderTools = [
     type: 'function',
     function: {
       name: 'set_starter_tasks',
-      description: 'Replace starter kanban tasks (usually for phase/sprint 1).',
+      description:
+        'Replace starter tasks ONLY if the backlog should change. Skip if tasks would be the same.',
       parameters: {
         type: 'object',
         properties: {
@@ -320,6 +323,24 @@ const projectBuilderTools = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'request_create_board',
+      description:
+        'Create the board now when the user is ready (e.g. "let\'s go", "create it", "ship it", "looks good"). Do not call this while still rewriting the plan. Does not replace set_roadmap/set_starter_tasks.',
+      parameters: {
+        type: 'object',
+        properties: {
+          reason: {
+            type: 'string',
+            description: 'Short reason, e.g. "user said ready".',
+          },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
 ] as const;
 
 export type ProjectBuilderChatMessage = {
@@ -329,8 +350,9 @@ export type ProjectBuilderChatMessage = {
 
 export type ProjectBuilderProgress =
   | { phase: 'awaiting_model' }
-  | { phase: 'streaming' }
-  | { phase: 'running_tool'; toolName: string };
+  | { phase: 'streaming_reply' }
+  | { phase: 'running_tool'; toolName: string }
+  | { phase: 'streaming_after_tools' };
 
 function normalizePhases(raw: unknown): RoadmapPhase[] {
   if (!Array.isArray(raw)) return [];
@@ -371,7 +393,19 @@ function normalizeTasks(raw: unknown): GeneratedSetupTask[] {
 }
 
 function buildProjectBuilderSystem(draft: ProjectBuilderDraft): string {
+  const readyToCreate = draft.title.trim().length > 0 && draft.phases.length > 0;
+  const isFirstDraft = !draft.title.trim() || draft.phases.length < 3;
+
   return `${PROJECT_BUILDER_CHAT_SYSTEM_PROMPT}
+
+Workspace status:
+- readyToCreate: ${readyToCreate}
+- firstDraftNeeded: ${isFirstDraft}
+- title: ${draft.title.trim() ? 'set' : 'empty'}
+- phases: ${draft.phases.length}
+- tasks: ${draft.tasks.length}
+
+If readyToCreate and the user wants to start/create/go, call request_create_board. Do not rewrite the whole plan.
 
 Current workspace JSON (read-only snapshot — update via tools):
 ${JSON.stringify(
@@ -478,8 +512,9 @@ async function consumeOpenAiChatStream(
 }
 
 /**
- * Single streaming turn for the project builder: text + tools in one model call loop.
- * Workspace action chips are UI-only (from applyTool) — no extra LLM call for narration.
+ * Two-step builder turn:
+ * 1) Stream a real chat reply (no tools) — intent, follow-up question, or steer.
+ * 2) Optional tools round — only if the workspace should change; may call zero tools.
  */
 export async function runProjectBuilderChat(input: {
   priorMessages: ProjectBuilderChatMessage[];
@@ -487,7 +522,10 @@ export async function runProjectBuilderChat(input: {
   getDraft: () => ProjectBuilderDraft;
   applyTool: (name: string, args: Record<string, unknown>) => string;
   onProgress?: (event: ProjectBuilderProgress) => void;
-  onAssistantDelta?: (text: string) => void;
+  /** Streaming text for the primary reply bubble (step 1). */
+  onReplyDelta?: (text: string) => void;
+  /** Optional text after tools (rare; usually empty). */
+  onAfterToolsDelta?: (text: string) => void;
   signal?: AbortSignal;
 }): Promise<string> {
   const apiMessages: Record<string, unknown>[] = [
@@ -497,90 +535,123 @@ export async function runProjectBuilderChat(input: {
     apiMessages.push({ role: m.role, content: m.content });
   }
   apiMessages.push({ role: 'user', content: input.userMessage });
+  apiMessages.push({ role: 'system', content: PROJECT_BUILDER_REPLY_HINT });
 
-  const MAX_TOOL_ROUNDS = 8;
-  let lastText = '';
+  // ── Step 1: real streamed reply, no tools ────────────────────────────────
+  input.onProgress?.({ phase: 'awaiting_model' });
+  const replyResponse = await postViaOpenAiProxy(
+    {
+      model: PROJECT_BUILDER_MODEL,
+      messages: apiMessages,
+      temperature: 0.6,
+      max_tokens: 280,
+      stream: true,
+    } satisfies OpenAIRequest,
+    input.signal
+  );
 
-  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-    apiMessages[0] = { role: 'system', content: buildProjectBuilderSystem(input.getDraft()) };
-
-    const needsForcedTools =
-      round === 0 && (!input.getDraft().title.trim() || input.getDraft().phases.length < 3);
-
-    input.onProgress?.({ phase: 'awaiting_model' });
-
-    const response = await postViaOpenAiProxy(
-      {
-        model: PROJECT_BUILDER_MODEL,
-        messages: apiMessages,
-        temperature: 0.55,
-        max_tokens: 1200,
-        tools: [...projectBuilderTools],
-        tool_choice: needsForcedTools ? 'required' : 'auto',
-        stream: true,
-      } satisfies OpenAIRequest,
-      input.signal
+  if (!replyResponse.ok) {
+    const errText = await replyResponse.text().catch(() => '');
+    throw new Error(
+      `OpenAI API error: ${replyResponse.status}${errText ? ` — ${errText.slice(0, 200)}` : ''}`
     );
-
-    if (!response.ok) {
-      const errText = await response.text().catch(() => '');
-      throw new Error(`OpenAI API error: ${response.status}${errText ? ` — ${errText.slice(0, 200)}` : ''}`);
-    }
-
-    input.onProgress?.({ phase: 'streaming' });
-    const streamed = await consumeOpenAiChatStream(response, (text) => {
-      lastText = text;
-      input.onAssistantDelta?.(text);
-    });
-    lastText = streamed.content;
-
-    if (streamed.toolCalls.length > 0) {
-      apiMessages.push({
-        role: 'assistant',
-        content: streamed.content || null,
-        tool_calls: streamed.toolCalls.map((tc) => ({
-          id: tc.id || `call_${tc.name}_${round}`,
-          type: 'function',
-          function: { name: tc.name, arguments: tc.arguments || '{}' },
-        })),
-      });
-
-      for (const tc of streamed.toolCalls) {
-        let args: Record<string, unknown> = {};
-        try {
-          args = JSON.parse(tc.arguments || '{}') as Record<string, unknown>;
-        } catch {
-          args = {};
-        }
-        input.onProgress?.({ phase: 'running_tool', toolName: tc.name });
-        const toolContent = input.applyTool(tc.name, args);
-        apiMessages.push({
-          role: 'tool',
-          tool_call_id: tc.id || `call_${tc.name}_${round}`,
-          content: toolContent,
-        });
-      }
-
-      // If the model already spoke alongside tools, keep that text — skip another round.
-      if (streamed.content.trim()) {
-        return streamed.content.trim();
-      }
-      continue;
-    }
-
-    if (streamed.content.trim()) {
-      return streamed.content.trim();
-    }
-
-    if (streamed.finishReason === 'length') {
-      throw new Error('Model response was truncated; try a shorter message.');
-    }
-
-    throw new Error('Model returned no text and no tool calls.');
   }
 
-  if (lastText.trim()) return lastText.trim();
-  throw new Error('Too many tool rounds; try a simpler follow-up.');
+  input.onProgress?.({ phase: 'streaming_reply' });
+  const replyRound = await consumeOpenAiChatStream(replyResponse, (text) => {
+    input.onReplyDelta?.(text);
+  });
+  const replyText = replyRound.content.trim();
+  if (!replyText) {
+    throw new Error('Model returned an empty reply.');
+  }
+
+  apiMessages.pop(); // remove reply hint
+  apiMessages.push({ role: 'assistant', content: replyText });
+  apiMessages[0] = { role: 'system', content: buildProjectBuilderSystem(input.getDraft()) };
+  apiMessages.push({ role: 'user', content: PROJECT_BUILDER_TOOLS_HINT });
+
+  // ── Step 2: optional tools ───────────────────────────────────────────────
+  input.onProgress?.({ phase: 'awaiting_model' });
+  const toolsResponse = await postViaOpenAiProxy(
+    {
+      model: PROJECT_BUILDER_MODEL,
+      messages: apiMessages,
+      temperature: 0.4,
+      max_tokens: 1100,
+      tools: [...projectBuilderTools],
+      tool_choice: 'auto',
+      stream: true,
+    } satisfies OpenAIRequest,
+    input.signal
+  );
+
+  if (!toolsResponse.ok) {
+    const errText = await toolsResponse.text().catch(() => '');
+    throw new Error(
+      `OpenAI API error: ${toolsResponse.status}${errText ? ` — ${errText.slice(0, 200)}` : ''}`
+    );
+  }
+
+  const toolsRound = await consumeOpenAiChatStream(toolsResponse);
+
+  if (toolsRound.toolCalls.length > 0) {
+    apiMessages.push({
+      role: 'assistant',
+      content: toolsRound.content || null,
+      tool_calls: toolsRound.toolCalls.map((tc) => ({
+        id: tc.id || `call_${tc.name}_1`,
+        type: 'function',
+        function: { name: tc.name, arguments: tc.arguments || '{}' },
+      })),
+    });
+
+    for (const tc of toolsRound.toolCalls) {
+      let args: Record<string, unknown> = {};
+      try {
+        args = JSON.parse(tc.arguments || '{}') as Record<string, unknown>;
+      } catch {
+        args = {};
+      }
+      input.onProgress?.({ phase: 'running_tool', toolName: tc.name });
+      const toolContent = input.applyTool(tc.name, args);
+      apiMessages.push({
+        role: 'tool',
+        tool_call_id: tc.id || `call_${tc.name}_1`,
+        content: toolContent,
+      });
+    }
+
+    const after = toolsRound.content.trim();
+    if (after) {
+      input.onProgress?.({ phase: 'streaming_after_tools' });
+      input.onAfterToolsDelta?.(after);
+    }
+  }
+
+  return replyText;
+}
+
+function phasesEqual(a: RoadmapPhase[], b: RoadmapPhase[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every(
+    (p, i) => p.title === b[i]?.title && p.description === b[i]?.description
+  );
+}
+
+function tasksEqual(a: GeneratedSetupTask[], b: GeneratedSetupTask[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((t, i) => {
+    const o = b[i];
+    return (
+      !!o &&
+      t.title === o.title &&
+      t.description === o.description &&
+      t.priority === o.priority &&
+      t.type === o.type &&
+      (t.sprint ?? 1) === (o.sprint ?? 1)
+    );
+  });
 }
 
 /** Apply a builder tool to a draft; returns a short result string for the model. */
@@ -594,15 +665,22 @@ export function applyProjectBuilderTool(
       const title = String(args.title ?? '').trim().slice(0, 80);
       const description = String(args.description ?? '').trim().slice(0, 600);
       if (!title) return { draft, result: 'Rejected: title required.' };
+      const nextDescription = description || draft.description;
+      if (title === draft.title.trim() && nextDescription === draft.description.trim()) {
+        return { draft, result: JSON.stringify({ ok: true, unchanged: true }) };
+      }
       return {
-        draft: { ...draft, title, description: description || draft.description },
-        result: JSON.stringify({ ok: true, title, description: description || draft.description }),
+        draft: { ...draft, title, description: nextDescription },
+        result: JSON.stringify({ ok: true, title, description: nextDescription }),
       };
     }
     case 'set_roadmap': {
       const phases = normalizePhases(args.phases);
       if (phases.length < 3) {
         return { draft, result: 'Rejected: need at least 3 phases.' };
+      }
+      if (phasesEqual(phases, draft.phases)) {
+        return { draft, result: JSON.stringify({ ok: true, unchanged: true }) };
       }
       const focusPhaseIndex =
         draft.focusPhaseIndex != null && draft.focusPhaseIndex < phases.length
@@ -618,6 +696,9 @@ export function applyProjectBuilderTool(
       if (tasks.length < 3) {
         return { draft, result: 'Rejected: need at least 3 starter tasks.' };
       }
+      if (tasksEqual(tasks, draft.tasks)) {
+        return { draft, result: JSON.stringify({ ok: true, unchanged: true }) };
+      }
       return {
         draft: { ...draft, tasks },
         result: JSON.stringify({ ok: true, taskCount: tasks.length }),
@@ -629,9 +710,33 @@ export function applyProjectBuilderTool(
         return { draft, result: 'Rejected: invalid phase index.' };
       }
       const clamped = Math.min(Math.floor(index), Math.max(0, draft.phases.length - 1));
+      const next = draft.phases.length ? clamped : null;
+      if (next === draft.focusPhaseIndex) {
+        return { draft, result: JSON.stringify({ ok: true, unchanged: true }) };
+      }
       return {
-        draft: { ...draft, focusPhaseIndex: draft.phases.length ? clamped : null },
-        result: JSON.stringify({ ok: true, focusPhaseIndex: draft.phases.length ? clamped : null }),
+        draft: { ...draft, focusPhaseIndex: next },
+        result: JSON.stringify({ ok: true, focusPhaseIndex: next }),
+      };
+    }
+    case 'request_create_board': {
+      const ready = draft.title.trim().length > 0 && draft.phases.length > 0;
+      if (!ready) {
+        return {
+          draft,
+          result: JSON.stringify({
+            ok: false,
+            reason: 'Workspace not ready — need a title and at least one roadmap phase first.',
+          }),
+        };
+      }
+      return {
+        draft,
+        result: JSON.stringify({
+          ok: true,
+          createBoard: true,
+          reason: String(args.reason ?? '').trim() || 'User requested create',
+        }),
       };
     }
     default:
@@ -767,6 +872,35 @@ const projectTaskAssistantTools = [
   {
     type: 'function',
     function: {
+      name: 'update_project',
+      description:
+        'Update the current project title, short description, and/or roadmap phases. Use when the user wants to change board metadata or the roadmap — not for editing individual tasks. Only include fields that should change. Providing phases replaces the whole roadmap.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Short project name (max ~80 chars)' },
+          description: { type: 'string', description: '1–3 sentence project pitch / description' },
+          phases: {
+            type: 'array',
+            description: 'Full replacement roadmap (typically 3–8 phases). Omit to leave the roadmap unchanged.',
+            items: {
+              type: 'object',
+              properties: {
+                title: { type: 'string' },
+                description: { type: 'string' },
+              },
+              required: ['title', 'description'],
+              additionalProperties: false,
+            },
+          },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'create_task',
       description:
         'Create a new task on the current project board. Use when the user asks to add, create, or track new work.',
@@ -854,7 +988,7 @@ const projectTaskAssistantTools = [
     function: {
       name: 'undo_last_action',
       description:
-        'Revert the most recent successful board change made by you in this chat session (create task, update task, delete task, or add comment). Use when the user asks to undo, revert, or take back the last thing you did. Each call undoes one step, most recent first. If nothing is queued to undo, the tool returns an error.',
+        'Revert the most recent successful board change made by you in this chat session (update project, create/update/delete task, or add comment). Use when the user asks to undo, revert, or take back the last thing you did. Each call undoes one step, most recent first. If nothing is queued to undo, the tool returns an error.',
       parameters: {
         type: 'object',
         properties: {},
@@ -874,7 +1008,7 @@ Each task includes "created_at" and "updated_at" (ISO timestamps from the databa
 
 If the JSON includes "user_attached_tasks", the user dragged those tasks into the chat for their latest message—treat them as the primary focus when interpreting the question, unless they ask about the whole board.
 
-When the user wants to add, edit, move, rename, or remove tasks, use the create_task, update_task, and delete_task tools. When they want to leave a note or comment on a task (without changing the task fields), use add_task_comment. When they want to reverse your last board change (including a deletion), use undo_last_action. Prefer tools over only describing changes. After tools succeed, briefly confirm what you did in plain language.
+When the user wants to change the project title, description, or roadmap (master_plan phases), use update_project. Do not invent tasks as a substitute for updating metadata. When they want to add, edit, move, rename, or remove tasks, use the create_task, update_task, and delete_task tools. When they want to leave a note or comment on a task (without changing the task fields), use add_task_comment. When they want to reverse your last board change (including a deletion or project update), use undo_last_action. Prefer tools over only describing changes. After tools succeed, briefly confirm what you did in plain language.
 
 For update_task, delete_task, and add_task_comment you MUST use the exact task "id" from the tasks array in the JSON. Do not send created_at or updated_at in update_task; the database maintains those. If multiple tasks match by title, disambiguate or ask the user. Only delete when the user clearly wants a task removed; undo_last_action can restore the last deleted task (task card data) for this session, but not older history.
 
