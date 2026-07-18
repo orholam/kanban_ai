@@ -12,7 +12,7 @@ const PrivacyPolicy: React.FC = () => {
             />
             <div className="max-w-4xl mx-auto px-6 py-12">
                 <h1 className="text-3xl font-bold mb-8">Privacy Policy</h1>
-                <p className="mb-6">Last updated: January 15, 2024</p>
+                <p className="mb-6">Last updated: July 18, 2026</p>
                 
                 <section className="mb-8">
                     <h2 className="text-2xl font-semibold mb-4">Introduction</h2>
@@ -59,9 +59,25 @@ const PrivacyPolicy: React.FC = () => {
                 </section>
 
                 <section className="mb-8">
+                    <h2 className="text-2xl font-semibold mb-4">Advertising</h2>
+                    <p className="mb-4">
+                        We use Google AdSense to display ads on Kanban AI. Google and its partners may use cookies or similar technologies to serve ads based on your prior visits to this site or other sites. You can learn more about how Google uses data when you use our site, and manage ad personalization, at{' '}
+                        <a
+                            href="https://policies.google.com/technologies/partner-sites"
+                            className="text-indigo-600 underline hover:text-indigo-500 dark:text-indigo-400"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Google&apos;s Partner Sites Policy
+                        </a>
+                        .
+                    </p>
+                </section>
+
+                <section className="mb-8">
                     <h2 className="text-2xl font-semibold mb-4">Data Sharing</h2>
                     <p className="mb-4">
-                        We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this policy or as required by law.
+                        We do not sell, trade, or otherwise transfer your personal information to third parties without your consent, except as described in this policy or as required by law. Advertising partners such as Google may receive technical information (for example, cookies and device data) as described under Advertising above.
                     </p>
                 </section>
 
