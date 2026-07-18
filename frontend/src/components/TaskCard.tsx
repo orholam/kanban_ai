@@ -73,7 +73,7 @@ export default function TaskCard({ task, onClick, onDeleteTask, isDarkMode , isC
         e.dataTransfer.dropEffect = 'copy';
       }}
       onClick={() => onClick(task)}
-      className={`cursor-move rounded-xl border px-3.5 py-3.5 transition-[background-color,border-color] sm:px-4 sm:py-4 ${
+      className={`cursor-pointer rounded-xl border px-3.5 py-3.5 transition-[background-color,border-color,transform] active:scale-[0.99] sm:cursor-move sm:px-4 sm:py-4 sm:active:scale-100 ${
         isDarkMode
           ? 'border-zinc-800/40 bg-zinc-900/25 hover:border-zinc-700/50 hover:bg-zinc-900/45'
           : 'border-zinc-200/35 bg-white/70 hover:border-zinc-200/55 hover:bg-white'
@@ -101,8 +101,10 @@ export default function TaskCard({ task, onClick, onDeleteTask, isDarkMode , isC
           <div className="flex shrink-0 items-center gap-2 pt-0.5">
             {assigneeAvatar}
             <button
+              type="button"
               onClick={handleDelete}
-              className={`${isDarkMode ? 'text-zinc-500 hover:text-rose-400' : 'text-zinc-400 hover:text-rose-600'} transition-colors`}
+              aria-label={`Delete ${task.title}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${isDarkMode ? 'text-zinc-500 hover:bg-zinc-800 hover:text-rose-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-rose-600'}`}
             >
               <Trash2 className="h-[1.125rem] w-[1.125rem]" />
             </button>
@@ -115,7 +117,7 @@ export default function TaskCard({ task, onClick, onDeleteTask, isDarkMode , isC
           </h3>
 
           {task.description && (
-            <div className="mb-2.5">
+            <div className="mb-2.5 max-sm:hidden">
               <p className={`text-xs leading-relaxed ${isDarkMode ? 'text-zinc-500' : 'text-zinc-600'}`}>
                 {task.description.length > 120 
                   ? `${task.description.substring(0, 120)}...` 
@@ -141,8 +143,10 @@ export default function TaskCard({ task, onClick, onDeleteTask, isDarkMode , isC
             <div className="flex shrink-0 items-center gap-2">
               {assigneeAvatar}
               <button
+                type="button"
                 onClick={handleDelete}
-                className={`${isDarkMode ? 'text-zinc-500 hover:text-rose-400' : 'text-zinc-400 hover:text-rose-600'} transition-colors`}
+                aria-label={`Delete ${task.title}`}
+                className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${isDarkMode ? 'text-zinc-500 hover:bg-zinc-800 hover:text-rose-400' : 'text-zinc-400 hover:bg-zinc-100 hover:text-rose-600'}`}
               >
                 <Trash2 className="h-[1.125rem] w-[1.125rem]" />
               </button>

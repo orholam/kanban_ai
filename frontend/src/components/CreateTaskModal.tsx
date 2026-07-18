@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { lazyWithRetry } from '../lib/lazyWithRetry';
-import { X, Calendar, User } from 'lucide-react';
-import type { Task } from '../types';
+import { X, Calendar, User, ChevronDown } from 'lucide-react';
+import type { Status, Task } from '../types';
 import type { AssigneeOption } from '../lib/assignee';
 import TextareaAutosize from 'react-textarea-autosize';
 import { v4 as uuidv4 } from 'uuid';
@@ -18,8 +18,15 @@ interface CreateTaskModalProps {
   projectId: string;
   numSprints?: number;
   defaultSprint?: number;
+  defaultStatus?: Status;
   assigneeOptions?: AssigneeOption[];
 }
+
+const STATUS_OPTIONS: { id: Status; label: string }[] = [
+  { id: 'todo', label: 'To do' },
+  { id: 'in-progress', label: 'In progress' },
+  { id: 'done', label: 'Done' },
+];
 
 export default function CreateTaskModal({
   onClose,
@@ -27,12 +34,13 @@ export default function CreateTaskModal({
   projectId,
   numSprints = 10,
   defaultSprint = 1,
+  defaultStatus = 'todo',
   assigneeOptions = [],
 }: CreateTaskModalProps) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [status, setStatus] = useState('todo');
+  const [status, setStatus] = useState<Status>(defaultStatus);
   const [sprint, setSprint] = useState(defaultSprint);
   const [dueDate, setDueDate] = useState(new Date());
   const [showCalendar, setShowCalendar] = useState(false);
@@ -41,6 +49,7 @@ export default function CreateTaskModal({
   const [assigneeId, setAssigneeId] = useState(user?.id || '');
   const [isClosing, setIsClosing] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 10);
@@ -51,6 +60,10 @@ export default function CreateTaskModal({
     setSprint(defaultSprint);
   }, [defaultSprint]);
 
+  useEffect(() => {
+    setStatus(defaultStatus);
+  }, [defaultStatus]);
+
   const handleClose = () => {
     setIsClosing(true);
     setTimeout(() => onClose(), 200);
@@ -58,16 +71,17 @@ export default function CreateTaskModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title.trim()) return;
 
     const ts = new Date().toISOString();
     const newTask: Task = {
       id: uuidv4(),
       project_id: projectId,
-      title,
+      title: title.trim(),
       description,
       type: type as 'bug' | 'feature' | 'scope',
       priority: priority as 'low' | 'medium' | 'high',
-      status: status as 'todo' | 'in-progress' | 'done',
+      status,
       sprint: parseInt(sprint.toString(), 10),
       due_date: dueDate.toISOString().split('T')[0],
       assignee_id: assigneeId,
@@ -94,30 +108,30 @@ export default function CreateTaskModal({
   const assigneeInitials = selectedAssignee?.initials ?? (assigneeId ? fallbackInitials : '—');
 
   const fieldSelectClass =
-    'w-full rounded-lg border border-gray-200 bg-white py-2 pl-3 pr-3 text-sm text-gray-900 focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-indigo-400/50 dark:focus:ring-indigo-400/15';
+    'w-full min-h-11 rounded-lg border border-gray-200 bg-white py-2.5 pl-3 pr-3 text-sm text-gray-900 focus:border-indigo-500/50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:focus:border-indigo-400/50 dark:focus:ring-indigo-400/15 sm:min-h-0 sm:py-2';
 
   const datepickerShellClass =
     'absolute left-0 top-full z-[60] mt-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-600 dark:bg-gray-800 [&_.react-datepicker]:!border-gray-700 [&_.react-datepicker]:!bg-gray-800 [&_.react-datepicker__triangle]:!hidden [&_.react-datepicker__header]:!border-gray-700 [&_.react-datepicker__header]:!bg-gray-800 [&_.react-datepicker__current-month]:!text-gray-100 [&_.react-datepicker__day-name]:!text-gray-400 [&_.react-datepicker__day]:!text-gray-200 [&_.react-datepicker__day:hover]:!bg-gray-700 [&_.react-datepicker__day--outside-month]:!text-gray-500 [&_.react-datepicker__day--selected]:!bg-indigo-600 [&_.react-datepicker__day--selected]:!text-white [&_.react-datepicker__day--keyboard-selected]:!bg-indigo-600/70 [&_.react-datepicker__navigation-icon::before]:!border-gray-300';
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-3 transition-all duration-200 ease-out sm:p-4 ${
+      className={`fixed inset-0 z-50 flex items-stretch justify-center transition-all duration-200 ease-out sm:items-center sm:p-4 ${
         isClosing ? 'bg-black/0' : isVisible ? 'bg-black/50 dark:bg-black/60' : 'bg-black/0'
       }`}
       onClick={handleClose}
     >
       <div
-        className={`flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg transition-all duration-200 ease-out dark:border-gray-700 dark:bg-gray-900 ${
-          isClosing ? 'scale-95 opacity-0' : isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+        className={`flex h-dvh max-h-dvh w-full max-w-6xl flex-col overflow-hidden border-gray-200 bg-white shadow-lg transition-all duration-200 ease-out dark:border-gray-700 dark:bg-gray-900 sm:h-auto sm:max-h-[92vh] sm:rounded-xl sm:border ${
+          isClosing ? 'translate-y-2 opacity-0 sm:translate-y-0 sm:scale-95' : isVisible ? 'translate-y-0 opacity-100 sm:scale-100' : 'translate-y-2 opacity-0 sm:translate-y-0 sm:scale-95'
         }`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-task-modal-title"
       >
-        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col lg:flex-row">
-          <div className="min-w-0 flex-1 overflow-y-auto border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 lg:border-b-0 lg:border-r">
-            <div className="flex min-h-0 flex-1 flex-col gap-5 p-6">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 lg:border-b-0 lg:border-r">
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-y-contain p-4 pt-[max(1rem,env(safe-area-inset-top))] sm:gap-5 sm:p-6">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="mb-1.5 text-xs capitalize text-gray-500 dark:text-gray-400">
@@ -129,37 +143,74 @@ export default function CreateTaskModal({
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="w-full border-0 bg-transparent text-xl font-semibold text-gray-900 outline-none placeholder:text-gray-400 focus:ring-0 dark:text-gray-100 dark:placeholder:text-gray-500"
-                    placeholder="Task title"
+                    placeholder="What needs doing?"
                     required
                     autoFocus
+                    enterKeyHint="done"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="shrink-0 rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                  className="shrink-0 rounded-lg p-2.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
                   aria-label="Close"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="create-task-status" className="mb-1 block text-xs text-gray-500 dark:text-gray-400">
-                    Status
-                  </label>
-                  <select
-                    id="create-task-status"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className={fieldSelectClass}
-                  >
-                    <option value="todo">Todo</option>
-                    <option value="in-progress">In progress</option>
-                    <option value="done">Done</option>
-                  </select>
+              <div>
+                <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Status</p>
+                <div className="grid grid-cols-3 gap-2" role="group" aria-label="Status">
+                  {STATUS_OPTIONS.map((opt) => {
+                    const active = status === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setStatus(opt.id)}
+                        className={`min-h-11 rounded-xl px-2 text-xs font-semibold transition-colors sm:min-h-10 ${
+                          active
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700/50'
+                        }`}
+                        aria-pressed={active}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+
+              <div className="flex flex-col sm:min-h-[14rem]">
+                <label htmlFor="create-task-description" className="mb-1 block text-xs text-gray-500 dark:text-gray-400">
+                  Description <span className="font-normal text-gray-400">(optional)</span>
+                </label>
+                <TextareaAutosize
+                  id="create-task-description"
+                  minRows={2}
+                  className="box-border w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm leading-6 text-gray-800 placeholder:text-gray-400 focus:border-indigo-500/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/15 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-indigo-400/40 sm:min-h-[12rem] sm:resize-y"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Details, criteria, links…"
+                  spellCheck={false}
+                />
+              </div>
+
+              <div className="sm:hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowDetails((v) => !v)}
+                  className="flex w-full min-h-11 items-center justify-between rounded-xl border border-gray-200 px-3 text-sm font-medium text-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  aria-expanded={showDetails}
+                >
+                  More options
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+
+              <div className={`${showDetails ? 'grid' : 'hidden'} grid-cols-2 gap-3 sm:grid`}>
                 <div>
                   <label htmlFor="create-task-sprint" className="mb-1 block text-xs text-gray-500 dark:text-gray-400">
                     Sprint
@@ -209,27 +260,14 @@ export default function CreateTaskModal({
                 </div>
               </div>
 
-              <div className="flex min-h-[14rem] flex-1 flex-col sm:min-h-[16rem]">
-                <label htmlFor="create-task-description" className="mb-1 block text-xs text-gray-500 dark:text-gray-400">
-                  Description
-                </label>
-                <TextareaAutosize
-                  id="create-task-description"
-                  minRows={8}
-                  className="box-border w-full min-h-[12rem] flex-1 resize-y rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm leading-6 text-gray-800 placeholder:text-gray-400 focus:border-indigo-500/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/15 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-indigo-400/40"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Details, criteria, links…"
-                  spellCheck={false}
-                />
-              </div>
-
-              <div className="mt-auto grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-2">
+              <div
+                className={`${showDetails ? 'grid' : 'hidden'} mt-auto grid shrink-0 grid-cols-1 gap-3 sm:grid sm:grid-cols-2`}
+              >
                 <div className="relative min-w-0">
                   <span className="mb-1 block text-xs text-gray-500 dark:text-gray-400">Due date</span>
                   <button
                     type="button"
-                    className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700/50"
+                    className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700/50 sm:min-h-0"
                     onClick={() => setShowCalendar(!showCalendar)}
                   >
                     <Calendar className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" aria-hidden />
@@ -253,7 +291,7 @@ export default function CreateTaskModal({
                 </div>
                 <div className="min-w-0">
                   <span className="mb-1 block text-xs text-gray-500 dark:text-gray-400">Assignee</span>
-                  <div className="flex min-h-[2.5rem] items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-800">
+                  <div className="flex min-h-11 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-800 sm:min-h-[2.5rem]">
                     <div
                       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-600 dark:bg-gray-600 dark:text-gray-200"
                       aria-hidden
@@ -286,26 +324,27 @@ export default function CreateTaskModal({
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-gray-200 pt-4 dark:border-gray-700">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700/50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus-visible:ring-indigo-400 dark:focus-visible:ring-offset-gray-900"
-                >
-                  Create Task
-                </button>
-              </div>
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-gray-200 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-gray-700 dark:bg-gray-900 sm:px-6 sm:py-4">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="min-h-11 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700/50 sm:min-h-0"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!title.trim()}
+                className="min-h-11 flex-1 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus-visible:ring-indigo-400 dark:focus-visible:ring-offset-gray-900 sm:min-h-0 sm:flex-none"
+              >
+                Create task
+              </button>
             </div>
           </div>
 
-          <aside className="flex min-h-0 min-w-0 flex-col border-gray-200 bg-zinc-50 dark:border-gray-800 dark:bg-gray-950 max-lg:min-h-[12rem] max-lg:max-h-[40vh] lg:w-[min(100%,28rem)] lg:shrink-0 lg:border-l">
+          <aside className="hidden min-h-0 min-w-0 flex-col border-gray-200 bg-zinc-50 dark:border-gray-800 dark:bg-gray-950 lg:flex lg:w-[min(100%,28rem)] lg:shrink-0 lg:border-l">
             <div className="shrink-0 border-b border-gray-200 px-4 py-3 dark:border-gray-800 lg:px-5">
               <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">KanbanAI</h3>
             </div>

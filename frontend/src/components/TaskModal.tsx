@@ -462,9 +462,15 @@ export default function TaskModal({
   const datepickerShellClass =
     'absolute left-0 top-full z-[60] mt-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg dark:border-gray-600 dark:bg-gray-800 [&_.react-datepicker]:!border-gray-700 [&_.react-datepicker]:!bg-gray-800 [&_.react-datepicker__triangle]:!hidden [&_.react-datepicker__header]:!border-gray-700 [&_.react-datepicker__header]:!bg-gray-800 [&_.react-datepicker__current-month]:!text-gray-100 [&_.react-datepicker__day-name]:!text-gray-400 [&_.react-datepicker__day]:!text-gray-200 [&_.react-datepicker__day:hover]:!bg-gray-700 [&_.react-datepicker__day--outside-month]:!text-gray-500 [&_.react-datepicker__day--selected]:!bg-indigo-600 [&_.react-datepicker__day--selected]:!text-white [&_.react-datepicker__day--keyboard-selected]:!bg-indigo-600/70 [&_.react-datepicker__navigation-icon::before]:!border-gray-300';
 
+  const statusChipOptions: { id: Status; label: string }[] = [
+    { id: 'todo', label: 'To do' },
+    { id: 'in-progress', label: 'In progress' },
+    { id: 'done', label: 'Done' },
+  ];
+
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-3 transition-all duration-200 ease-out sm:p-4 ${
+      className={`fixed inset-0 z-50 flex items-stretch justify-center transition-all duration-200 ease-out sm:items-center sm:p-4 ${
         isClosing
           ? 'bg-black/0'
           : isVisible
@@ -474,17 +480,22 @@ export default function TaskModal({
       onClick={handleClose}
     >
       <div
-        className={`flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg transition-all duration-200 ease-out dark:border-gray-700 dark:bg-gray-900 ${
-          isClosing ? 'scale-95 opacity-0' : isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+        className={`flex h-dvh max-h-dvh w-full max-w-6xl flex-col overflow-hidden border-gray-200 bg-white shadow-lg transition-all duration-200 ease-out dark:border-gray-700 dark:bg-gray-900 sm:h-auto sm:max-h-[92vh] sm:rounded-xl sm:border ${
+          isClosing
+            ? 'translate-y-2 opacity-0 sm:translate-y-0 sm:scale-95'
+            : isVisible
+              ? 'translate-y-0 opacity-100 sm:scale-100'
+              : 'translate-y-2 opacity-0 sm:translate-y-0 sm:scale-95'
         }`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="task-modal-title"
       >
-        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-          <div className="min-w-0 flex-1 overflow-y-auto border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 lg:border-b-0 lg:border-r">
-            <div className="flex min-h-0 flex-1 flex-col gap-5 p-6">
+        {/* Mobile: one scroll for form + comments. Desktop: side-by-side panes. */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain lg:flex-row lg:overflow-hidden">
+          <div className="min-w-0 shrink-0 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-y-contain lg:border-b-0 lg:border-r">
+            <div className="flex flex-col gap-4 p-4 pt-[max(1rem,env(safe-area-inset-top))] sm:gap-5 sm:p-6">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="mb-1.5 text-xs capitalize text-gray-500 dark:text-gray-400">
@@ -502,15 +513,42 @@ export default function TaskModal({
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="shrink-0 rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                  className="shrink-0 rounded-lg p-2.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
                   aria-label="Close"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
+              <div className="sm:hidden">
+                <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Status</p>
+                <div className="grid grid-cols-3 gap-2" role="group" aria-label="Status">
+                  {statusChipOptions.map((opt) => {
+                    const active = status === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => {
+                          setStatus(opt.id);
+                          onStatusChange(task.id, opt.id);
+                        }}
+                        className={`min-h-11 rounded-xl px-2 text-xs font-semibold transition-colors ${
+                          active
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700/50'
+                        }`}
+                        aria-pressed={active}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                <div className="max-sm:hidden">
                   <label htmlFor="task-modal-status" className="mb-1 block text-xs text-gray-500 dark:text-gray-400">
                     Status
                   </label>
@@ -525,7 +563,7 @@ export default function TaskModal({
                     <option value="done">Done</option>
                   </select>
                 </div>
-                <div>
+                <div className="max-sm:col-span-2">
                   <label htmlFor="task-modal-sprint" className="mb-1 block text-xs text-gray-500 dark:text-gray-400">
                     Sprint
                   </label>
@@ -533,7 +571,7 @@ export default function TaskModal({
                     id="task-modal-sprint"
                     value={sprint}
                     onChange={handleSprintChange}
-                    className={fieldSelectClass}
+                    className={`${fieldSelectClass} min-h-11 sm:min-h-0`}
                   >
                     {Array.from({ length: numSprints }, (_, i) => i + 1).map((s) => (
                       <option key={s} value={s}>
@@ -544,14 +582,14 @@ export default function TaskModal({
                 </div>
               </div>
 
-              <div className="flex min-h-[14rem] flex-1 flex-col sm:min-h-[16rem]">
+              <div className="flex flex-col sm:min-h-[16rem]">
                 <label htmlFor="task-modal-description" className="mb-1 block text-xs text-gray-500 dark:text-gray-400">
                   Description
                 </label>
                 <TextareaAutosize
                   id="task-modal-description"
-                  minRows={8}
-                  className="box-border w-full min-h-[12rem] flex-1 resize-y rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm leading-6 text-gray-800 placeholder:text-gray-400 focus:border-indigo-500/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/15 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-indigo-400/40"
+                  minRows={3}
+                  className="box-border w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-3 text-sm leading-6 text-gray-800 placeholder:text-gray-400 focus:border-indigo-500/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/15 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:placeholder:text-gray-500 dark:focus:border-indigo-400/40 sm:min-h-[12rem] sm:resize-y"
                   value={description}
                   onChange={handleDescriptionChange}
                   placeholder="Details, criteria, links…"
@@ -559,7 +597,7 @@ export default function TaskModal({
                 />
               </div>
 
-              <div className="mt-auto grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="relative min-w-0">
                   <span className="mb-1 block text-xs text-gray-500 dark:text-gray-400">Due date</span>
                   <button
@@ -641,11 +679,11 @@ export default function TaskModal({
             </div>
           </div>
 
-          <aside className="flex min-h-0 min-w-0 flex-col border-gray-200 bg-zinc-50 dark:border-gray-800 dark:bg-gray-950 max-lg:min-h-[14rem] max-lg:max-h-[55vh] lg:w-[min(100%,32rem)] lg:shrink-0 lg:border-l">
+          <aside className="flex min-w-0 flex-col border-gray-200 bg-zinc-50 pb-[env(safe-area-inset-bottom)] dark:border-gray-800 dark:bg-gray-950 lg:min-h-0 lg:w-[min(100%,32rem)] lg:shrink-0 lg:overflow-hidden lg:border-l lg:pb-0">
             <div className="shrink-0 border-b border-gray-200 px-4 py-3 dark:border-gray-800 lg:px-5">
               <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Comments</h3>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 lg:px-5">
+            <div className="px-4 py-4 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:overscroll-y-contain lg:px-5">
               {guestMode ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Comments sync to your team when you use a saved project.{' '}
@@ -761,12 +799,12 @@ export default function TaskModal({
                           onKeyDown={handleCommentKeyDown}
                           placeholder="Add a comment… (Markdown supported)"
                           disabled={commentSubmitting}
-                          minRows={3}
-                          maxRows={16}
+                          minRows={2}
+                          maxRows={8}
                           spellCheck={false}
                           aria-label="Task comment"
                           aria-describedby="task-comment-mention-footer"
-                          className="relative z-10 max-h-[20rem] min-h-[2.75rem] w-full resize-none overflow-y-auto overflow-x-hidden bg-transparent py-1 text-[13px] leading-snug text-transparent caret-zinc-900 placeholder:text-zinc-400 focus:outline-none selection:bg-indigo-200/50 disabled:cursor-not-allowed dark:caret-zinc-100 dark:placeholder:text-zinc-500 dark:selection:bg-indigo-500/30"
+                          className="relative z-10 min-h-[2.75rem] w-full resize-none overflow-x-hidden bg-transparent py-1 text-[13px] leading-snug text-transparent caret-zinc-900 placeholder:text-zinc-400 focus:outline-none selection:bg-indigo-200/50 disabled:cursor-not-allowed dark:caret-zinc-100 dark:placeholder:text-zinc-500 dark:selection:bg-indigo-500/30 lg:max-h-[20rem] lg:overflow-y-auto"
                         />
                       </div>
                       <button

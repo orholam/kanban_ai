@@ -3,7 +3,7 @@ import { lazyWithRetry } from '../lib/lazyWithRetry';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { Plus, Minus, Eye, EyeOff, Link as LinkIcon, Plug, Users, X, Filter, Sparkles } from 'lucide-react';
 import TaskCard from '../components/TaskCard';
-import type { Project, Task, Priority, TaskType } from '../types';
+import type { Project, Task, Priority, TaskType, Status } from '../types';
 import {
   deleteTaskRow,
   fetchProjectMetaFields,
@@ -25,6 +25,7 @@ import { fetchProfileDisplayName } from '../lib/profileDisplayName';
 import { getDisplayName, getUserInitials } from '../lib/userUtils';
 import type { AssigneeOption } from '../lib/assignee';
 import { initialsFromName } from '../lib/assignee';
+import { v4 as uuidv4 } from 'uuid';
 
 const MCP_CONNECT_BANNER_KEY = 'kanban_mcp_connect_banner_dismissed_v1';
 
@@ -159,10 +160,15 @@ export default function KanbanBoard({
   const [isLoading, setIsLoading] = useState(true);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createDefaultStatus, setCreateDefaultStatus] = useState<Status>('todo');
+  const [mobileColumn, setMobileColumn] = useState<Status>('todo');
+  const [quickCaptureTitle, setQuickCaptureTitle] = useState('');
+  const [isQuickCreating, setIsQuickCreating] = useState(false);
   const [chatOpenRequest, setChatOpenRequest] = useState(0);
   const [isCondensed, setIsCondensed] = useState(() => {
     const saved = localStorage.getItem('kanban-condensed-mode');
-    return saved ? JSON.parse(saved) : false;
+    if (saved) return JSON.parse(saved) as boolean;
+    return typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
   });
   const [isPrivacyUpdating, setIsPrivacyUpdating] = useState(false);
   const [isMembersPanelOpen, setIsMembersPanelOpen] = useState(false);
@@ -528,13 +534,46 @@ export default function KanbanBoard({
     }
 
     try {
-      console.log("trying to create new task!");
-      console.log(newTask);
       const merged = await insertTaskRow(newTask);
       setTasks((prevTasks) => [...prevTasks, { ...merged, isAnimated: true }]);
       toast.success('Task created');
     } catch (error) {
       console.error('Error creating task:', error);
+    }
+  };
+
+  const openCreateModal = (status: Status = 'todo') => {
+    setCreateDefaultStatus(status);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleQuickCapture = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const title = quickCaptureTitle.trim();
+    if (!title || !currentProject || isQuickCreating) return;
+
+    const ts = new Date().toISOString();
+    const newTask: Task = {
+      id: uuidv4(),
+      project_id: currentProject.id,
+      title,
+      description: '',
+      type: 'feature',
+      priority: 'medium',
+      status: mobileColumn,
+      sprint: activeSprint,
+      due_date: new Date().toISOString().split('T')[0],
+      assignee_id: user?.id || '',
+      created_at: ts,
+      updated_at: ts,
+    };
+
+    setIsQuickCreating(true);
+    setQuickCaptureTitle('');
+    try {
+      await handleCreateTask(newTask);
+    } finally {
+      setIsQuickCreating(false);
     }
   };
 
@@ -1060,16 +1099,60 @@ export default function KanbanBoard({
     return out;
   }, [tasks, searchQuery, activeSprint, assigneeFilter, typeFilter, priorityFilter]);
 
+  const renderColumnTasks = (columnId: Status) => {
+    const columnTasks = tasksByColumn[columnId];
+    return columnTasks.map((task, index) => (
+      <div
+        key={task.id}
+        className={`relative overflow-hidden rounded-xl ${
+          !isLoading && !task.isAnimated
+            ? 'translate-y-1 transform opacity-0 animate-[fade-in-up_.45s_ease-out_forwards]'
+            : ''
+        } ${
+          task.aiBrandish
+            ? isDarkMode
+              ? 'shadow-[0_0_0_1px_rgba(129,140,248,0.14),0_0_14px_-8px_rgba(129,140,248,0.08)]'
+              : 'shadow-[0_0_0_1px_rgba(99,102,241,0.16),0_0_12px_-8px_rgba(99,102,241,0.07)]'
+            : ''
+        }`}
+        style={{ animationDelay: `${index * STAGGER_DELAY_MS}ms` }}
+      >
+        <TaskCard
+          task={task}
+          onClick={setSelectedTask}
+          onDeleteTask={handleDeleteTask}
+          isDarkMode={isDarkMode}
+          isCondensed={isCondensed}
+          assignee={assigneeById.get((task.assignee_id ?? '').trim())}
+        />
+        {task.aiBrandish ? (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-[1] overflow-hidden rounded-[inherit]"
+          >
+            <div
+              className={`absolute inset-y-0 left-0 w-[55%] bg-gradient-to-r from-transparent to-transparent animate-ai-brandish-sweep ${
+                isDarkMode ? 'via-indigo-400/[0.09]' : 'via-indigo-500/[0.11]'
+              }`}
+              onAnimationEnd={() => clearAiBrandish(task.id)}
+            />
+          </div>
+        ) : null}
+      </div>
+    ));
+  };
+
   return (
     <div
-      className={`flex min-h-0 w-full flex-1 transition-colors duration-200 ${
+      className={`flex min-h-0 w-full flex-1 overflow-hidden transition-colors duration-200 ${
         isDarkMode ? 'bg-zinc-950' : 'bg-zinc-50'
       }`}
     >
-      <div className="min-h-0 flex-1 overflow-auto px-3 py-3 sm:px-4">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="shrink-0 px-3 pt-3 sm:px-4">
         {showMcpBanner ? (
           <div
-            className={`mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm ${
+            className={`mb-3 hidden flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm md:flex ${
               isDarkMode
                 ? 'border-teal-500/30 bg-teal-950/25 text-zinc-200'
                 : 'border-teal-200 bg-teal-50/80 text-zinc-800'
@@ -1130,7 +1213,7 @@ export default function KanbanBoard({
                 </h1>
               )}
               {currentProject && !guestMode ? (
-                <span className="flex shrink-0 flex-wrap items-center gap-1.5">
+                <span className="hidden shrink-0 flex-wrap items-center gap-1.5 sm:flex">
                   <button
                     type="button"
                     onClick={() => setIsMembersPanelOpen(true)}
@@ -1195,7 +1278,7 @@ export default function KanbanBoard({
                 placeholder="Add a short description…"
                 rows={2}
                 aria-label="Project description"
-                className={`mt-1 w-full max-w-2xl resize-y border-0 border-b border-transparent bg-transparent text-xs leading-snug transition-colors focus:border-indigo-500 focus:outline-none focus:ring-0 disabled:opacity-60 sm:text-[13px] ${
+                className={`mt-1 hidden w-full max-w-2xl resize-y border-0 border-b border-transparent bg-transparent text-xs leading-snug transition-colors focus:border-indigo-500 focus:outline-none focus:ring-0 disabled:opacity-60 sm:block sm:text-[13px] ${
                   isDarkMode
                     ? 'text-zinc-400 placeholder:text-zinc-600 hover:border-zinc-700'
                     : 'text-zinc-600 placeholder:text-zinc-400 hover:border-zinc-200'
@@ -1218,19 +1301,21 @@ export default function KanbanBoard({
         </header>
 
         {currentProject && !guestMode ? (
-          <ProjectRoadmapPanel
-            isDarkMode={isDarkMode}
-            projectId={currentProject.id}
-            masterPlan={currentProject.master_plan ?? ''}
-            onMasterPlanChange={(next) =>
-              setCurrentProject((prev) => (prev ? { ...prev, master_plan: next } : null))
-            }
-            disabled={isSavingProjectMeta}
-          />
+          <div className="mt-2 hidden md:block">
+            <ProjectRoadmapPanel
+              isDarkMode={isDarkMode}
+              projectId={currentProject.id}
+              masterPlan={currentProject.master_plan ?? ''}
+              onMasterPlanChange={(next) =>
+                setCurrentProject((prev) => (prev ? { ...prev, master_plan: next } : null))
+              }
+              disabled={isSavingProjectMeta}
+            />
+          </div>
         ) : null}
 
         <div
-          className={`mb-3 flex min-h-[2.5rem] flex-wrap items-center gap-x-1 gap-y-1 rounded-xl border px-1 py-1 sm:mb-4 ${
+          className={`mb-2 mt-2 flex min-h-[2.5rem] flex-wrap items-center gap-x-1 gap-y-1 rounded-xl border px-1 py-1 md:mb-0 ${
             isDarkMode
               ? 'border-zinc-800/90 bg-zinc-900/35'
               : 'border-zinc-200/70 bg-zinc-100/40'
@@ -1314,7 +1399,7 @@ export default function KanbanBoard({
                   type="button"
                   disabled={isSprintUpdating}
                   onClick={() => void handleAddSprint()}
-                  className={`inline-flex min-h-[1.625rem] items-center gap-1 rounded-md px-2 text-xs font-semibold transition-colors disabled:opacity-60 ${
+                  className={`hidden min-h-[1.625rem] items-center gap-1 rounded-md px-2 text-xs font-semibold transition-colors disabled:opacity-60 md:inline-flex ${
                     isDarkMode
                       ? 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'
                       : 'text-zinc-600 hover:bg-zinc-200/80 hover:text-zinc-900'
@@ -1329,7 +1414,7 @@ export default function KanbanBoard({
                     type="button"
                     disabled={isSprintUpdating}
                     onClick={() => void handleRemoveSprint()}
-                    className={`inline-flex min-h-[1.625rem] items-center gap-1 rounded-md px-2 text-xs font-semibold transition-colors disabled:opacity-60 ${
+                    className={`hidden min-h-[1.625rem] items-center gap-1 rounded-md px-2 text-xs font-semibold transition-colors disabled:opacity-60 md:inline-flex ${
                       isDarkMode
                         ? 'text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300'
                         : 'text-zinc-600 hover:bg-zinc-200/80 hover:text-zinc-900'
@@ -1471,7 +1556,7 @@ export default function KanbanBoard({
             </>
           ) : null}
 
-          <div className="flex items-center gap-2 px-2 py-1">
+          <div className="hidden items-center gap-2 px-2 py-1 md:flex">
             <span className={`text-[11px] font-medium ${isDarkMode ? 'text-zinc-500' : 'text-zinc-600'}`}>
               Compact
             </span>
@@ -1494,8 +1579,8 @@ export default function KanbanBoard({
 
           <button
             type="button"
-            onClick={() => setIsCreateModalOpen(true)}
-            className={`ml-auto inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+            onClick={() => openCreateModal('todo')}
+            className={`ml-auto hidden items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors md:inline-flex ${
               isDarkMode ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-indigo-600 text-white hover:bg-indigo-700'
             }`}
           >
@@ -1506,7 +1591,7 @@ export default function KanbanBoard({
 
         {!isLoading && currentProject && tasks.length === 0 ? (
           <div
-            className={`mb-4 rounded-xl border px-4 py-4 sm:mb-5 sm:px-5 ${
+            className={`mb-4 hidden rounded-xl border px-4 py-4 md:block sm:mb-5 sm:px-5 ${
               isDarkMode
                 ? 'border-indigo-500/25 bg-indigo-950/30'
                 : 'border-indigo-200/80 bg-indigo-50/60'
@@ -1518,15 +1603,14 @@ export default function KanbanBoard({
                   Your board is empty
                 </p>
                 <p className={`mt-1 text-xs leading-relaxed sm:text-sm ${isDarkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                  Add a task manually or let the AI assistant break down sprint one — use the panel on the right or the
-                  buttons below.
+                  Type a title in the bar below, open the full form, or ask the AI assistant to break down sprint one.
                 </p>
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsCreateModalOpen(true)}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                  onClick={() => openCreateModal('todo')}
+                  className={`inline-flex min-h-11 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:min-h-0 ${
                     isDarkMode
                       ? 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700'
                       : 'bg-white text-zinc-900 ring-1 ring-zinc-200 hover:bg-zinc-50'
@@ -1538,7 +1622,7 @@ export default function KanbanBoard({
                 <button
                   type="button"
                   onClick={() => setChatOpenRequest((n) => n + 1)}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-500"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-500 sm:min-h-0"
                 >
                   <Sparkles className="h-3.5 w-3.5 shrink-0" />
                   Plan with AI
@@ -1548,88 +1632,190 @@ export default function KanbanBoard({
           </div>
         ) : null}
 
-        <div className="grid grid-cols-1 gap-y-5 md:grid-cols-3 md:gap-x-5 md:gap-y-0 md:items-stretch lg:gap-x-6">
-          {BOARD_COLUMNS.map((column) => {
-            const columnTasks = tasksByColumn[column.id];
-            const count = columnTasks.length;
-            const dragHere = dragOverColumn === column.id;
-            return (
-              <div
-                key={column.id}
-                data-kanban-column={column.id}
-                className={`flex min-h-0 min-w-0 flex-col rounded-lg border-2 border-transparent transition-[background-color,border-color] duration-150 ${
-                  dragHere
-                    ? isDarkMode
-                      ? 'border-indigo-500/55 bg-zinc-900/50'
-                      : 'border-indigo-400/70 bg-indigo-50/40'
-                    : ''
-                }`}
-                onDragOver={(e) => handleDragOver(e, column.id)}
-                onDragLeave={(e) => handleColumnDragLeave(e, column.id)}
-                onDrop={(e) => handleDrop(e, column.id)}
-              >
-                <div
-                  className={`sticky top-0 z-[1] flex shrink-0 items-baseline justify-between gap-2 border-b py-1.5 ${
-                    isDarkMode ? 'border-zinc-800/80 bg-zinc-950' : 'border-zinc-200/60 bg-zinc-50'
-                  }`}
-                >
-                  <h3
-                    className={`text-[11px] font-semibold uppercase tracking-wide ${
-                      isDarkMode ? 'text-zinc-500' : 'text-zinc-500'
+        </div>
+
+        {/* Mobile: one status list, one vertical scroller — no nested / horizontal board scroll */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:hidden">
+          <div className="shrink-0 px-3 pb-2">
+            <div
+              role="tablist"
+              aria-label="Task status"
+              className={`grid grid-cols-3 gap-1 rounded-xl p-1 ${
+                isDarkMode ? 'bg-zinc-900/80' : 'bg-zinc-100'
+              }`}
+            >
+              {BOARD_COLUMNS.map((column) => {
+                const count = tasksByColumn[column.id].length;
+                const active = mobileColumn === column.id;
+                return (
+                  <button
+                    key={column.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setMobileColumn(column.id)}
+                    className={`flex min-h-10 flex-col items-center justify-center rounded-lg px-1 py-1.5 transition-colors ${
+                      active
+                        ? isDarkMode
+                          ? 'bg-zinc-800 text-zinc-100 shadow-sm'
+                          : 'bg-white text-zinc-900 shadow-sm'
+                        : isDarkMode
+                          ? 'text-zinc-500'
+                          : 'text-zinc-500'
                     }`}
                   >
-                    {column.title}
-                  </h3>
-                  <span className={`text-[11px] tabular-nums ${isDarkMode ? 'text-zinc-600' : 'text-zinc-400'}`}>
-                    {count}
-                  </span>
-                </div>
-                <div
-                  className={`flex min-h-0 flex-1 flex-col gap-1.5 pt-2 pb-1 ${columnTasks.length === 0 ? 'min-h-[2.5rem]' : ''}`}
+                    <span className="text-[11px] font-semibold leading-none">{column.title}</span>
+                    <span
+                      className={`mt-0.5 text-[10px] tabular-nums ${
+                        active
+                          ? isDarkMode
+                            ? 'text-indigo-300'
+                            : 'text-indigo-600'
+                          : isDarkMode
+                            ? 'text-zinc-600'
+                            : 'text-zinc-400'
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3">
+            <div className="flex items-center justify-between gap-2 pb-2">
+              <p
+                className={`text-[11px] font-semibold uppercase tracking-wide ${
+                  isDarkMode ? 'text-zinc-500' : 'text-zinc-500'
+                }`}
+              >
+                {BOARD_COLUMNS.find((c) => c.id === mobileColumn)?.title}
+              </p>
+              <button
+                type="button"
+                onClick={() => openCreateModal(mobileColumn)}
+                className={`flex h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold transition-colors ${
+                  isDarkMode
+                    ? 'text-indigo-300 hover:bg-zinc-800'
+                    : 'text-indigo-700 hover:bg-indigo-50'
+                }`}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add
+              </button>
+            </div>
+            <div className="flex flex-col gap-1.5 pb-2">
+              {tasksByColumn[mobileColumn].length === 0 ? (
+                <p className={`py-8 text-center text-sm ${isDarkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                  No tasks here yet
+                </p>
+              ) : (
+                renderColumnTasks(mobileColumn)
+              )}
+            </div>
+          </div>
+
+          {currentProject ? (
+            <form
+              onSubmit={(e) => void handleQuickCapture(e)}
+              className={`shrink-0 border-t px-3 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] ${
+                isDarkMode
+                  ? 'border-zinc-800/80 bg-zinc-950'
+                  : 'border-zinc-200/80 bg-zinc-50'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <label htmlFor="mobile-quick-capture" className="sr-only">
+                  Quick add task
+                </label>
+                <input
+                  id="mobile-quick-capture"
+                  type="text"
+                  value={quickCaptureTitle}
+                  onChange={(e) => setQuickCaptureTitle(e.target.value)}
+                  placeholder={`Add to ${BOARD_COLUMNS.find((c) => c.id === mobileColumn)?.title.toLowerCase()}…`}
+                  enterKeyHint="done"
+                  autoComplete="off"
+                  className={`min-h-11 min-w-0 flex-1 rounded-xl border px-3.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500/30 ${
+                    isDarkMode
+                      ? 'border-zinc-700 bg-zinc-900 text-zinc-100 placeholder:text-zinc-500'
+                      : 'border-zinc-200 bg-white text-zinc-900 placeholder:text-zinc-400'
+                  }`}
+                />
+                <button
+                  type="submit"
+                  disabled={!quickCaptureTitle.trim() || isQuickCreating}
+                  className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  {columnTasks.map((task, index) => (
-                      <div
-                        key={task.id}
-                        className={`relative overflow-hidden rounded-xl ${
-                          !isLoading && !task.isAnimated
-                            ? 'translate-y-1 transform opacity-0 animate-[fade-in-up_.45s_ease-out_forwards]'
-                            : ''
-                        } ${
-                          task.aiBrandish
-                            ? isDarkMode
-                              ? 'shadow-[0_0_0_1px_rgba(129,140,248,0.14),0_0_14px_-8px_rgba(129,140,248,0.08)]'
-                              : 'shadow-[0_0_0_1px_rgba(99,102,241,0.16),0_0_12px_-8px_rgba(99,102,241,0.07)]'
-                            : ''
-                        }`}
-                        style={{ animationDelay: `${index * STAGGER_DELAY_MS}ms` }}
-                      >
-                        <TaskCard
-                          task={task}
-                          onClick={setSelectedTask}
-                          onDeleteTask={handleDeleteTask}
-                          isDarkMode={isDarkMode}
-                          isCondensed={isCondensed}
-                          assignee={assigneeById.get((task.assignee_id ?? '').trim())}
-                        />
-                        {task.aiBrandish ? (
-                          <div
-                            aria-hidden
-                            className="pointer-events-none absolute inset-0 z-[1] overflow-hidden rounded-[inherit]"
-                          >
-                            <div
-                              className={`absolute inset-y-0 left-0 w-[55%] bg-gradient-to-r from-transparent to-transparent animate-ai-brandish-sweep ${
-                                isDarkMode ? 'via-indigo-400/[0.09]' : 'via-indigo-500/[0.11]'
-                              }`}
-                              onAnimationEnd={() => clearAiBrandish(task.id)}
-                            />
-                          </div>
-                        ) : null}
-                      </div>
-                    ))}
-                </div>
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openCreateModal(mobileColumn)}
+                  className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition-colors ${
+                    isDarkMode
+                      ? 'border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800'
+                      : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100'
+                  }`}
+                  aria-label="Open full create form"
+                  title="More options"
+                >
+                  <Plus className="h-5 w-5" />
+                </button>
               </div>
-            );
-          })}
+            </form>
+          ) : null}
+        </div>
+
+        {/* Desktop: classic three-column board */}
+        <div className="hidden min-h-0 flex-1 overflow-auto px-4 pb-3 md:block">
+          <div className="grid grid-cols-3 items-stretch gap-x-5 lg:gap-x-6">
+            {BOARD_COLUMNS.map((column) => {
+              const columnTasks = tasksByColumn[column.id];
+              const count = columnTasks.length;
+              const dragHere = dragOverColumn === column.id;
+              return (
+                <div
+                  key={column.id}
+                  data-kanban-column={column.id}
+                  className={`flex min-h-0 min-w-0 flex-col rounded-lg border-2 border-transparent transition-[background-color,border-color] duration-150 ${
+                    dragHere
+                      ? isDarkMode
+                        ? 'border-indigo-500/55 bg-zinc-900/50'
+                        : 'border-indigo-400/70 bg-indigo-50/40'
+                      : ''
+                  }`}
+                  onDragOver={(e) => handleDragOver(e, column.id)}
+                  onDragLeave={(e) => handleColumnDragLeave(e, column.id)}
+                  onDrop={(e) => handleDrop(e, column.id)}
+                >
+                  <div
+                    className={`sticky top-0 z-[1] flex shrink-0 items-baseline justify-between gap-2 border-b py-1.5 ${
+                      isDarkMode ? 'border-zinc-800/80 bg-zinc-950' : 'border-zinc-200/60 bg-zinc-50'
+                    }`}
+                  >
+                    <h3
+                      className={`text-[11px] font-semibold uppercase tracking-wide ${
+                        isDarkMode ? 'text-zinc-500' : 'text-zinc-500'
+                      }`}
+                    >
+                      {column.title}
+                    </h3>
+                    <span className={`text-[11px] tabular-nums ${isDarkMode ? 'text-zinc-600' : 'text-zinc-400'}`}>
+                      {count}
+                    </span>
+                  </div>
+                  <div
+                    className={`flex flex-col gap-1.5 pb-1 pt-2 ${columnTasks.length === 0 ? 'min-h-[2.5rem]' : ''}`}
+                  >
+                    {renderColumnTasks(column.id)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -1674,6 +1860,7 @@ export default function KanbanBoard({
             projectId={currentProject?.id || ''}
             numSprints={currentProject?.num_sprints ?? 10}
             defaultSprint={activeSprint}
+            defaultStatus={createDefaultStatus}
             assigneeOptions={assigneeOptions}
           />
         </Suspense>
@@ -1690,7 +1877,7 @@ export default function KanbanBoard({
           onMembersChanged={onRefreshProjects}
         />
       ) : null}
+
     </div>
-    
   );
 }

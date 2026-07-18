@@ -19,7 +19,13 @@ export default function ProjectRoadmapPanel({
   onMasterPlanChange,
   disabled = false,
 }: ProjectRoadmapPanelProps) {
-  const [open, setOpen] = useState(() => parseMasterPlan(masterPlan).length > 0);
+  const [open, setOpen] = useState(() => {
+    // Keep the board chrome short on phones (browser chrome already eats height).
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
+      return false;
+    }
+    return parseMasterPlan(masterPlan).length > 0;
+  });
   const [phases, setPhases] = useState<RoadmapPhase[]>(() => parseMasterPlan(masterPlan));
   const [saving, setSaving] = useState(false);
 
