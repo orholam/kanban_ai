@@ -103,6 +103,7 @@ On a **hosted** deployment, Kanban AI exposes a remote MCP server at `/api/mcp` 
 
 - AI project breakdown and sprint-aware task generation
 - Drag-and-drop kanban with priorities, types, due dates, and comments
+- Mobile-first board: status tabs + single scroll list, in-flow quick-add, drawer nav, overlay AI assistant
 - In-board AI assistant (and `@kanban` replies on task threads)
 - Project members (cloud) or local seeded collaborator for sharing tests
 - Dark / light mode

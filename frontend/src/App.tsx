@@ -161,6 +161,20 @@ function AppContent() {
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileNavOpen]);
 
   const refreshProjects = async () => {
     if (!user) {
@@ -337,11 +351,15 @@ function AppContent() {
       />
 
       <Route path="*" element={
-        <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div className={`flex h-dvh max-h-dvh flex-col overflow-hidden ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
           {!guestVariantBLandingChrome && (
-            <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+            <Header
+              isDarkMode={isDarkMode}
+              toggleTheme={toggleTheme}
+              onOpenMobileNav={user ? () => setMobileNavOpen(true) : undefined}
+            />
           )}
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex min-h-0 flex-1 overflow-hidden">
             {user && (
               <Sidebar
                 isDarkMode={isDarkMode}
@@ -349,9 +367,11 @@ function AppContent() {
                 user={user}
                 showAnalyticsLink={showAnalyticsLink}
                 onDeleteProject={handleDeleteProject}
+                mobileOpen={mobileNavOpen}
+                onMobileClose={() => setMobileNavOpen(false)}
               />
             )}
-            <main className="flex-1 min-h-0 min-w-0 flex flex-col">
+            <main className="flex min-h-0 min-w-0 flex-1 flex-col">
               <Routes>
                 <Route
                   path="/"

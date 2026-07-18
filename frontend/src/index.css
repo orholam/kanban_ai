@@ -11,6 +11,14 @@ body {
   @apply antialiased text-gray-900;
 }
 
+/* Prefer dynamic viewport height so mobile browser chrome doesn't create twin scrollers */
+@supports (height: 100dvh) {
+  .h-screen {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+}
+
 /* Custom scrollbar styles */
 ::-webkit-scrollbar {
   width: 6px;

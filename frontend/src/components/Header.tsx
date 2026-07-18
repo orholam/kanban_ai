@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Menu } from 'lucide-react';
 import Logo from '../assets/kanban_ai_logo5.png';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
@@ -9,9 +9,11 @@ import { DOCUMENTATION_BOARD_BASE_PATH } from '../documentation-board-feature/in
 interface HeaderProps {
   isDarkMode: boolean;
   toggleTheme: () => void;
+  /** When set, shows a menu control that opens the workspace sidebar on small screens. */
+  onOpenMobileNav?: () => void;
 }
 
-export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
+export default function Header({ isDarkMode, toggleTheme, onOpenMobileNav }: HeaderProps) {
   const { user, signOut } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -41,23 +43,39 @@ export default function Header({ isDarkMode, toggleTheme }: HeaderProps) {
 
   return (
     <header
-      className={`relative z-30 border-b backdrop-blur-xl ${
+      className={`relative z-30 border-b pt-[env(safe-area-inset-top)] backdrop-blur-xl ${
         isDarkMode
           ? 'border-zinc-800/60 bg-zinc-950/80'
           : 'border-zinc-200/70 bg-white/80'
       }`}
     >
       <div className="mx-auto flex h-14 max-w-[1920px] items-center justify-between gap-2 px-3 sm:h-16 sm:gap-4 sm:px-6">
-        <Link to="/" className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-2.5">
-          <img src={Logo} alt="Kanban AI Logo" className="h-8 w-auto sm:h-10" />
-          <span
-            className={`truncate text-base font-bold tracking-tight sm:text-xl ${
-              isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
-            }`}
-          >
-            Kanban AI
-          </span>
-        </Link>
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2.5">
+          {user && onOpenMobileNav ? (
+            <button
+              type="button"
+              onClick={onOpenMobileNav}
+              className={`shrink-0 rounded-lg p-2.5 transition-colors lg:hidden ${
+                isDarkMode
+                  ? 'text-zinc-300 hover:bg-zinc-800/80 hover:text-zinc-100'
+                  : 'text-zinc-600 hover:bg-zinc-100/90 hover:text-zinc-900'
+              }`}
+              aria-label="Open navigation menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          ) : null}
+          <Link to="/" className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-2.5">
+            <img src={Logo} alt="Kanban AI Logo" className="h-8 w-auto sm:h-10" />
+            <span
+              className={`truncate text-base font-bold tracking-tight sm:text-xl ${
+                isDarkMode ? 'text-zinc-100' : 'text-zinc-900'
+              }`}
+            >
+              Kanban AI
+            </span>
+          </Link>
+        </div>
 
         <nav
           className={`flex min-w-0 items-center gap-0 sm:gap-0.5 sm:gap-1 ${

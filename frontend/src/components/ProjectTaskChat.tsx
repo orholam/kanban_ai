@@ -40,6 +40,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { recordAnalyticsEvent } from '../lib/analyticsEvents';
 import { createTaskComment, deleteTaskComment, listTaskCommentsForTasks } from '../api/taskComments';
 import { KANBAN_AI_COMMENT_AUTHOR } from '../lib/kanbanAiComment';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 /** Fields the board assistant may change on the open project. */
 export type ProjectMetaPatch = Partial<Pick<Project, 'title' | 'description' | 'master_plan'>>;
@@ -531,7 +532,12 @@ export default function ProjectTaskChat({
   /** One-step stack of successful assistant mutations (for undo_last_action). */
   const agentUndoStackRef = useRef<AgentUndoEntry[]>([]);
 
+  const isNarrow = useMediaQuery('(max-width: 1023px)');
+
   const [open, setOpen] = useState(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches) {
+      return false;
+    }
     try {
       const v = localStorage.getItem(STORAGE_OPEN);
       if (v === null) return true;
@@ -544,6 +550,29 @@ export default function ProjectTaskChat({
   useEffect(() => {
     if (chatOpenRequest > 0) setOpen(true);
   }, [chatOpenRequest]);
+
+  const wasNarrowRef = useRef(isNarrow);
+  /** When the viewport crosses the narrow breakpoint, collapse or restore the desktop rail preference. */
+  useEffect(() => {
+    const wasNarrow = wasNarrowRef.current;
+    wasNarrowRef.current = isNarrow;
+    if (wasNarrow === isNarrow) return;
+
+    if (isNarrow) {
+      setOpen(false);
+      return;
+    }
+    try {
+      const v = localStorage.getItem(STORAGE_OPEN);
+      if (v === null) {
+        setOpen(true);
+        return;
+      }
+      setOpen(JSON.parse(v) as boolean);
+    } catch {
+      setOpen(true);
+    }
+  }, [isNarrow]);
   const [messages, setMessages] = useState<ProjectTaskChatMessage[]>([]);
   const messagesRef = useRef<ProjectTaskChatMessage[]>([]);
   useEffect(() => {
@@ -627,12 +656,22 @@ export default function ProjectTaskChat({
   }, [clearProgressDelayTimer]);
 
   useEffect(() => {
+    if (isNarrow) return;
     try {
       localStorage.setItem(STORAGE_OPEN, JSON.stringify(open));
     } catch {
       /* ignore */
     }
-  }, [open]);
+  }, [open, isNarrow]);
+
+  useEffect(() => {
+    if (!isNarrow || !open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isNarrow, open]);
 
   useEffect(() => {
     setMessages([]);
@@ -1164,9 +1203,31 @@ export default function ProjectTaskChat({
     !boardLoading && tasks.length === 0 ? EMPTY_BOARD_ASSISTANT_SUGGESTIONS : ASSISTANT_SUGGESTIONS;
 
   if (!open) {
+    if (isNarrow) {
+      return (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className={`fixed z-30 flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-1 transition-transform active:scale-95 lg:hidden ${
+            isDarkMode
+              ? 'bg-indigo-600 text-white shadow-indigo-950/40 ring-indigo-400/40'
+              : 'bg-indigo-600 text-white shadow-indigo-900/20 ring-indigo-500/30'
+          }`}
+          style={{
+            right: 'max(1rem, env(safe-area-inset-right))',
+            bottom: 'max(5.25rem, calc(env(safe-area-inset-bottom) + 4.25rem))',
+          }}
+          title="Open project assistant"
+          aria-label="Open project assistant"
+        >
+          <Sparkles className="h-5 w-5" />
+        </button>
+      );
+    }
+
     return (
       <div
-        className={`relative flex w-12 shrink-0 flex-col border-l ${border} ${panelBg}`}
+        className={`relative hidden w-12 shrink-0 flex-col border-l lg:flex ${border} ${panelBg}`}
         aria-label="Project assistant collapsed"
         onDragEnter={handleDragEnterPanel}
         onDragLeave={handleDragLeavePanel}
@@ -1181,7 +1242,7 @@ export default function ProjectTaskChat({
             aria-hidden
           >
             <span
-              className={`max-w-[7rem] text-center text-[10px] font-semibold uppercase leading-tight tracking-wide ${
+              className={`max-w-[7rem] text-center text-[10px] font-semibold uppercase tracking-wide ${
                 isDarkMode ? 'text-indigo-300' : 'text-indigo-600'
               }`}
             >
@@ -1212,8 +1273,21 @@ export default function ProjectTaskChat({
   }
 
   return (
+    <>
+      {isNarrow ? (
+        <button
+          type="button"
+          aria-label="Close project assistant"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[1px] lg:hidden"
+          onClick={() => setOpen(false)}
+        />
+      ) : null}
     <aside
-      className={`relative flex h-full max-h-full min-h-0 w-[min(100%,400px)] shrink-0 flex-col border-l ${border} ${panelBg}`}
+      className={`relative flex max-h-full min-h-0 flex-col overflow-hidden border-l ${border} ${panelBg} ${
+        isNarrow
+          ? 'fixed inset-y-0 right-0 z-50 h-dvh max-h-dvh w-full max-w-md shadow-2xl'
+          : 'h-full w-[min(100%,400px)] shrink-0'
+      }`}
       aria-label="Project task assistant"
       onDragEnter={handleDragEnterPanel}
       onDragLeave={handleDragLeavePanel}
@@ -1305,7 +1379,7 @@ export default function ProjectTaskChat({
 
       <div
         ref={listRef}
-        className={`flex min-h-0 flex-1 flex-col overflow-y-auto px-4 ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'} ${
+        className={`flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-y-contain px-4 ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'} ${
           messages.length === 0 ? '' : 'space-y-3 py-4'
         }`}
       >
@@ -1577,7 +1651,7 @@ export default function ProjectTaskChat({
           }`}
         >
           {composerAttachments.length > 0 ? (
-            <div className="flex max-h-[40vh] flex-col gap-2 overflow-y-auto border-b px-2.5 py-2.5 sm:max-h-[min(40vh,14rem)]">
+            <div className="flex flex-col gap-2 border-b px-2.5 py-2.5">
               <p
                 className={`text-[10px] font-semibold uppercase tracking-wide ${
                   isDarkMode ? 'text-zinc-500' : 'text-zinc-500'
@@ -1689,7 +1763,7 @@ export default function ProjectTaskChat({
           </div>
         </div>
         <p
-          className={`mt-2 px-1 text-center text-[10px] tabular-nums tracking-wide ${
+          className={`mt-2 px-1 pb-[env(safe-area-inset-bottom)] text-center text-[10px] tabular-nums tracking-wide ${
             isDarkMode ? 'text-zinc-600' : 'text-zinc-400'
           }`}
         >
@@ -1697,5 +1771,6 @@ export default function ProjectTaskChat({
         </p>
       </div>
     </aside>
+    </>
   );
 }
