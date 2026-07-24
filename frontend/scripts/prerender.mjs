@@ -202,7 +202,8 @@ function markdownToHtml(md) {
 
 function inlineFormat(text) {
   let s = escapeHtml(text);
-  s = s.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2">$1</a>');
+  // Absolute and root-relative internal links (SPA markdown uses /blog/... heavily)
+  s = s.replace(/\[([^\]]+)\]\((https?:[^)\s]+|\/[^)\s]+)\)/g, '<a href="$2">$1</a>');
   s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
   return s;
@@ -242,11 +243,11 @@ function loadDocArticles() {
 
 const STATIC_PAGE_META = {
   '/': {
-    title: 'Kanban AI — AI kanban boards & AI task planning',
+    title: 'Kanban AI — AI Kanban Board with AI Task Planning & MCP',
     description:
-      'Kanban AI is the AI powered kanban AI task management tool for shipping faster: AI-powered boards, columns, and sprint planning for builders and teams. Try a guest board with no signup.',
+      'AI kanban board for builders and small teams: AI task planning, smart columns, sprints, and Cursor/Claude MCP. Try a free guest board — no signup required.',
     keywords:
-      'kanban AI, Kanban AI, AI kanban, AI kanban board, kanban app, AI task management, sprint planning',
+      'kanban AI, AI kanban, AI kanban board, kanban software with ai, AI task management, kanban app, sprint planning, MCP, side projects',
     type: 'website',
     bodyHtml: `
       <main>
@@ -254,6 +255,7 @@ const STATIC_PAGE_META = {
         <p>AI-powered kanban boards and task planning for builders and small teams.</p>
         <nav>
           <a href="${SITE}/blog">Blog</a>
+          <a href="${SITE}/blog/ai-kanban-board-guide-2026">AI kanban board guide</a>
           <a href="${SITE}/docs">Documentation</a>
           <a href="${SITE}/login">Sign in</a>
           <a href="${SITE}/contact">Contact</a>
@@ -374,6 +376,25 @@ function pageMetaForRoute(route, blogPosts, docArticles) {
     const post = blogPosts.find((p) => p.slug === blogMatch[1]);
     if (!post) return null;
     const publishedIso = new Date(`${post.date}T12:00:00.000Z`).toISOString();
+    const related = blogPosts
+      .filter((p) => p.slug !== post.slug)
+      .map((p) => ({
+        post: p,
+        overlap: (p.tags || []).filter((t) => (post.tags || []).includes(t)).length,
+      }))
+      .filter((x) => x.overlap > 0)
+      .sort((a, b) => b.overlap - a.overlap || String(b.post.date).localeCompare(String(a.post.date)))
+      .slice(0, 3)
+      .map((x) => x.post);
+    const relatedHtml =
+      related.length > 0
+        ? `<section aria-labelledby="related-posts-heading"><h2 id="related-posts-heading">Related reading</h2><ul>${related
+            .map(
+              (r) =>
+                `<li><a href="${SITE}/blog/${escapeHtml(r.slug)}">${escapeHtml(r.title)}</a> — ${escapeHtml(r.excerpt)}</li>`
+            )
+            .join('')}</ul></section>`
+        : '';
     return {
       title: `${post.title} | Kanban AI Blog`,
       description: post.excerpt,
@@ -383,6 +404,7 @@ function pageMetaForRoute(route, blogPosts, docArticles) {
       author: post.author,
       publishedTime: publishedIso,
       image: post.featuredImage || OG_IMAGE,
+      faqs: Array.isArray(post.faqs) ? post.faqs : [],
       bodyHtml: `
         <article>
           <p><a href="${SITE}/blog">Back to Blog</a></p>
@@ -390,7 +412,8 @@ function pageMetaForRoute(route, blogPosts, docArticles) {
           <p>${escapeHtml(post.excerpt)}</p>
           <p>By ${escapeHtml(post.author || 'Kanban AI')} · <time datetime="${escapeHtml(post.date)}">${escapeHtml(post.date)}</time></p>
           ${markdownToHtml(post.body || '')}
-        </article>`,
+        </article>
+        ${relatedHtml}`,
     };
   }
 
@@ -445,7 +468,6 @@ function applyHead(html, meta) {
   }
 
   const pageLd = {
-    '@context': 'https://schema.org',
     '@type': meta.type === 'article' ? 'Article' : 'WebPage',
     name: meta.title,
     headline: meta.title,
@@ -471,7 +493,32 @@ function applyHead(html, meta) {
       pageLd.dateModified = meta.publishedTime;
     }
   }
-  out = upsertPageJsonLd(out, pageLd);
+
+  const graph = [pageLd];
+  if (meta.type === 'article' && meta.url) {
+    graph.push({
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: `${SITE}/blog` },
+        { '@type': 'ListItem', position: 3, name: meta.title, item: meta.url },
+      ],
+    });
+  }
+  if (Array.isArray(meta.faqs) && meta.faqs.length > 0) {
+    graph.push({
+      '@type': 'FAQPage',
+      mainEntity: meta.faqs.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: { '@type': 'Answer', text: item.answer },
+      })),
+    });
+  }
+  out = upsertPageJsonLd(out, {
+    '@context': 'https://schema.org',
+    '@graph': graph,
+  });
 
   if (meta.bodyHtml) {
     out = injectRootContent(out, meta.bodyHtml);

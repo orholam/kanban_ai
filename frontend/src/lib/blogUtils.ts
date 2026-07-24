@@ -13,6 +13,7 @@ import kanbanMcpToolsComparedPost from '../data/blog/kanban-mcp-tools-compared.j
 import bestKanbanToolsWithMcp2026Post from '../data/blog/best-kanban-tools-with-mcp-2026.json';
 import bestAiProjectManagementToolsSideProjectsPost from '../data/blog/best-ai-project-management-tools-side-projects.json';
 import llmoAiToolDiscoverabilityPost from '../data/blog/llmo-ai-tool-discoverability-2026.json';
+import aiKanbanBoardGuidePost from '../data/blog/ai-kanban-board-guide-2026.json';
 
 export interface BlogPost {
   id: string;
@@ -23,6 +24,8 @@ export interface BlogPost {
   tags: string[];
   body: string;
   featuredImage?: string;
+  /** Optional FAQ pairs for FAQPage JSON-LD (often overlooked SEO). */
+  faqs?: { question: string; answer: string }[];
 }
 
 // Array of all blog posts
@@ -41,6 +44,7 @@ const allPosts: BlogPost[] = [
   bestKanbanToolsWithMcp2026Post as BlogPost,
   bestAiProjectManagementToolsSideProjectsPost as BlogPost,
   llmoAiToolDiscoverabilityPost as BlogPost,
+  aiKanbanBoardGuidePost as BlogPost,
 ];
 
 /**
@@ -75,5 +79,27 @@ export function getAllTags(): string[] {
     post.tags.forEach(tag => tagSet.add(tag));
   });
   return Array.from(tagSet).sort();
+}
+
+/**
+ * Related posts by shared tags (excludes current). Used for internal linking blocks.
+ */
+export function getRelatedPosts(slug: string, limit = 3): BlogPost[] {
+  const current = getPostBySlug(slug);
+  if (!current) return [];
+
+  const scored = allPosts
+    .filter((post) => post.id !== current.id)
+    .map((post) => {
+      const overlap = post.tags.filter((tag) => current.tags.includes(tag)).length;
+      return { post, overlap };
+    })
+    .filter(({ overlap }) => overlap > 0)
+    .sort((a, b) => {
+      if (b.overlap !== a.overlap) return b.overlap - a.overlap;
+      return new Date(b.post.date).getTime() - new Date(a.post.date).getTime();
+    });
+
+  return scored.slice(0, limit).map(({ post }) => post);
 }
 

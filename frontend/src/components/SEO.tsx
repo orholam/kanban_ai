@@ -29,6 +29,8 @@ interface SEOProps {
   noindex?: boolean;
   /** Ordered trail (Home → … → current) rendered as BreadcrumbList structured data. */
   breadcrumbs?: { name: string; url: string }[];
+  /** FAQ pairs rendered as FAQPage JSON-LD (helps FAQ rich results when eligible). */
+  faqs?: { question: string; answer: string }[];
 }
 
 export default function SEO({
@@ -45,6 +47,7 @@ export default function SEO({
   tags = [],
   noindex = false,
   breadcrumbs = [],
+  faqs = [],
 }: SEOProps) {
   useEffect(() => {
     document.querySelectorAll('meta[property^="article:"]').forEach((el) => el.remove());
@@ -131,9 +134,41 @@ export default function SEO({
           item: crumb.url,
         })),
       };
+      const graph: Record<string, unknown>[] = [pageLd, breadcrumbLd];
+      if (faqs.length > 0) {
+        graph.push({
+          '@type': 'FAQPage',
+          mainEntity: faqs.map((item) => ({
+            '@type': 'Question',
+            name: item.question,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: item.answer,
+            },
+          })),
+        });
+      }
       upsertPageJsonLd({
         '@context': 'https://schema.org',
-        '@graph': [pageLd, breadcrumbLd],
+        '@graph': graph,
+      });
+    } else if (faqs.length > 0) {
+      upsertPageJsonLd({
+        '@context': 'https://schema.org',
+        '@graph': [
+          pageLd,
+          {
+            '@type': 'FAQPage',
+            mainEntity: faqs.map((item) => ({
+              '@type': 'Question',
+              name: item.question,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: item.answer,
+              },
+            })),
+          },
+        ],
       });
     } else {
       upsertPageJsonLd(pageLd);
@@ -157,6 +192,7 @@ export default function SEO({
     tags,
     noindex,
     breadcrumbs,
+    faqs,
   ]);
 
   return null;

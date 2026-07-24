@@ -87,6 +87,8 @@ Authenticated users fetch full config from `GET /api/mcp-setup` with their sessi
 
 - MCP setup docs: https://kanbanai.dev/docs/connect-mcp-claude-cursor
 - Kanban + MCP comparison (2026): https://kanbanai.dev/blog/kanban-mcp-tools-compared
+- Best AI kanban boards with MCP (ranked): https://kanbanai.dev/blog/best-kanban-tools-with-mcp-2026
+- AI kanban board guide (definitions + buyer checklist): https://kanbanai.dev/blog/ai-kanban-board-guide-2026
 
 ## Tech Stack
 

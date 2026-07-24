@@ -8,16 +8,16 @@ export const LANDING_HERO_VERSION_TAG = 'v0.1';
 
 export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/og-image.png`;
 
-/** Default document title — lead with brand + target query. */
+/** Default document title — brand + high-intent queries from Search Console. */
 export const DEFAULT_TITLE =
-  'Kanban AI — AI kanban boards, smart columns & AI task planning';
+  'Kanban AI — AI Kanban Board with AI Task Planning & MCP';
 
-/** Meta description: natural “kanban AI” phrasing for SERP snippets. */
+/** Meta description tuned for “ai kanban” / “ai kanban board” SERP CTR. */
 export const DEFAULT_DESCRIPTION =
-  'Kanban AI is the kanban AI app for shipping faster: AI-powered columns and cards, sprint planning, and task breakdowns for builders and small teams. Try a guest board with no signup.';
+  'AI kanban board for builders and small teams: AI task planning, smart columns, sprints, and Cursor/Claude MCP. Try a free guest board — no signup required.';
 
 export const DEFAULT_KEYWORDS =
-  'kanban AI, Kanban AI, AI kanban board, AI task management, kanban app, sprint planning, side projects';
+  'kanban AI, AI kanban, AI kanban board, kanban software with ai, AI task management, kanban app, sprint planning, MCP, side projects';
 
 export const WORKBENCH_DESCRIPTION =
   'Your private Kanban AI workspace — tasks, columns, and sprints.';
