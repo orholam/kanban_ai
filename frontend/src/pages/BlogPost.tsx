@@ -2,7 +2,7 @@ import { useParams, Link, Navigate } from 'react-router-dom';
 import { Calendar, Tag, ArrowLeft, User } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { getPostBySlug } from '../lib/blogUtils';
+import { getPostBySlug, getRelatedPosts } from '../lib/blogUtils';
 import SEO from '../components/SEO';
 import { DEFAULT_OG_IMAGE } from '../lib/siteMeta';
 import { format } from 'date-fns';
@@ -20,6 +20,7 @@ export default function BlogPost({ isDarkMode }: BlogPostProps) {
   }
 
   const publishedIso = new Date(`${post.date}T12:00:00.000Z`).toISOString();
+  const relatedPosts = slug ? getRelatedPosts(slug, 3) : [];
 
   return (
     <>
@@ -35,6 +36,7 @@ export default function BlogPost({ isDarkMode }: BlogPostProps) {
         section="Productivity"
         tags={post.tags}
         image={post.featuredImage ?? DEFAULT_OG_IMAGE}
+        faqs={post.faqs}
         breadcrumbs={[
           { name: 'Home', url: 'https://kanbanai.dev/' },
           { name: 'Blog', url: 'https://kanbanai.dev/blog' },
@@ -333,6 +335,39 @@ export default function BlogPost({ isDarkMode }: BlogPostProps) {
               </ReactMarkdown>
             </div>
           </article>
+
+          {relatedPosts.length > 0 && (
+            <section
+              className={`mt-12 pt-8 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}
+              aria-labelledby="related-posts-heading"
+            >
+              <h2
+                id="related-posts-heading"
+                className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
+              >
+                Related reading
+              </h2>
+              <ul className="space-y-3">
+                {relatedPosts.map((related) => (
+                  <li key={related.id}>
+                    <Link
+                      to={`/blog/${related.id}`}
+                      className={`block font-medium transition-colors ${
+                        isDarkMode
+                          ? 'text-indigo-400 hover:text-indigo-300'
+                          : 'text-indigo-700 hover:text-indigo-900'
+                      }`}
+                    >
+                      {related.title}
+                    </Link>
+                    <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {related.excerpt}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* Back to Blog Link (Bottom) */}
           <div className={`mt-12 pt-8 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}>

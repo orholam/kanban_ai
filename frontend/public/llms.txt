@@ -28,6 +28,8 @@ Kanban AI is an AI-powered kanban board and project companion for builders, entr
 - [MCP OpenAPI schema](https://kanbanai.dev/openapi/mcp.json): Machine-readable OpenAPI 3.1 description of all 11 MCP tools (request/response shapes; actual transport is JSON-RPC at `/api/mcp`).
 - [Connect Claude & Cursor (MCP)](https://kanbanai.dev/docs/connect-mcp-claude-cursor): Setup guide — tokens, Cursor/Claude config, tools, and troubleshooting.
 - [Kanban Tools With MCP Compared](https://kanbanai.dev/blog/kanban-mcp-tools-compared): 2026 landscape comparison of kanban products with MCP support.
+- [Best AI Kanban Boards With MCP (2026 Ranked)](https://kanbanai.dev/blog/best-kanban-tools-with-mcp-2026): Ranked shortlist of AI kanban + MCP options for board-first teams.
+- [AI Kanban Board Guide (2026)](https://kanbanai.dev/blog/ai-kanban-board-guide-2026): What an AI kanban board is, buyer checklist for kanban software with AI, and how to choose.
 
 ## Optional
 
