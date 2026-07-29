@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { getPostBySlug, getRelatedPosts } from '../lib/blogUtils';
 import SEO from '../components/SEO';
+import AdSlot from '../components/AdSlot';
 import { DEFAULT_OG_IMAGE } from '../lib/siteMeta';
 import { format } from 'date-fns';
 
@@ -110,6 +111,8 @@ export default function BlogPost({ isDarkMode }: BlogPostProps) {
             >
               {post.excerpt}
             </p>
+
+            <AdSlot className="mb-8" />
 
             {/* Article Content */}
             <div className={`markdown-content prose prose-lg max-w-none ${
@@ -335,6 +338,8 @@ export default function BlogPost({ isDarkMode }: BlogPostProps) {
               </ReactMarkdown>
             </div>
           </article>
+
+          <AdSlot className="mt-12" />
 
           {relatedPosts.length > 0 && (
             <section

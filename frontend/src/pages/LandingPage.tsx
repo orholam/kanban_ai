@@ -11,6 +11,7 @@ import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
 import { McpHeroInline } from '../components/McpHeroInline'
 import { TrustedBy } from '../components/TrustedBy'
 import SEO from '../components/SEO'
+import AdSlot from '../components/AdSlot'
 import { DEFAULT_DESCRIPTION, DEFAULT_KEYWORDS, DEFAULT_TITLE } from '../lib/siteMeta'
 import {
   DOCUMENTATION_BOARD_BASE_PATH,
@@ -117,6 +118,8 @@ function LandingPageVariantA({ isDarkMode, onCTAClick }: VariantProps) {
           </div>
         </div>
       </div>
+
+      <AdSlot className="mx-auto max-w-4xl px-4 pb-8 sm:px-6 lg:px-8" />
 
       {/* Features Section */}
       <div className={`py-16 sm:py-24 lg:py-32 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>

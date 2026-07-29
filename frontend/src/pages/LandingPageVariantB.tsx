@@ -28,6 +28,7 @@ import taskManagement from '../assets/undraw_join_re_w1lh.svg'
 import aiAssistant from '../assets/undraw_lightbulb_moment_re_ulyo.svg'
 import { McpHeroInline } from '../components/McpHeroInline'
 import { TrustedBy } from '../components/TrustedBy'
+import AdSlot from '../components/AdSlot'
 import {
   DOCUMENTATION_BOARD_BASE_PATH,
   RELEASE_UPDATES_SLUG,
@@ -465,6 +466,8 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
           />
         </div>
       </section>
+
+      <AdSlot className={`px-2 py-8 ${SHELL}`} />
 
       {/* MCP deep-dive */}
       <section

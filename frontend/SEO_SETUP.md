@@ -11,6 +11,11 @@
 7. **Public Content SEO**: SEO tags are applied to landing, docs, blog, login, contact, privacy, and terms pages
 8. **Docs + Blog Discovery**: Sitemap includes docs/articles + blog/posts, and `index.html` includes a noscript crawlable link hub
 9. **Post-build prerender**: `npm run build` runs `scripts/prerender.mjs` after Vite to write static HTML for public routes (`/`, `/blog/*`, `/docs/*`, `/contact`, `/connect`, etc.) with correct canonical/OG tags and crawlable body copy (no Puppeteer). Set `SKIP_PRERENDER=1` to skip (e.g. fast local builds). Failures fail the build so deploys never ship a single SPA shell for every URL.
+
+   ⚠️ `vercel.json` must pin `"buildCommand": "npm run build"`. Vercel's Vite preset otherwise runs bare `vite build`, which skips the prerender step **without failing** — every URL then serves the homepage shell with `<link rel="canonical" href="https://kanbanai.dev/">`. Verify after a deploy by checking that a blog URL returns its own title:
+   ```bash
+   curl -s https://kanbanai.dev/blog/best-kanban-tools-with-mcp-2026 | grep -o '<title>[^<]*</title>'
+   ```
 10. **LLMO / AI discoverability**: `llms.txt`, `llms-full.txt`, `openapi/mcp.json`, and `/.well-known/mcp-server` in `public/`; `robots.txt` includes Cloudflare `Content-Signal` and explicit AI crawler rules
 
 ## 🖼️ Open Graph Image Setup
@@ -63,6 +68,7 @@ These pages require authentication and won't be indexed:
 
 - SEO component: `frontend/src/components/SEO.tsx`
 - SEO utilities: `frontend/src/lib/seo.ts`
+- Prerender writer: `frontend/scripts/prerender.mjs` (invoked by `npm run build`, pinned as the Vercel build command in `frontend/vercel.json`)
 - Sitemap: `frontend/public/sitemap.xml`
 - Robots: `frontend/public/robots.txt` (includes `Content-Signal` and AI crawler allow rules)
 - LLMO index: `frontend/public/llms.txt`, `frontend/public/llms-full.txt`
