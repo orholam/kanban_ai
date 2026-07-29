@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   const request = vercelRequestToWebRequest(req);
   const auth = await authenticateMcpRequest(request);
-  if (!auth.ok) {
+  if (auth.ok === false) {
     recordMcpAuthFailure({
       reason: auth.reason,
       attemptedUserId: auth.attemptedUserId,

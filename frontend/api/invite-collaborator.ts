@@ -55,7 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   const request = vercelRequestToWebRequest(req);
   const auth = await authenticateSupabaseAccessToken(request);
-  if (!auth.ok) {
+  if (auth.ok === false) {
     res.status(401).json({ error: 'Unauthorized', reason: auth.reason });
     return;
   }

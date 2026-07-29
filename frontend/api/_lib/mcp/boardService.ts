@@ -106,32 +106,39 @@ export type BoardTaskComment = {
   created_at: string;
 };
 
+function asProjectRecord(
+  projects: Record<string, unknown> | Record<string, unknown>[] | null | undefined
+): Record<string, unknown> | null {
+  if (!projects) return null;
+  return Array.isArray(projects) ? (projects[0] ?? null) : projects;
+}
+
 function mapSidebarProjects(
   collaborations: {
     project_id: string;
-    projects: Record<string, unknown> | null;
+    projects: Record<string, unknown> | Record<string, unknown>[] | null;
   }[]
 ): BoardProject[] {
-  return collaborations
-    .map((collaboration) => {
-      const project = collaboration.projects;
-      if (!project) return null;
-      return {
-        id: String(project.id),
-        title: String(project.title ?? ''),
-        description: String(project.description ?? ''),
-        keywords: project.keywords != null ? String(project.keywords) : undefined,
-        projectType: project.projectType != null ? String(project.projectType) : 'Manual',
-        num_sprints: project.num_sprints != null ? Number(project.num_sprints) : undefined,
-        current_sprint: project.current_sprint != null ? Number(project.current_sprint) : undefined,
-        due_date: project.due_date != null ? String(project.due_date) : undefined,
-        complete: project.complete != null ? Boolean(project.complete) : undefined,
-        created_at: project.created_at != null ? String(project.created_at) : undefined,
-        user_id: project.user_id != null ? String(project.user_id) : undefined,
-        private: project.private != null ? Boolean(project.private) : true,
-      } satisfies BoardProject;
-    })
-    .filter((p): p is BoardProject => p !== null);
+  const mapped: BoardProject[] = [];
+  for (const collaboration of collaborations) {
+    const project = asProjectRecord(collaboration.projects);
+    if (!project) continue;
+    mapped.push({
+      id: String(project.id),
+      title: String(project.title ?? ''),
+      description: String(project.description ?? ''),
+      keywords: project.keywords != null ? String(project.keywords) : undefined,
+      projectType: project.projectType != null ? String(project.projectType) : 'Manual',
+      num_sprints: project.num_sprints != null ? Number(project.num_sprints) : undefined,
+      current_sprint: project.current_sprint != null ? Number(project.current_sprint) : undefined,
+      due_date: project.due_date != null ? String(project.due_date) : undefined,
+      complete: project.complete != null ? Boolean(project.complete) : undefined,
+      created_at: project.created_at != null ? String(project.created_at) : undefined,
+      user_id: project.user_id != null ? String(project.user_id) : undefined,
+      private: project.private != null ? Boolean(project.private) : true,
+    });
+  }
+  return mapped;
 }
 
 export async function listProjects(): Promise<BoardProject[]> {
@@ -161,7 +168,7 @@ export async function listProjects(): Promise<BoardProject[]> {
     .eq('accepted', true);
 
   if (error) throw error;
-  return mapSidebarProjects((data ?? []) as Parameters<typeof mapSidebarProjects>[0]);
+  return mapSidebarProjects((data ?? []) as unknown as Parameters<typeof mapSidebarProjects>[0]);
 }
 
 export async function getProject(projectId: string): Promise<BoardProject | null> {
