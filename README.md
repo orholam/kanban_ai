@@ -75,7 +75,7 @@ Use this when you want real accounts, multi-device sync, or the hosted MCP serve
 
 Set `OPENAI_API_KEY` (and Supabase / MCP vars below) in the Vercel project. The OpenAI key is read only on the server — never put it in `VITE_*` client env.
 
-`frontend/vercel.json` pins `"buildCommand": "npm run build"`. Leave it there: Vercel's Vite preset otherwise runs bare `vite build` and silently skips the SEO prerender, which makes every public URL serve the homepage shell and canonical. See [`frontend/SEO_SETUP.md`](frontend/SEO_SETUP.md).
+`frontend/vercel.json` pins `"buildCommand": "npm run build"`. Leave it there: Vercel's Vite preset otherwise runs bare `vite build` and silently skips the SEO prerender, which makes every public URL serve the homepage shell and canonical. See [`frontend/SEO_SETUP.md`](frontend/SEO_SETUP.md). AdSense recovery work (crawlable copy, ads off docs) is logged in [`docs/adsense-approval-log.md`](docs/adsense-approval-log.md).
 
 ---
 
@@ -83,7 +83,7 @@ Set `OPENAI_API_KEY` (and Supabase / MCP vars below) in the Vercel project. The 
 
 Ads are served by TinyAdz/Apitiny via the script tag at the bottom of `frontend/index.html` (site id + `data-test-mode`). Two things are easy to break:
 
-- **Ad placements.** TinyAdz auto-places inline ads by matching CSS class chains it scraped from the landing page, so any other page gets no inventory. Add `<AdSlot />` (`frontend/src/components/AdSlot.tsx`) where an ad belongs — it renders a `ta-ad-container` div that TinyAdz fills. Currently used on blog posts, docs articles, and both landing variants.
+- **Ad placements.** TinyAdz auto-places inline ads by matching CSS class chains it scraped from the landing page, so any other page gets no inventory. Add `<AdSlot />` (`frontend/src/components/AdSlot.tsx`) where an ad belongs — it renders a `ta-ad-container` div that TinyAdz fills. Currently used on blog posts and both landing variants (not on docs — see [`docs/adsense-approval-log.md`](docs/adsense-approval-log.md)).
 - **The visitor-engagement gate.** TinyAdz renders nothing until it sees a window `scroll`, `mousemove`, or `touchmove`. Because every route scrolls inside a nested `overflow-y-auto` element, `window` never emits `scroll` on its own, so `frontend/src/lib/nestedScrollBridge.ts` re-broadcasts nested scrolls onto the window from `main.tsx`. Without it, visitors who only wheel-scroll see zero ads and register zero views.
 
 To preview demo ads locally, set `data-test-mode="true"` in `frontend/index.html`.

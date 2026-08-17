@@ -282,6 +282,7 @@ function AppContent() {
           </div>
         </div>
       } />
+      <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
       <Route path="/terms-of-service" element={
         <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
           <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
@@ -292,6 +293,7 @@ function AppContent() {
           </div>
         </div>
       } />
+      <Route path="/terms" element={<Navigate to="/terms-of-service" replace />} />
       <Route path="/contact" element={
         <div className={`h-screen flex flex-col ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
           <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} />

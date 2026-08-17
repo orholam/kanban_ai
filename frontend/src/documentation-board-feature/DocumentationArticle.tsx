@@ -2,7 +2,6 @@ import { useParams, Link, Navigate } from 'react-router-dom';
 import { ChevronRight, Clock } from 'lucide-react';
 import { getDocumentationArticleBySlug, getDocumentationCategoryById } from './documentationUtils';
 import SEO from '../components/SEO';
-import AdSlot from '../components/AdSlot';
 import { DEFAULT_OG_IMAGE } from '../lib/siteMeta';
 import { format } from 'date-fns';
 import { DOCUMENTATION_BOARD_BASE_PATH, documentationBoardArticlePath } from './integration';
@@ -98,8 +97,6 @@ export default function DocumentationArticlePage({ isDarkMode }: DocumentationAr
           >
             {doc.excerpt}
           </p>
-
-          <AdSlot className="mb-9" />
 
           <DocMarkdown isDarkMode={isDarkMode} markdown={doc.body} />
 

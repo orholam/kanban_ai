@@ -44,6 +44,10 @@
       ]
     }
   ],
+  "redirects": [
+    { "source": "/privacy", "destination": "/privacy-policy", "permanent": true },
+    { "source": "/terms", "destination": "/terms-of-service", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }

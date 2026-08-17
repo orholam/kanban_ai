@@ -10,12 +10,15 @@
 6. **Dynamic SEO**: Created SEO component for page-specific meta tags
 7. **Public Content SEO**: SEO tags are applied to landing, docs, blog, login, contact, privacy, and terms pages
 8. **Docs + Blog Discovery**: Sitemap includes docs/articles + blog/posts, and `index.html` includes a noscript crawlable link hub
-9. **Post-build prerender**: `npm run build` runs `scripts/prerender.mjs` after Vite to write static HTML for public routes (`/`, `/blog/*`, `/docs/*`, `/contact`, `/connect`, etc.) with correct canonical/OG tags and crawlable body copy (no Puppeteer). Set `SKIP_PRERENDER=1` to skip (e.g. fast local builds). Failures fail the build so deploys never ship a single SPA shell for every URL.
+9. **Post-build prerender**: `npm run build` runs `scripts/prerender.mjs` after Vite to write static HTML for public routes (`/`, `/blog/*`, `/docs/*`, `/contact`, `/connect`, `/privacy-policy`, `/terms-of-service`, etc.) with correct canonical/OG tags and **crawlable full body copy** (docs articles include markdown from `documentationBodies.ts`, not title+excerpt only). Set `SKIP_PRERENDER=1` to skip (e.g. fast local builds). Failures fail the build so deploys never ship a single SPA shell for every URL. Thin landing/docs/legal bodies fail the build on purpose (AdSense reviewers see this HTML).
 
-   ⚠️ `vercel.json` must pin `"buildCommand": "npm run build"`. Vercel's Vite preset otherwise runs bare `vite build`, which skips the prerender step **without failing** — every URL then serves the homepage shell with `<link rel="canonical" href="https://kanbanai.dev/">`. Verify after a deploy by checking that a blog URL returns its own title:
+   ⚠️ `vercel.json` must pin `"buildCommand": "npm run build"`. Vercel's Vite preset otherwise runs bare `vite build`, which skips the prerender step **without failing** — every URL then serves the homepage shell with `<link rel="canonical" href="https://kanbanai.dev/">`. Verify after a deploy by checking that a blog URL returns its own title **and** a docs URL contains article headings from the markdown body:
    ```bash
    curl -s https://kanbanai.dev/blog/best-kanban-tools-with-mcp-2026 | grep -o '<title>[^<]*</title>'
+   curl -s https://kanbanai.dev/docs/overview | grep -o 'Mental model'
    ```
+
+   AdSense recovery work is tracked in [`docs/adsense-approval-log.md`](../docs/adsense-approval-log.md).
 10. **LLMO / AI discoverability**: `llms.txt`, `llms-full.txt`, `openapi/mcp.json`, and `/.well-known/mcp-server` in `public/`; `robots.txt` includes Cloudflare `Content-Signal` and explicit AI crawler rules
 
 ## 🖼️ Open Graph Image Setup
@@ -43,7 +46,7 @@ The SEO component automatically:
 **Landing Page**: Rich description of your AI-powered project management tool
 **Login Page**: Clear call-to-action for signing in
 **Contact Page**: Public sales / partnership form (same `feedback` table as in-app Feedback)
-**Docs Hub + Articles**: Indexed knowledge-base style pages with article-level metadata
+**Docs hub + articles**: Indexed knowledge-base pages with article-level metadata **and** full prerendered article bodies (not excerpts).
 **Blog + Posts**: Indexed article pages with canonical + article schema metadata
 **Privacy Policy**: Professional privacy information
 **Terms of Service**: Comprehensive terms and conditions
