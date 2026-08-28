@@ -2,7 +2,7 @@
 
 export const MCP_TOOLS = [
   { name: 'list_projects', description: 'List all projects you can access' },
-  { name: 'get_board', description: 'Load a project, tasks, and comments as JSON' },
+  { name: 'get_board', description: 'Load project tasks, optionally by sprint or without comments' },
   { name: 'create_project', description: 'Create a new project' },
   { name: 'update_project', description: 'Update project metadata or notes' },
   { name: 'delete_project', description: 'Delete a project and its tasks' },

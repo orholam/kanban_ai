@@ -179,22 +179,31 @@ export async function getProject(projectId: string): Promise<BoardProject | null
   return (data as BoardProject | null) ?? null;
 }
 
-export async function getProjectWithTasks(projectId: string): Promise<{
+export async function getProjectWithTasks(
+  projectId: string,
+  options: { sprint?: number } = {}
+): Promise<{
   project: BoardProject | null;
   tasks: BoardTask[];
 }> {
-  const [project, tasks] = await Promise.all([getProject(projectId), listTasks(projectId)]);
+  const [project, tasks] = await Promise.all([
+    getProject(projectId),
+    listTasks(projectId, options),
+  ]);
   return { project, tasks };
 }
 
-export async function listTasks(projectId: string): Promise<BoardTask[]> {
+export async function listTasks(
+  projectId: string,
+  options: { sprint?: number } = {}
+): Promise<BoardTask[]> {
   await assertProjectMember(projectId);
   const { supabase } = getMcpContext();
-  const { data, error } = await supabase
-    .from('tasks')
-    .select('*')
-    .eq('project_id', projectId)
-    .order('created_at', { ascending: true });
+  let query = supabase.from('tasks').select('*').eq('project_id', projectId);
+  if (options.sprint !== undefined) {
+    query = query.eq('sprint', options.sprint);
+  }
+  const { data, error } = await query.order('created_at', { ascending: true });
   if (error) throw error;
   return (data ?? []) as BoardTask[];
 }
@@ -400,28 +409,67 @@ export async function deleteTaskComment(commentId: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function getBoardContextJson(projectId: string): Promise<string> {
-  const { project, tasks } = await getProjectWithTasks(projectId);
+const COMMENT_TASK_ID_BATCH_SIZE = 100;
+
+async function listCommentsForProjectTasks(
+  projectId: string,
+  taskIds: string[]
+): Promise<BoardTaskComment[]> {
+  if (taskIds.length === 0) return [];
+  await assertProjectMember(projectId);
+  const { supabase } = getMcpContext();
+  const batches: string[][] = [];
+  for (let index = 0; index < taskIds.length; index += COMMENT_TASK_ID_BATCH_SIZE) {
+    batches.push(taskIds.slice(index, index + COMMENT_TASK_ID_BATCH_SIZE));
+  }
+
+  const results = await Promise.all(
+    batches.map(async (batch) => {
+      const { data, error } = await supabase
+        .from('task_comments')
+        .select('*')
+        .in('task_id', batch)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as BoardTaskComment[];
+    })
+  );
+  return results.flat();
+}
+
+export async function getBoardContextJson(
+  projectId: string,
+  options: { sprint?: number; includeComments?: boolean } = {}
+): Promise<string> {
+  const { project, tasks } = await getProjectWithTasks(projectId, {
+    sprint: options.sprint,
+  });
   if (!project) {
     throw new Error(`Project ${projectId} not found`);
   }
 
-  const commentsByTask = await Promise.all(
-    tasks.map(async (task) => ({
-      taskId: task.id,
-      comments: await listTaskComments(task.id),
-    }))
-  );
+  if (options.includeComments === false) {
+    return JSON.stringify({ project, tasks }, null, 2);
+  }
 
-  const tasksWithComments = tasks.map((task) => ({
-    ...task,
-    comments: commentsByTask.find((c) => c.taskId === task.id)?.comments ?? [],
-  }));
+  const comments = await listCommentsForProjectTasks(
+    projectId,
+    tasks.map((task) => task.id)
+  );
+  const commentsByTask = new Map<string, BoardTaskComment[]>();
+  for (const comment of comments) {
+    const taskComments = commentsByTask.get(comment.task_id) ?? [];
+    taskComments.push(comment);
+    commentsByTask.set(comment.task_id, taskComments);
+  }
 
   return JSON.stringify(
     {
       project,
-      tasks: tasksWithComments,
+      tasks: tasks.map((task) => ({
+        ...task,
+        comments: commentsByTask.get(task.id) ?? [],
+      })),
     },
     null,
     2

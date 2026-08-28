@@ -115,7 +115,7 @@
         "operationId": "get_board",
         "tags": ["Board"],
         "summary": "Get Board",
-        "description": "Get a project and all of its tasks (with task comments) as JSON context.\n\n**MCP invocation:** `tools/call` with `name: \"get_board\"`.",
+        "description": "Get a project and its tasks as JSON context. Optionally filter by sprint and omit comments for large boards.\n\n**MCP invocation:** `tools/call` with `name: \"get_board\"`.",
         "security": [
           { "bearerAuth": [], "apiKeyAuth": [] },
           { "bearerAuth": [] }
@@ -608,7 +608,17 @@
         "required": ["project_id"],
         "additionalProperties": false,
         "properties": {
-          "project_id": { "type": "string", "format": "uuid", "description": "Project UUID" }
+          "project_id": { "type": "string", "format": "uuid", "description": "Project UUID" },
+          "sprint": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Return only tasks in this sprint"
+          },
+          "include_comments": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include task comments. Set false to keep large-board responses bounded."
+          }
         }
       },
       "GetBoardResult": {

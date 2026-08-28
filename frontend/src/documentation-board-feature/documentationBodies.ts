@@ -375,7 +375,7 @@ If you revoked the key or get \`401\`, return to **Connect AI**, click **Rotate 
 | Tool | What it does |
 |------|----------------|
 | \`list_projects\` | Projects you can access |
-| \`get_board\` | Full project + tasks + comments JSON |
+| \`get_board\` | Project + tasks JSON; optional \`sprint\` filter and \`include_comments=false\` for large boards |
 | \`create_project\` / \`update_project\` / \`delete_project\` | Project CRUD |
 | \`create_task\` / \`update_task\` / \`delete_task\` | Task CRUD |
 | \`list_task_comments\` / \`add_task_comment\` / \`delete_task_comment\` | Task threads |
@@ -383,6 +383,7 @@ If you revoked the key or get \`401\`, return to **Connect AI**, click **Rotate 
 ## Example prompts (once connected)
 
 - *"List my Kanban AI projects and tell me which have tasks in progress."*
+- *"Load project \`<uuid>\` without comments and summarize tasks across every sprint."*
 - *"On project \`<uuid>\`, move every todo task in sprint 2 to in-progress."*
 - *"Create a task: Ship landing page copy review — feature, high priority, due Friday."*
 

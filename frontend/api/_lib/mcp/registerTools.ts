@@ -80,14 +80,23 @@ export function registerKanbanMcpTools(server: McpServer): void {
     'get_board',
     {
       title: 'Get Board',
-      description: 'Get a project and all of its tasks (with task comments) as JSON context.',
+      description:
+        'Get a project and its tasks as JSON context. Optionally filter by sprint and omit comments for large boards.',
       inputSchema: {
         project_id: z.string().uuid().describe('Project UUID'),
+        sprint: z.number().int().min(1).optional().describe('Return only tasks in this sprint'),
+        include_comments: z
+          .boolean()
+          .optional()
+          .describe('Include task comments (defaults to true; disable for large boards)'),
       },
     },
-    async ({ project_id }) =>
-      runTool('get_board', { project_id }, async () => {
-        const json = await board.getBoardContextJson(project_id);
+    async ({ project_id, sprint, include_comments }) =>
+      runTool('get_board', { project_id, sprint, include_comments }, async () => {
+        const json = await board.getBoardContextJson(project_id, {
+          sprint,
+          includeComments: include_comments ?? true,
+        });
         return textResult(json);
       })
   );

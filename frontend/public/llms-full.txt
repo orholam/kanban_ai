@@ -66,7 +66,7 @@ Authenticated users fetch full config from `GET /api/mcp-setup` with their sessi
 | Tool | Description |
 |------|-------------|
 | `list_projects` | List all Kanban AI projects the signed-in user can access. |
-| `get_board` | Get a project and all of its tasks (with task comments) as JSON context. |
+| `get_board` | Get project tasks as JSON; optionally filter by sprint or omit comments for large boards. |
 | `create_project` | Create a new Kanban AI project for the signed-in user. |
 | `update_project` | Update project metadata (title, notes, privacy, sprint fields, etc.). |
 | `delete_project` | Delete a project and all of its tasks and collaborator rows. |
