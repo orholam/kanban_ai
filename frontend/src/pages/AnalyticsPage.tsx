@@ -4,6 +4,14 @@ import { BarChart3, CalendarRange, Eye, MousePointerClick, Sparkles, LogIn, User
 import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import { landingAbVersionFromMetadata, LANDING_AB_TEST_VERSION } from '../lib/landingAbTest';
+import {
+  analyticsDashboardUserIds,
+  EMPTY_ANALYTICS_DASHBOARD,
+  loadAnalyticsDashboard,
+  PRODUCT_ANALYTICS_EVENT_TYPES,
+  type AnalyticsDashboardData,
+  type AnalyticsRange,
+} from '../lib/loadAnalyticsDashboard';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { isLocalAppMode } from '../lib/localApp';
@@ -36,12 +44,7 @@ const EVENT_LABELS: Record<Exclude<AnalyticsEventType, McpAnalyticsEventType>, s
 };
 
 /** Only product events are shown in the KPI tiles and charts. */
-const EVENT_ORDER: Exclude<AnalyticsEventType, McpAnalyticsEventType>[] = [
-  'sign_up',
-  'sign_in',
-  'ai_interaction',
-  'task_write',
-];
+const EVENT_ORDER = PRODUCT_ANALYTICS_EVENT_TYPES;
 
 const EVENT_ICONS: Record<Exclude<AnalyticsEventType, McpAnalyticsEventType>, React.ElementType> = {
   sign_up: UserPlus,
@@ -66,7 +69,6 @@ function dayKey(iso: string): string {
   return iso.slice(0, 10);
 }
 
-type AnalyticsRange = '24h' | '7d' | '30d' | 'all';
 type VolumeGranularity = 'day' | 'month' | 'year';
 
 function buildVolumeOverTimeSeries(
@@ -295,20 +297,20 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
   const [range, setRange] = useState<AnalyticsRange>('7d');
   const [volumeGranularity, setVolumeGranularity] = useState<VolumeGranularity>('day');
   const [selectedSubject, setSelectedSubject] = useState<{ kind: 'user' | 'guest'; id: string } | null>(null);
-  const [events, setEvents] = useState<AnalyticsEventRow[]>([]);
+  const [dashboard, setDashboard] = useState<AnalyticsDashboardData>(EMPTY_ANALYTICS_DASHBOARD);
   const [nameByUserId, setNameByUserId] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isLocalAppMode()) {
-      setEvents([]);
+      setDashboard(EMPTY_ANALYTICS_DASHBOARD);
       setNameByUserId({});
       setLoading(false);
       return;
     }
     if (!user) {
-      setEvents([]);
+      setDashboard(EMPTY_ANALYTICS_DASHBOARD);
       setNameByUserId({});
       setLoading(false);
       return;
@@ -327,68 +329,61 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
     const load = async () => {
       setLoading(true);
       setError(null);
-      const query = supabase
-        .from('analytics_events')
-        .select('id, created_at, user_id, guest_session_id, event_type, metadata')
-        .order('created_at', { ascending: false })
-        .limit(50000);
 
-      if (range === '24h') {
-        query.gte('created_at', subHours(new Date(), 24).toISOString());
-      } else if (range === '7d') {
-        query.gte('created_at', subDays(new Date(), 7).toISOString());
-      } else if (range === '30d') {
-        query.gte('created_at', subDays(new Date(), 30).toISOString());
-      }
-
-      const { data: rows, error: qErr } = await query;
-
-      if (cancelled) return;
-
-      if (qErr) {
-        setError(qErr.message);
-        setEvents([]);
+      let data: AnalyticsDashboardData;
+      try {
+        data = await loadAnalyticsDashboard(range);
+      } catch (err) {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : 'Failed to load analytics');
+        setDashboard(EMPTY_ANALYTICS_DASHBOARD);
         setNameByUserId({});
         setLoading(false);
         return;
       }
 
-      const list = (rows ?? []) as AnalyticsEventRow[];
-      setEvents(list);
+      if (cancelled) return;
 
-      const ids = [...new Set(list.map((e) => e.user_id).filter((id): id is string => Boolean(id)))];
+      setDashboard(data);
+
+      const ids = analyticsDashboardUserIds(data);
       if (ids.length === 0) {
         setNameByUserId({});
         setLoading(false);
         return;
       }
 
-      const { data: profs, error: pErr } = await supabase
-        .from('profiles')
-        .select('id, display_name, full_name, name, username')
-        .in('id', ids);
-
-      if (cancelled) return;
-
-      if (pErr) {
-        console.warn('Analytics profiles:', pErr.message);
-        const fallback: Record<string, string> = {};
-        for (const id of ids) fallback[id] = id.slice(0, 8);
-        setNameByUserId(fallback);
-        setLoading(false);
-        return;
-      }
-
       const map: Record<string, string> = {};
-      for (const p of profs ?? []) {
-        const row = p as {
-          id: string;
-          display_name: string | null;
-          full_name: string | null;
-          name: string | null;
-          username: string | null;
-        };
-        map[row.id] = labelForProfileRow(row);
+      const chunkSize = 100;
+      for (let i = 0; i < ids.length; i += chunkSize) {
+        const chunk = ids.slice(i, i + chunkSize);
+        const { data: profs, error: pErr } = await supabase
+          .from('profiles')
+          .select('id, display_name, full_name, name, username')
+          .in('id', chunk);
+
+        if (cancelled) return;
+
+        if (pErr) {
+          console.warn('Analytics profiles:', pErr.message);
+          for (const id of ids) {
+            if (!map[id]) map[id] = id.slice(0, 8);
+          }
+          setNameByUserId(map);
+          setLoading(false);
+          return;
+        }
+
+        for (const p of profs ?? []) {
+          const row = p as {
+            id: string;
+            display_name: string | null;
+            full_name: string | null;
+            name: string | null;
+            username: string | null;
+          };
+          map[row.id] = labelForProfileRow(row);
+        }
       }
       for (const id of ids) {
         if (!map[id]) map[id] = id.slice(0, 8);
@@ -403,22 +398,7 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
     };
   }, [user, profileLoading, accountProfile?.account_role, range]);
 
-  /** Raw product events only — LP A/B and MCP events are handled separately. */
-  const productEvents = useMemo(
-    () =>
-      events.filter(
-        (e) =>
-          e.event_type !== 'lp_view' &&
-          e.event_type !== 'lp_cta_click' &&
-          !isMcpEventType(e.event_type),
-      ),
-    [events],
-  );
-
-  const mcpEvents = useMemo(
-    () => events.filter((e) => isMcpEventType(e.event_type)),
-    [events],
-  );
+  const productEvents = dashboard.productEvents;
 
   const filteredEvents = useMemo(() => {
     if (!selectedSubject) return productEvents;
@@ -434,7 +414,7 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
       A: { views: 0, clicks: 0 },
       B: { views: 0, clicks: 0 },
     };
-    for (const e of events) {
+    for (const e of dashboard.lpEvents) {
       if (e.event_type !== 'lp_view' && e.event_type !== 'lp_cta_click') continue;
       if (landingAbVersionFromMetadata(e.metadata) !== LANDING_AB_TEST_VERSION) continue;
       const v = (e.metadata?.variant as string) as 'A' | 'B' | undefined;
@@ -443,18 +423,24 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
       else if (e.event_type === 'lp_cta_click') byVariant[v].clicks++;
     }
     return byVariant;
-  }, [events]);
+  }, [dashboard.lpEvents]);
 
   const totalsByType = useMemo(() => {
+    if (!selectedSubject) return dashboard.productCounts;
     const m: Partial<Record<AnalyticsEventType, number>> = {};
     for (const e of filteredEvents) {
       const t = e.event_type as AnalyticsEventType;
       m[t] = (m[t] ?? 0) + 1;
     }
     return m;
-  }, [filteredEvents]);
+  }, [dashboard.productCounts, filteredEvents, selectedSubject]);
 
-  const totalEvents = filteredEvents.length;
+  const totalEvents = useMemo(() => {
+    if (!selectedSubject) {
+      return EVENT_ORDER.reduce((sum, key) => sum + dashboard.productCounts[key], 0);
+    }
+    return filteredEvents.length;
+  }, [dashboard.productCounts, filteredEvents.length, selectedSubject]);
 
   const eventTypeMax = useMemo(
     () => Math.max(...EVENT_ORDER.map((k) => totalsByType[k] ?? 0), 1),
@@ -507,19 +493,10 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
     return { ...s, start, end: cumulative };
   });
 
-  const mcpToolCalls = useMemo(
-    () => mcpEvents.filter((e) => e.event_type === 'mcp_tool_call'),
-    [mcpEvents],
-  );
-
-  const mcpCountsByType = useMemo(() => {
-    const m: Partial<Record<McpAnalyticsEventType, number>> = {};
-    for (const e of mcpEvents) {
-      if (!isMcpEventType(e.event_type)) continue;
-      m[e.event_type] = (m[e.event_type] ?? 0) + 1;
-    }
-    return m;
-  }, [mcpEvents]);
+  const mcpToolCalls = dashboard.mcpToolCalls;
+  const mcpCountsByType = dashboard.mcpCounts;
+  const mcpEventTotal =
+    mcpCountsByType.mcp_tool_call + mcpCountsByType.mcp_session + mcpCountsByType.mcp_auth_failure;
 
   const mcpToolSuccessCount = useMemo(
     () => mcpToolCalls.filter((e) => e.metadata?.success === true).length,
@@ -555,7 +532,7 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
     [mcpToolCounts],
   );
 
-  const recentMcpEvents = useMemo(() => mcpEvents.slice(0, 20), [mcpEvents]);
+  const recentMcpEvents = dashboard.mcpRecent;
 
   const mcpDailySeries = useMemo(() => {
     const byBucket: Record<string, number> = {};
@@ -864,7 +841,7 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                       Tool calls, auth failures, and sessions are logged server-side.
                     </p>
                   </div>
-                  <p className={`text-xs tabular-nums ${muted}`}>{mcpEvents.length} MCP events in range</p>
+                  <p className={`text-xs tabular-nums ${muted}`}>{mcpEventTotal} MCP events in range</p>
                 </div>
 
                 <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
