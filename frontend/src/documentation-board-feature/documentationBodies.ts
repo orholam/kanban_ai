@@ -2,6 +2,12 @@
 
 export const bodyReleaseUpdates = `Short notes on what recently shipped and what is in progress. For how-to detail, follow the links into the rest of the docs.
 
+## September 2026
+
+### MCP: no agent-side hard deletes
+
+The remote MCP server no longer exposes \`delete_project\`, \`delete_task\`, or \`delete_task_comment\`. Agents can still list, create, and update boards; permanent deletion stays in the signed-in web app. Authenticated MCP traffic is rate-limited, and unauthenticated calls return \`WWW-Authenticate: Bearer\`.
+
 ## July 2026
 
 ### MCP: drive your board from Cursor & Claude
@@ -375,10 +381,17 @@ If you revoked the key or get \`401\`, return to **Connect AI**, click **Rotate 
 | Tool | What it does |
 |------|----------------|
 | \`list_projects\` | Projects you can access |
+<<<<<<< Updated upstream
 | \`get_board\` | Project + tasks JSON; optional \`sprint\` filter and \`include_comments=false\` for large boards |
 | \`create_project\` / \`update_project\` / \`delete_project\` | Project CRUD |
 | \`create_task\` / \`update_task\` / \`delete_task\` | Task CRUD |
 | \`list_task_comments\` / \`add_task_comment\` / \`delete_task_comment\` | Task threads |
+=======
+| \`get_board\` | Full project + tasks + comments JSON |
+| \`create_project\` / \`update_project\` | Create or update a project (permanent deletion stays in the web app) |
+| \`create_task\` / \`update_task\` | Create or update a task (status, title, sprint, etc.) |
+| \`list_task_comments\` / \`add_task_comment\` | Read or append task comments |
+>>>>>>> Stashed changes
 
 ## Example prompts (once connected)
 

@@ -10,7 +10,7 @@ Kanban AI is an AI-powered kanban board and project companion for builders, entr
 
 **MCP authentication:** each request requires `Authorization: Bearer <kai_… personal key>` from [Connect AI](https://kanbanai.dev/connect) (keys do not expire). Short-lived Supabase session JWTs still work. When the deployment sets `MCP_API_SECRET`, also send `X-MCP-API-Key: <secret>`. End users get both pre-filled from Connect AI; operators set `MCP_API_SECRET` on Vercel.
 
-**MCP tools (11):** `list_projects`, `get_board`, `create_project`, `update_project`, `delete_project`, `create_task`, `update_task`, `delete_task`, `list_task_comments`, `add_task_comment`, `delete_task_comment`.
+**MCP tools (8):** `list_projects`, `get_board`, `create_project`, `update_project`, `create_task`, `update_task`, `list_task_comments`, `add_task_comment`. Permanent deletion stays in the signed-in web app.
 
 ## Site
 
@@ -24,8 +24,8 @@ Kanban AI is an AI-powered kanban board and project companion for builders, entr
 ## MCP
 
 - [MCP discovery manifest](https://kanbanai.dev/.well-known/mcp-server): Machine-readable server metadata (endpoint, auth, tools preview) per draft-serra-mcp-discovery-uri.
-- [MCP endpoint](https://kanbanai.dev/api/mcp): Remote Model Context Protocol server; same board operations as the web app.
-- [MCP OpenAPI schema](https://kanbanai.dev/openapi/mcp.json): Machine-readable OpenAPI 3.1 description of all 11 MCP tools (request/response shapes; actual transport is JSON-RPC at `/api/mcp`).
+- [MCP endpoint](https://kanbanai.dev/api/mcp): Remote Model Context Protocol server for listing, creating, and updating boards. Permanent deletion stays in the signed-in web app.
+- [MCP OpenAPI schema](https://kanbanai.dev/openapi/mcp.json): Machine-readable OpenAPI 3.1 description of all 8 MCP tools (request/response shapes; actual transport is JSON-RPC at `/api/mcp`).
 - [Connect Claude & Cursor (MCP)](https://kanbanai.dev/docs/connect-mcp-claude-cursor): Setup guide — tokens, Cursor/Claude config, tools, and troubleshooting.
 - [Kanban Tools With MCP Compared](https://kanbanai.dev/blog/kanban-mcp-tools-compared): 2026 landscape comparison of kanban products with MCP support.
 - [Best AI Kanban Boards With MCP (2026 Ranked)](https://kanbanai.dev/blog/best-kanban-tools-with-mcp-2026): Ranked shortlist of AI kanban + MCP options for board-first teams.

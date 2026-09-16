@@ -2,35 +2,27 @@ import { v4 as uuidv4 } from 'uuid';
 import { getMcpContext } from './requestContext.js';
 
 /** Enforces project membership (needed when auth uses service-role for API keys). */
-async function assertProjectMember(projectId: string): Promise<{ ownerId: string }> {
+async function assertProjectMember(projectId: string): Promise<void> {
   const { supabase, userId } = getMcpContext();
 
   const { data: collab, error: collabError } = await supabase
     .from('project_collaborators')
-    .select('id, projects ( user_id )')
+    .select('id')
     .eq('project_id', projectId)
     .eq('user_id', userId)
     .eq('accepted', true)
     .maybeSingle();
   if (collabError) throw collabError;
-
-  if (collab) {
-    const nested = collab.projects as { user_id: string } | { user_id: string }[] | null;
-    const owner =
-      (Array.isArray(nested) ? nested[0]?.user_id : nested?.user_id) != null
-        ? String(Array.isArray(nested) ? nested[0]?.user_id : nested?.user_id)
-        : userId;
-    return { ownerId: owner };
-  }
+  if (collab) return;
 
   const { data: owned, error: ownedError } = await supabase
     .from('projects')
-    .select('id, user_id')
+    .select('id')
     .eq('id', projectId)
     .eq('user_id', userId)
     .maybeSingle();
   if (ownedError) throw ownedError;
-  if (owned) return { ownerId: userId };
+  if (owned) return;
 
   throw new Error(`Project ${projectId} not found`);
 }
@@ -46,21 +38,6 @@ async function assertTaskAccess(taskId: string): Promise<{ projectId: string }> 
   if (!task) throw new Error(`Task ${taskId} not found`);
   await assertProjectMember(String(task.project_id));
   return { projectId: String(task.project_id) };
-}
-
-async function assertCommentAccess(commentId: string): Promise<void> {
-  const { supabase, userId } = getMcpContext();
-  const { data: comment, error } = await supabase
-    .from('task_comments')
-    .select('id, task_id, user_id')
-    .eq('id', commentId)
-    .maybeSingle();
-  if (error) throw error;
-  if (!comment) throw new Error(`Comment ${commentId} not found`);
-  if (String(comment.user_id) !== userId) {
-    throw new Error('Only the comment author can delete this comment');
-  }
-  await assertTaskAccess(String(comment.task_id));
 }
 
 export type BoardTask = {
@@ -292,20 +269,6 @@ export async function updateProject(
   return data as BoardProject;
 }
 
-export async function deleteProject(projectId: string): Promise<void> {
-  const { ownerId } = await assertProjectMember(projectId);
-  const { supabase, userId } = getMcpContext();
-  if (ownerId !== userId) {
-    throw new Error('Only the project owner can delete this project');
-  }
-  const { error: tasksErr } = await supabase.from('tasks').delete().eq('project_id', projectId);
-  if (tasksErr) throw tasksErr;
-  const { error: collabErr } = await supabase.from('project_collaborators').delete().eq('project_id', projectId);
-  if (collabErr) throw collabErr;
-  const { error: projectErr } = await supabase.from('projects').delete().eq('id', projectId);
-  if (projectErr) throw projectErr;
-}
-
 export async function createTask(input: {
   project_id: string;
   title: string;
@@ -356,13 +319,6 @@ export async function updateTask(
   return data as BoardTask;
 }
 
-export async function deleteTask(taskId: string): Promise<void> {
-  await assertTaskAccess(taskId);
-  const { supabase } = getMcpContext();
-  const { error } = await supabase.from('tasks').delete().eq('id', taskId);
-  if (error) throw error;
-}
-
 export async function listTaskComments(taskId: string): Promise<BoardTaskComment[]> {
   await assertTaskAccess(taskId);
   const { supabase } = getMcpContext();
@@ -402,6 +358,7 @@ export async function addTaskComment(input: {
   return data as BoardTaskComment;
 }
 
+<<<<<<< Updated upstream
 export async function deleteTaskComment(commentId: string): Promise<void> {
   await assertCommentAccess(commentId);
   const { supabase } = getMcpContext();
@@ -444,6 +401,10 @@ export async function getBoardContextJson(
   const { project, tasks } = await getProjectWithTasks(projectId, {
     sprint: options.sprint,
   });
+=======
+export async function getBoardContextJson(projectId: string): Promise<string> {
+  const { project, tasks } = await getProjectWithTasks(projectId);
+>>>>>>> Stashed changes
   if (!project) {
     throw new Error(`Project ${projectId} not found`);
   }

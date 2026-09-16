@@ -92,7 +92,7 @@ To preview demo ads locally, set `data-test-mode="true"` in `frontend/index.html
 
 ## MCP (Cursor, Claude, other agents)
 
-On a **hosted** deployment, Kanban AI exposes a remote MCP server at `/api/mcp` with the same board operations as the web app.
+On a **hosted** deployment, Kanban AI exposes a remote MCP server at `/api/mcp` for listing, creating, and updating projects, tasks, and comments. Permanent deletion stays in the signed-in web app.
 
 - **End users:** sign in → **Connect AI** (`/connect`) → copy the generated config into Cursor or Claude Desktop. Config uses a long-lived personal MCP key (`kai_…`) so you do not need to reconnect hourly.
 - **Operators:** before Connect AI can issue `kai_…` keys in production, apply `supabase/migrations/20260714120000_mcp_api_keys.sql` on the **Kanban** Supabase project (`mruhzlixrwsgwqaodviy`). Run `./scripts/apply-mcp-api-keys-migration.sh` for the SQL editor link, or `supabase db push` after linking that project.
@@ -108,7 +108,7 @@ On a **hosted** deployment, Kanban AI exposes a remote MCP server at `/api/mcp` 
 | `MCP_KEY_ENCRYPTION_SECRET` | Optional dedicated secret for encrypting personal MCP keys (falls back to `MCP_API_SECRET` / service role) |
 | `OPENAI_API_KEY` | In-app AI (optional for MCP CRUD tools) |
 
-**Tools:** `list_projects`, `get_board`, `create_project`, `update_project`, `delete_project`, `create_task`, `update_task`, `delete_task`, `list_task_comments`, `add_task_comment`, `delete_task_comment`.
+**Tools (8):** `list_projects`, `get_board`, `create_project`, `update_project`, `create_task`, `update_task`, `list_task_comments`, `add_task_comment`. Permanent deletion of projects, tasks, and comments stays in the signed-in web app so agents cannot wipe boards. Unauthenticated MCP calls return `401` with `WWW-Authenticate: Bearer`. Authenticated traffic is rate-limited (`RateLimit` headers; 120 req/min).
 
 ---
 

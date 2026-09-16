@@ -1,8 +1,8 @@
 {
   "mcp_version": "2025-06-18",
-  "version": "1.1.0",
-  "name": "Kanban AI",
-  "description": "Remote MCP server for Kanban AI boards — list projects, read boards, and manage tasks and comments with the same operations as the web app.",
+  "version": "1.2.0",
+  "name": "io.github.orholam/kanban-ai",
+  "description": "Remote MCP server for Kanban AI boards — list projects, read boards, and create or update tasks and comments. Permanent deletion stays in the signed-in web app.",
   "endpoint": "https://kanbanai.dev/api/mcp",
   "transport": "http",
   "trust_class": "enterprise",
@@ -13,61 +13,61 @@
     "methods": ["bearer", "apikey"],
     "endpoint": "https://kanbanai.dev/connect",
     "apikey_header": "X-MCP-API-Key",
-    "bearer_description": "Personal MCP key (kai_…) from Connect AI, or a short-lived Supabase session JWT"
+    "bearer_description": "Personal MCP key (kai_…) from Connect AI, or a short-lived Supabase session JWT",
+    "www_authenticate": "Bearer",
+    "resource_metadata": "https://kanbanai.dev/.well-known/oauth-protected-resource"
+  },
+  "rate_limit": {
+    "authenticated": "120 requests per minute",
+    "unauthenticated": "30 requests per minute"
   },
   "docs": "https://kanbanai.dev/docs/connect-mcp-claude-cursor",
   "links": {
     "connect": "https://kanbanai.dev/connect",
-    "documentation": "https://kanbanai.dev/docs/connect-mcp-claude-cursor"
+    "documentation": "https://kanbanai.dev/docs/connect-mcp-claude-cursor",
+    "repository": "https://github.com/orholam/kanban_ai"
   },
   "repository": "https://github.com/orholam/kanban_ai",
-  "last_updated": "2026-07-14T00:00:00Z",
+  "publisher": {
+    "name": "orholam",
+    "homepage": "https://kanbanai.dev",
+    "github": "https://github.com/orholam/kanban_ai"
+  },
+  "last_updated": "2026-09-15T00:00:00Z",
   "cache_ttl": 3600,
   "crawl": true,
   "tools_preview": [
     {
       "name": "list_projects",
-      "description": "List all Kanban AI projects the signed-in user can access."
+      "description": "Read-only listing of Kanban AI projects the authenticated user can access."
     },
     {
       "name": "get_board",
-      "description": "Get a project and all of its tasks (with task comments) as JSON context."
+      "description": "Read-only snapshot of one project, including its tasks and comments as JSON."
     },
     {
       "name": "create_project",
-      "description": "Create a new Kanban AI project for the signed-in user."
+      "description": "Create a new Kanban AI project owned by the authenticated user."
     },
     {
       "name": "update_project",
-      "description": "Update project metadata (title, notes, privacy, sprint fields, etc.)."
-    },
-    {
-      "name": "delete_project",
-      "description": "Delete a project and all of its tasks and collaborator rows."
+      "description": "Update metadata on a project the authenticated user already belongs to."
     },
     {
       "name": "create_task",
-      "description": "Create a task on a project board."
+      "description": "Create a task card on a project board the authenticated user already belongs to."
     },
     {
       "name": "update_task",
-      "description": "Update an existing task by id."
-    },
-    {
-      "name": "delete_task",
-      "description": "Delete a task from a board."
+      "description": "Update fields on an existing task the authenticated user can access."
     },
     {
       "name": "list_task_comments",
-      "description": "List comments on a task."
+      "description": "Read-only listing of comments on a task the authenticated user can access."
     },
     {
       "name": "add_task_comment",
-      "description": "Add a comment to a task thread."
-    },
-    {
-      "name": "delete_task_comment",
-      "description": "Delete a task comment by id."
+      "description": "Append a comment to a task thread the authenticated user can access."
     }
   ]
 }

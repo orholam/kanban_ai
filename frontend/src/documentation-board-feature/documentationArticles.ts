@@ -10,7 +10,7 @@ export const DOCUMENTATION_ARTICLES: DocumentationArticle[] = [
     excerpt: 'Recent shipping notes: MCP for Cursor & Claude, and the new project experience revamp.',
     estimatedMinutes: 3,
     tags: ['changelog', 'MCP', 'releases'],
-    date: '2026-07-15',
+    date: '2026-09-15',
     author: 'Kanban AI',
     body: bodies.bodyReleaseUpdates,
   },

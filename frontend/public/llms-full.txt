@@ -41,7 +41,7 @@ Kanban AI is your personal AI-powered project companion that helps you build, tr
 
 ## MCP Server
 
-Kanban AI exposes a **remote MCP server** at `https://kanbanai.dev/api/mcp`. It talks directly to Supabase with the same board operations as the web app (projects, tasks, comments).
+Kanban AI exposes a **remote MCP server** at `https://kanbanai.dev/api/mcp`. It talks directly to Supabase with the same board **read and write** operations as the web app (projects, tasks, comments). Permanent deletion of projects, tasks, and comments is not exposed over MCP.
 
 ### Setup
 
@@ -65,17 +65,22 @@ Authenticated users fetch full config from `GET /api/mcp-setup` with their sessi
 
 | Tool | Description |
 |------|-------------|
+<<<<<<< Updated upstream
 | `list_projects` | List all Kanban AI projects the signed-in user can access. |
 | `get_board` | Get project tasks as JSON; optionally filter by sprint or omit comments for large boards. |
 | `create_project` | Create a new Kanban AI project for the signed-in user. |
 | `update_project` | Update project metadata (title, notes, privacy, sprint fields, etc.). |
 | `delete_project` | Delete a project and all of its tasks and collaborator rows. |
+=======
+| `list_projects` | Read-only listing of Kanban AI projects the authenticated user can access. |
+| `get_board` | Read-only snapshot of a project and its tasks and comments as JSON. |
+| `create_project` | Create a new Kanban AI project owned by the authenticated user. |
+| `update_project` | Update project metadata (title, notes, privacy, sprint fields). |
+>>>>>>> Stashed changes
 | `create_task` | Create a task on a project board. |
-| `update_task` | Update an existing task by id. |
-| `delete_task` | Delete a task from a board. |
-| `list_task_comments` | List comments on a task. |
-| `add_task_comment` | Add a comment to a task thread. |
-| `delete_task_comment` | Delete a task comment by id. |
+| `update_task` | Update an existing task (status, title, sprint, etc.). |
+| `list_task_comments` | Read-only listing of comments on a task. |
+| `add_task_comment` | Append a comment to a task thread. |
 
 ### Example Prompts
 

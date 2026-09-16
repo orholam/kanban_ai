@@ -7,11 +7,11 @@ Registry metadata lives at the repository root: [`server.json`](../server.json).
 | Field | Value |
 | --- | --- |
 | Registry name | `io.github.orholam/kanban-ai` |
-| Version | `1.1.0` (matches `serverInfo.version` in `frontend/api/mcp.ts`) |
+| Version | `1.2.0` (matches `serverInfo.version` in `frontend/api/mcp.ts`) |
 | Transport | `streamable-http` |
 | Endpoint | `https://kanbanai.dev/api/mcp` |
 
-> **Note:** `frontend/package.json` uses `0.0.0` for the web app. Bump `server.json` `version` when you ship MCP-facing changes (and keep it aligned with `serverInfo.version` in `frontend/api/mcp.ts`).
+> **Note:** `frontend/package.json` uses `0.0.0` for the web app. Bump `server.json` `version` when you ship MCP-facing changes (and keep it aligned with `MCP_SERVER_VERSION` in `frontend/api/_lib/mcp/version.ts` and `serverInfo` in `frontend/api/mcp.ts`). After a production deploy, republish with `mcp-publisher publish server.json` so the official MCP Registry and downstream scanners (including PolicyLayer) pick up the new tool list.
 
 ## Prerequisites
 
@@ -112,8 +112,8 @@ On success, the server appears in the [MCP Registry](https://registry.modelconte
 mcp-publisher publish server.json
 
 # Deprecate an old version
-mcp-publisher status --status deprecated --message "Upgrade to 1.1.0" \
-  io.github.orholam/kanban-ai 1.0.0
+mcp-publisher status --status deprecated --message "Upgrade to 1.2.0" \
+  io.github.orholam/kanban-ai 1.1.0
 ```
 
 ## Troubleshooting

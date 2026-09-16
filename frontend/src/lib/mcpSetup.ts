@@ -5,13 +5,10 @@ export const MCP_TOOLS = [
   { name: 'get_board', description: 'Load project tasks, optionally by sprint or without comments' },
   { name: 'create_project', description: 'Create a new project' },
   { name: 'update_project', description: 'Update project metadata or notes' },
-  { name: 'delete_project', description: 'Delete a project and its tasks' },
   { name: 'create_task', description: 'Add a task to a board' },
   { name: 'update_task', description: 'Move or edit a task (status, title, sprint, etc.)' },
-  { name: 'delete_task', description: 'Remove a task' },
   { name: 'list_task_comments', description: 'Read comments on a task' },
   { name: 'add_task_comment', description: 'Leave a note on a task' },
-  { name: 'delete_task_comment', description: 'Delete a comment' },
 ] as const;
 
 export const MCP_EXAMPLE_PROMPTS = [

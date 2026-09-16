@@ -530,7 +530,7 @@ export default function LandingPageVariantB({ isDarkMode, onCTAClick, toggleThem
 
           <div className={`mt-6 flex flex-wrap items-center justify-center gap-4 text-xs ${textSubtle}`}>
             <span className="inline-flex items-center gap-1.5">
-              <Plug className="h-3.5 w-3.5 text-sky-500" /> 11 tools
+              <Plug className="h-3.5 w-3.5 text-sky-500" /> 8 tools
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Clipboard className="h-3.5 w-3.5 text-sky-500" /> One-click config
