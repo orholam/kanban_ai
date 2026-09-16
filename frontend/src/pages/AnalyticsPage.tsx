@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { eachDayOfInterval, eachHourOfInterval, eachMonthOfInterval, eachYearOfInterval, format, startOfHour, startOfMonth, startOfYear, subDays, subHours } from 'date-fns';
-import { BarChart3, CalendarRange, Eye, MousePointerClick, Sparkles, LogIn, UserPlus, ListTodo, Plug, ShieldAlert, Activity } from 'lucide-react';
+import { BarChart3, CalendarRange, Eye, MousePointerClick, Sparkles, LogIn, UserPlus, ListTodo, Plug, ShieldAlert, Activity, Users, Repeat, UserCheck, Bot } from 'lucide-react';
 import SEO from '../components/SEO';
 import { useAuth } from '../contexts/AuthContext';
 import { landingAbVersionFromMetadata, LANDING_AB_TEST_VERSION } from '../lib/landingAbTest';
@@ -12,6 +12,7 @@ import {
   type AnalyticsDashboardData,
   type AnalyticsRange,
 } from '../lib/loadAnalyticsDashboard';
+import { summarizeMcpAudience, uniqueMcpUsersByDay } from '../lib/mcpAnalyticsInsights';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { isLocalAppMode } from '../lib/localApp';
@@ -138,6 +139,45 @@ function buildVolumeOverTimeSeries(
     const key = bucketKey(d);
     return { day: key, label: bucketLabel(d), count: byBucket[key] ?? 0 };
   });
+}
+
+function mcpChartBuckets(
+  range: AnalyticsRange,
+  events: { created_at: string }[],
+): { key: string; label: string }[] {
+  if (range === '24h') {
+    const end = startOfHour(new Date());
+    const start = subHours(end, 23);
+    return eachHourOfInterval({ start, end }).map((h) => ({
+      key: format(h, "yyyy-MM-dd'T'HH:00"),
+      label: format(h, 'ha'),
+    }));
+  }
+
+  const end = new Date();
+  end.setHours(0, 0, 0, 0);
+  const oldest = events.length ? events.reduce((min, e) => (e.created_at < min ? e.created_at : min), events[0].created_at) : null;
+  const inferredStart =
+    range === 'all'
+      ? oldest
+        ? new Date(dayKey(oldest))
+        : end
+      : range === '7d'
+        ? subDays(end, 6)
+        : subDays(end, 29);
+  return eachDayOfInterval({ start: inferredStart, end }).map((d) => ({
+    key: format(d, 'yyyy-MM-dd'),
+    label: format(d, 'MMM d'),
+  }));
+}
+
+function mcpEventBucketKey(iso: string, range: AnalyticsRange): string {
+  if (range === '24h') {
+    const ts = new Date(iso);
+    ts.setMinutes(0, 0, 0);
+    return format(ts, "yyyy-MM-dd'T'HH:00");
+  }
+  return iso.slice(0, 10);
 }
 
 function volumeGranularityLabel(granularity: VolumeGranularity): string {
@@ -534,44 +574,40 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
 
   const recentMcpEvents = dashboard.mcpRecent;
 
-  const mcpDailySeries = useMemo(() => {
-    const byBucket: Record<string, number> = {};
-    if (range === '24h') {
-      const end = startOfHour(new Date());
-      const start = subHours(end, 23);
-      const hours = eachHourOfInterval({ start, end });
-      for (const e of mcpToolCalls) {
-        const ts = new Date(e.created_at);
-        ts.setMinutes(0, 0, 0);
-        const key = format(ts, "yyyy-MM-dd'T'HH:00");
-        byBucket[key] = (byBucket[key] ?? 0) + 1;
-      }
-      return hours.map((h) => {
-        const key = format(h, "yyyy-MM-dd'T'HH:00");
-        return { day: key, label: format(h, 'ha'), count: byBucket[key] ?? 0 };
-      });
-    }
+  const mcpAudience = useMemo(
+    () => summarizeMcpAudience(dashboard.mcpSessions, dashboard.mcpToolCalls, dashboard.mcpAuthFailures),
+    [dashboard.mcpSessions, dashboard.mcpToolCalls, dashboard.mcpAuthFailures],
+  );
 
-    const end = new Date();
-    end.setHours(0, 0, 0, 0);
-    const inferredStart =
-      range === 'all'
-        ? mcpToolCalls.length
-          ? new Date(dayKey(mcpToolCalls[mcpToolCalls.length - 1].created_at))
-          : end
-        : range === '7d'
-          ? subDays(end, 6)
-          : subDays(end, 29);
-    const days = eachDayOfInterval({ start: inferredStart, end });
+  const mcpChartEvents = useMemo(
+    () => [...dashboard.mcpToolCalls, ...dashboard.mcpSessions, ...dashboard.mcpAuthFailures],
+    [dashboard.mcpToolCalls, dashboard.mcpSessions, dashboard.mcpAuthFailures],
+  );
+
+  const mcpDailySeries = useMemo(() => {
+    const buckets = mcpChartBuckets(range, mcpChartEvents);
+    const byBucket: Record<string, number> = {};
     for (const e of mcpToolCalls) {
-      const k = dayKey(e.created_at);
+      const k = mcpEventBucketKey(e.created_at, range);
       byBucket[k] = (byBucket[k] ?? 0) + 1;
     }
-    return days.map((d) => {
-      const day = format(d, 'yyyy-MM-dd');
-      return { day, label: format(d, 'MMM d'), count: byBucket[day] ?? 0 };
-    });
-  }, [mcpToolCalls, range]);
+    return buckets.map((b) => ({ day: b.key, label: b.label, count: byBucket[b.key] ?? 0 }));
+  }, [mcpToolCalls, mcpChartEvents, range]);
+
+  const mcpUniqueUserSeries = useMemo(() => {
+    const buckets = mcpChartBuckets(range, mcpChartEvents);
+    const usersByBucket: Record<string, Set<string>> = {};
+    for (const point of uniqueMcpUsersByDay(dashboard.mcpSessions, dashboard.mcpToolCalls)) {
+      const k = mcpEventBucketKey(point.created_at, range);
+      if (!usersByBucket[k]) usersByBucket[k] = new Set();
+      usersByBucket[k].add(point.userId);
+    }
+    return buckets.map((b) => ({
+      day: b.key,
+      label: b.label,
+      count: usersByBucket[b.key]?.size ?? 0,
+    }));
+  }, [dashboard.mcpSessions, dashboard.mcpToolCalls, mcpChartEvents, range]);
 
   const shell = isDarkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-50 text-zinc-900';
   const panel = isDarkMode
@@ -838,10 +874,39 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                     </div>
                     <p className={`mt-1 text-xs ${muted}`}>
                       Remote MCP usage at <code className={`rounded px-1 py-0.5 font-mono text-[11px] ${isDarkMode ? 'bg-zinc-800 text-zinc-200' : 'bg-zinc-100 text-zinc-800'}`}>/api/mcp</code>.
-                      Tool calls, auth failures, and sessions are logged server-side.
+                      Signed-in people are counted from sessions and tool calls. Unauthenticated probes are grouped by user-agent (scanners vs unknown). Repeat means activity on two or more days.
                     </p>
+                    {mcpAudience.story ? (
+                      <p className={`mt-3 max-w-3xl text-sm leading-relaxed ${isDarkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>
+                        {mcpAudience.story}
+                      </p>
+                    ) : null}
                   </div>
                   <p className={`text-xs tabular-nums ${muted}`}>{mcpEventTotal} MCP events in range</p>
+                </div>
+
+                <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {(
+                    [
+                      { label: 'Signed-in people', value: mcpAudience.uniqueUsers, icon: Users, fill: 'rgb(20 184 166)', soft: 'rgba(20, 184, 166, 0.2)' },
+                      { label: 'Repeat (2+ days)', value: mcpAudience.repeatUsers, icon: Repeat, fill: 'rgb(99 102 241)', soft: 'rgba(99, 102, 241, 0.2)' },
+                      { label: 'Called tools', value: mcpAudience.engagedUsers, icon: UserCheck, fill: 'rgb(245 158 11)', soft: 'rgba(245, 158, 11, 0.2)' },
+                      { label: 'Bot probes', value: mcpAudience.botProbes, icon: Bot, fill: 'rgb(239 68 68)', soft: 'rgba(239, 68, 68, 0.2)' },
+                    ] as const
+                  ).map(({ label, value, icon: Icon, fill, soft }) => (
+                    <div
+                      key={label}
+                      className={`rounded-xl border p-4 ${
+                        isDarkMode ? 'border-zinc-800/80 bg-zinc-900/60' : 'border-zinc-200/90 bg-zinc-50'
+                      }`}
+                    >
+                      <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: soft }}>
+                        <Icon className="h-4 w-4" style={{ color: fill }} aria-hidden />
+                      </div>
+                      <p className="text-xl font-semibold tabular-nums">{value}</p>
+                      <p className={`mt-0.5 text-[10px] font-medium uppercase tracking-wide ${muted}`}>{label}</p>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -896,6 +961,147 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                   </div>
                 </div>
 
+                <div className="mb-6 grid gap-6 lg:grid-cols-2">
+                  <div>
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide">Signed-in people</h3>
+                    {mcpAudience.users.length === 0 ? (
+                      <p className={`text-sm ${muted}`}>No signed-in MCP users in this window.</p>
+                    ) : (
+                      <div className={`overflow-x-auto rounded-xl border ${isDarkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+                        <table className="min-w-full text-left text-xs">
+                          <thead className={isDarkMode ? 'bg-zinc-900/80 text-zinc-400' : 'bg-zinc-50 text-zinc-600'}>
+                            <tr>
+                              <th className="px-3 py-2 font-medium">Person</th>
+                              <th className="px-3 py-2 font-medium">Days</th>
+                              <th className="px-3 py-2 font-medium">Sessions</th>
+                              <th className="px-3 py-2 font-medium">Tools</th>
+                              <th className="px-3 py-2 font-medium">Last seen</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {mcpAudience.users.slice(0, 12).map((u) => (
+                              <tr
+                                key={u.userId}
+                                className={isDarkMode ? 'border-t border-zinc-800/80' : 'border-t border-zinc-100'}
+                              >
+                                <td className="px-3 py-2">
+                                  <div className="font-medium">{nameByUserId[u.userId] ?? u.userId.slice(0, 8)}</div>
+                                  <div className={`font-mono text-[10px] ${muted}`}>{u.userId.slice(0, 8)}</div>
+                                  <div className="mt-1 flex flex-wrap gap-1">
+                                    {u.repeat ? (
+                                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${isDarkMode ? 'bg-indigo-500/15 text-indigo-200' : 'bg-indigo-50 text-indigo-800'}`}>
+                                        Repeat
+                                      </span>
+                                    ) : (
+                                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${isDarkMode ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-100 text-zinc-700'}`}>
+                                        One day
+                                      </span>
+                                    )}
+                                    {u.engaged ? (
+                                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${isDarkMode ? 'bg-amber-500/15 text-amber-200' : 'bg-amber-50 text-amber-900'}`}>
+                                        Tools
+                                      </span>
+                                    ) : (
+                                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${isDarkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-500'}`}>
+                                        Session only
+                                      </span>
+                                    )}
+                                    {u.clientFamily ? (
+                                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${muted}`}>
+                                        {u.clientFamily}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-2 tabular-nums">{u.daysActive}</td>
+                                <td className="px-3 py-2 tabular-nums">{u.sessions}</td>
+                                <td className="px-3 py-2 tabular-nums">
+                                  {u.toolCalls}
+                                  {u.toolCalls > 0 ? (
+                                    <span className={muted}> ({u.toolSuccess} ok)</span>
+                                  ) : null}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-2 tabular-nums">
+                                  {format(new Date(u.lastSeen), 'MMM d HH:mm')}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {mcpAudience.users.length > 12 ? (
+                          <p className={`px-3 py-2 text-[11px] ${muted}`}>
+                            Showing 12 of {mcpAudience.users.length} people.
+                          </p>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide">Bot / scanner probes</h3>
+                    {mcpAudience.botFamilies.length === 0 ? (
+                      <p className={`text-sm ${muted}`}>
+                        No scanner user-agents in this window
+                        {mcpAudience.unknownAuthFailures > 0
+                          ? ` (${mcpAudience.unknownAuthFailures} auth failures had no user-agent).`
+                          : '.'}
+                      </p>
+                    ) : (
+                      <ul className="space-y-3">
+                        {mcpAudience.botFamilies.slice(0, 8).map((b) => (
+                          <li key={b.family}>
+                            <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
+                              <span className="truncate font-mono text-xs">{b.family}</span>
+                              <span className="shrink-0 tabular-nums font-semibold">{b.probes}</span>
+                            </div>
+                            <div className={`h-1.5 overflow-hidden rounded-full ${isDarkMode ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
+                              <div
+                                className="h-full rounded-full bg-red-500"
+                                style={{
+                                  width: `${(b.probes / Math.max(mcpAudience.botFamilies[0]?.probes ?? 1, 1)) * 100}%`,
+                                }}
+                              />
+                            </div>
+                            <p className={`mt-1 truncate text-[10px] ${muted}`}>
+                              {b.fingerprints} distinct token{b.fingerprints === 1 ? '' : 's'} · last {format(new Date(b.lastSeen), 'MMM d HH:mm')}
+                              {b.sampleUserAgent ? ` · ${b.sampleUserAgent.slice(0, 48)}` : ''}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {mcpAudience.authReasons.length > 0 ? (
+                      <div className="mt-4">
+                        <h4 className={`mb-2 text-[10px] font-semibold uppercase tracking-wide ${muted}`}>Auth failure reasons</h4>
+                        <ul className="space-y-1">
+                          {mcpAudience.authReasons.map((r) => (
+                            <li key={r.reason} className="flex justify-between gap-2 text-xs">
+                              <span className="truncate font-mono">{r.reason}</span>
+                              <span className="tabular-nums">{r.count}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="mb-6 grid gap-6 lg:grid-cols-2">
+                  <div>
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide">Unique signed-in users</h3>
+                    <p className={`mb-2 text-[11px] ${muted}`}>Distinct people with a session or tool call.</p>
+                    <DailyVolumeChart
+                      series={mcpUniqueUserSeries}
+                      isDarkMode={isDarkMode}
+                      granularityLabel={range === '24h' ? 'hour' : 'day'}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide">MCP tool volume</h3>
+                    <DailyVolumeChart series={mcpDailySeries} isDarkMode={isDarkMode} />
+                  </div>
+                </div>
+
                 <div className="grid gap-6 lg:grid-cols-2">
                   <div>
                     <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide">Tool calls by name</h3>
@@ -927,15 +1133,8 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                       </ul>
                     )}
                   </div>
-
                   <div>
-                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide">MCP tool volume</h3>
-                    <DailyVolumeChart series={mcpDailySeries} isDarkMode={isDarkMode} />
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide">Recent MCP events</h3>
+                    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide">Recent MCP events</h3>
                   {recentMcpEvents.length === 0 ? (
                     <p className={`text-sm ${muted}`}>No MCP activity yet.</p>
                   ) : (
@@ -1005,6 +1204,7 @@ export default function AnalyticsPage({ isDarkMode }: { isDarkMode: boolean }) {
                       </table>
                     </div>
                   )}
+                </div>
                 </div>
               </section>
 
