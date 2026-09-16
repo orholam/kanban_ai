@@ -108,6 +108,13 @@ export function recordMcpAuthFailure(input: {
   );
 }
 
-export function recordMcpSession(input: { userId: string; method: string }): void {
-  void recordMcpAnalyticsEvent('mcp_session', { method: input.method }, input.userId);
+export function recordMcpSession(input: { userId: string; method: string; userAgent?: string }): void {
+  void recordMcpAnalyticsEvent(
+    'mcp_session',
+    {
+      method: input.method,
+      ...(input.userAgent ? { user_agent: input.userAgent } : {}),
+    },
+    input.userId
+  );
 }

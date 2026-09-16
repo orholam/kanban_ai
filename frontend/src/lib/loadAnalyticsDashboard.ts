@@ -1,7 +1,6 @@
 import { subDays, subHours } from 'date-fns';
 import { supabase } from './supabase';
 import type { AnalyticsEventRow, AnalyticsEventType, McpAnalyticsEventType } from '../types';
-import { MCP_ANALYTICS_EVENT_TYPES } from '../types';
 
 export type AnalyticsRange = '24h' | '7d' | '30d' | 'all';
 
@@ -33,6 +32,8 @@ export type AnalyticsDashboardData = {
   productCounts: Record<ProductAnalyticsEventType, number>;
   lpEvents: AnalyticsEventRow[];
   mcpToolCalls: AnalyticsEventRow[];
+  mcpSessions: AnalyticsEventRow[];
+  mcpAuthFailures: AnalyticsEventRow[];
   mcpRecent: AnalyticsEventRow[];
   mcpCounts: Record<McpAnalyticsEventType, number>;
 };
@@ -47,6 +48,8 @@ export const EMPTY_ANALYTICS_DASHBOARD: AnalyticsDashboardData = {
   },
   lpEvents: [],
   mcpToolCalls: [],
+  mcpSessions: [],
+  mcpAuthFailures: [],
   mcpRecent: [],
   mcpCounts: {
     mcp_tool_call: 0,
@@ -113,12 +116,24 @@ async function countEventsByType(
   return count ?? 0;
 }
 
+function newestMcpEvents(
+  toolCalls: AnalyticsEventRow[],
+  sessions: AnalyticsEventRow[],
+  authFailures: AnalyticsEventRow[],
+  limit: number,
+): AnalyticsEventRow[] {
+  return [...toolCalls, ...sessions, ...authFailures]
+    .sort((a, b) => (a.created_at < b.created_at ? 1 : a.created_at > b.created_at ? -1 : 0))
+    .slice(0, limit);
+}
+
 export async function loadAnalyticsDashboard(range: AnalyticsRange): Promise<AnalyticsDashboardData> {
   const [
     productEvents,
     lpEvents,
     mcpToolCalls,
-    mcpRecent,
+    mcpSessions,
+    mcpAuthFailures,
     signUpCount,
     signInCount,
     aiCount,
@@ -130,7 +145,8 @@ export async function loadAnalyticsDashboard(range: AnalyticsRange): Promise<Ana
     fetchEventRowsByTypes(PRODUCT_ANALYTICS_EVENT_TYPES, range),
     fetchEventRowsByTypes(LANDING_ANALYTICS_EVENT_TYPES, range),
     fetchEventRowsByTypes(['mcp_tool_call'], range),
-    fetchEventRowsByTypes(MCP_ANALYTICS_EVENT_TYPES, range, 20),
+    fetchEventRowsByTypes(['mcp_session'], range),
+    fetchEventRowsByTypes(['mcp_auth_failure'], range),
     countEventsByType('sign_up', range),
     countEventsByType('sign_in', range),
     countEventsByType('ai_interaction', range),
@@ -150,7 +166,9 @@ export async function loadAnalyticsDashboard(range: AnalyticsRange): Promise<Ana
     },
     lpEvents,
     mcpToolCalls,
-    mcpRecent,
+    mcpSessions,
+    mcpAuthFailures,
+    mcpRecent: newestMcpEvents(mcpToolCalls, mcpSessions, mcpAuthFailures, 20),
     mcpCounts: {
       mcp_tool_call: mcpToolCount,
       mcp_session: mcpSessionCount,
@@ -161,7 +179,13 @@ export async function loadAnalyticsDashboard(range: AnalyticsRange): Promise<Ana
 
 export function analyticsDashboardUserIds(data: AnalyticsDashboardData): string[] {
   const ids = new Set<string>();
-  for (const e of [...data.productEvents, ...data.mcpToolCalls, ...data.mcpRecent]) {
+  for (const e of [
+    ...data.productEvents,
+    ...data.mcpToolCalls,
+    ...data.mcpSessions,
+    ...data.mcpAuthFailures,
+    ...data.mcpRecent,
+  ]) {
     if (e.user_id) ids.add(e.user_id);
   }
   return [...ids];

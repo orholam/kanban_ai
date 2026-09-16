@@ -96,7 +96,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return;
   }
 
-  recordMcpSession({ userId: auth.context.userId, method: req.method ?? 'POST' });
+  recordMcpSession({
+    userId: auth.context.userId,
+    method: req.method ?? 'POST',
+    userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : undefined,
+  });
 
   await mcpRequestContext.run(auth.context, async () => {
     const response = await mcpHandler(request);
